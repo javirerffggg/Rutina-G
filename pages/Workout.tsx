@@ -94,7 +94,7 @@ const Workout: React.FC = () => {
   // Calculate Progress based on 'completed' flag
   const totalExercises = exercises.length;
   const completedExercises = logs.filter(l => l.completed).length;
-  const progressPercentage = Math.round((completedExercises / totalExercises) * 100);
+  const progressPercentage = Math.round((completedExercises / totalExercises) * 100) || 0;
 
   return (
     <div className="pb-10 min-h-screen">
@@ -109,21 +109,35 @@ const Workout: React.FC = () => {
             </p>
           </div>
           
-          {/* Circular Progress */}
-          <div className="relative w-12 h-12 flex items-center justify-center">
-            <svg className="w-full h-full transform -rotate-90">
-              <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.1)" strokeWidth="4" fill="none" />
-              <circle 
-                cx="24" cy="24" r="20" 
-                stroke="#d97706" 
-                strokeWidth="4" 
-                fill="none" 
-                strokeDasharray="125.6" 
-                strokeDashoffset={125.6 - (125.6 * progressPercentage) / 100}
+          {/* Circular Progress (Fixed Centering & Clipping) */}
+          <div className="relative w-14 h-14 flex items-center justify-center">
+            <svg className="w-full h-full transform -rotate-90 overflow-visible" viewBox="0 0 36 36">
+              {/* Background Circle */}
+              <path
+                d="M18 2.0845
+                  a 15.9155 15.9155 0 0 1 0 31.831
+                  a 15.9155 15.9155 0 0 1 0 -31.831"
+                fill="none"
+                stroke="rgba(255,255,255,0.1)"
+                strokeWidth="3"
+              />
+              {/* Progress Circle - Circumference is approx 100 */}
+              <path
+                d="M18 2.0845
+                  a 15.9155 15.9155 0 0 1 0 31.831
+                  a 15.9155 15.9155 0 0 1 0 -31.831"
+                fill="none"
+                stroke="#d97706"
+                strokeWidth="3"
+                strokeDasharray="100, 100"
+                strokeDashoffset={100 - progressPercentage}
+                strokeLinecap="round"
                 className="transition-all duration-1000 ease-out"
               />
             </svg>
-            <span className="absolute text-[10px] font-bold text-white">{progressPercentage}%</span>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-[11px] font-bold text-white">{progressPercentage}%</span>
+            </div>
           </div>
         </div>
 
@@ -277,7 +291,6 @@ const Workout: React.FC = () => {
       
       {/* Floating Save FAB */}
       <div className="fixed bottom-24 right-5 z-40 animate-in zoom-in duration-300 pointer-events-none">
-        {/* Helper text or extra actions could go here, but main save is auto or via header */}
          <button 
              onClick={() => saveWorkout()}
              className="bg-brand-500 hover:bg-brand-400 text-white w-14 h-14 rounded-full shadow-[0_0_20px_rgba(14,165,233,0.5)] flex items-center justify-center transition-transform hover:scale-105 pointer-events-auto"

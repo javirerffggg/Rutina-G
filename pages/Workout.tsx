@@ -1,0 +1,292 @@
+import React, { useState, useEffect } from 'react';
+import { ROUTINE_MAPPING, EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS } from '../constants';
+import { RoutineType, Exercise, WorkoutLogEntry, WorkoutSet } from '../types';
+import { getTodayDateString, getCurrentPhase } from '../utils';
+import { saveLog, getLogs, getPreviousWorkoutLog } from '../services/storage';
+import { ChevronDown, Save, History, Plus, Minus, Check, Trophy, Circle } from 'lucide-react';
+
+const Workout: React.FC = () => {
+  const today = getTodayDateString();
+  const dayOfWeek = new Date().getDay();
+  const phase = getCurrentPhase();
+  
+  const defaultRoutine = ROUTINE_MAPPING[dayOfWeek];
+  const [selectedRoutine, setSelectedRoutine] = useState<RoutineType>(defaultRoutine);
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [logs, setLogs] = useState<WorkoutLogEntry[]>([]);
+  // activeExercise controls which accordion is expanded
+  const [activeExercise, setActiveExercise] = useState<string | null>(null);
+
+  useEffect(() => {
+    let list: Exercise[] = [];
+    if (selectedRoutine === RoutineType.PUSH) list = EXERCISES_PUSH;
+    if (selectedRoutine === RoutineType.PULL) list = EXERCISES_PULL;
+    if (selectedRoutine === RoutineType.LEGS) list = EXERCISES_LEGS;
+    setExercises(list);
+    
+    const existingDayLog = getLogs()[today];
+    if (existingDayLog?.exercises && existingDayLog.workoutType === selectedRoutine) {
+      setLogs(existingDayLog.exercises);
+    } else {
+      setLogs(list.map(ex => ({ exerciseId: ex.id, sets: [], completed: false })));
+    }
+  }, [selectedRoutine, today]);
+
+  const updateSet = (exerciseId: string, setIndex: number, field: keyof WorkoutSet, value: number) => {
+    const newLogs = logs.map(log => {
+      if (log.exerciseId !== exerciseId) return log;
+      const newSets = [...log.sets];
+      if (!newSets[setIndex]) newSets[setIndex] = { weight: 0, reps: 0 };
+      newSets[setIndex] = { ...newSets[setIndex], [field]: value };
+      return { ...log, sets: newSets };
+    });
+    setLogs(newLogs);
+  };
+
+  const addSet = (exerciseId: string) => {
+    const newLogs = logs.map(log => {
+      if (log.exerciseId !== exerciseId) return log;
+      const lastSet = log.sets[log.sets.length - 1] || { weight: 0, reps: 0 };
+      return { ...log, sets: [...log.sets, { ...lastSet }] };
+    });
+    setLogs(newLogs);
+    // Automatically expand when adding a set
+    setActiveExercise(exerciseId);
+  };
+
+  const removeSet = (exerciseId: string, index: number) => {
+    const newLogs = logs.map(log => {
+      if (log.exerciseId !== exerciseId) return log;
+      return { ...log, sets: log.sets.filter((_, i) => i !== index) };
+    });
+    setLogs(newLogs);
+  };
+
+  const toggleExerciseComplete = (exerciseId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent accordion toggle
+    const newLogs = logs.map(log => {
+      if (log.exerciseId !== exerciseId) return log;
+      return { ...log, completed: !log.completed };
+    });
+    setLogs(newLogs);
+    
+    // If marking as complete, collapse the accordion
+    const targetLog = newLogs.find(l => l.exerciseId === exerciseId);
+    if (targetLog?.completed) {
+      setActiveExercise(null);
+    }
+    
+    // Auto-save on toggle
+    saveWorkout(newLogs);
+  };
+
+  const saveWorkout = (currentLogs = logs) => {
+    const currentLog = getLogs()[today] || { date: today };
+    const updated = {
+      ...currentLog,
+      workoutCompleted: true,
+      workoutType: selectedRoutine,
+      exercises: currentLogs
+    };
+    saveLog(updated);
+  };
+
+  // Calculate Progress based on 'completed' flag
+  const totalExercises = exercises.length;
+  const completedExercises = logs.filter(l => l.completed).length;
+  const progressPercentage = Math.round((completedExercises / totalExercises) * 100);
+
+  return (
+    <div className="pb-10 min-h-screen">
+      {/* Premium Header */}
+      <div className="relative pt-8 px-5 pb-6 bg-gradient-to-b from-brand-900/20 to-transparent">
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-1">Entrenamiento</h1>
+            <p className="text-brand-400 text-xs font-bold tracking-widest uppercase flex items-center gap-1">
+              <Trophy size={12} className="text-gold-500" />
+              {phase.trainingFocus}
+            </p>
+          </div>
+          
+          {/* Circular Progress */}
+          <div className="relative w-12 h-12 flex items-center justify-center">
+            <svg className="w-full h-full transform -rotate-90">
+              <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.1)" strokeWidth="4" fill="none" />
+              <circle 
+                cx="24" cy="24" r="20" 
+                stroke="#d97706" 
+                strokeWidth="4" 
+                fill="none" 
+                strokeDasharray="125.6" 
+                strokeDashoffset={125.6 - (125.6 * progressPercentage) / 100}
+                className="transition-all duration-1000 ease-out"
+              />
+            </svg>
+            <span className="absolute text-[10px] font-bold text-white">{progressPercentage}%</span>
+          </div>
+        </div>
+
+        {/* Custom Routine Dropdown */}
+        <div className="relative group z-20">
+          <div className="glass-panel rounded-xl p-1 flex items-center relative">
+            <select 
+              value={selectedRoutine}
+              onChange={(e) => setSelectedRoutine(e.target.value as RoutineType)}
+              className="w-full bg-transparent text-white font-bold text-sm px-3 py-2.5 appearance-none focus:outline-none z-10"
+            >
+              {Object.values(RoutineType).map(t => (
+                <option key={t} value={t} className="bg-dark-card text-white">{t}</option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-3 text-brand-500 pointer-events-none" size={18} />
+          </div>
+        </div>
+      </div>
+
+      {/* Exercises List */}
+      <div className="px-5 space-y-4">
+        {exercises.map((exercise, i) => {
+          const log = logs.find(l => l.exerciseId === exercise.id) || { exerciseId: exercise.id, sets: [], completed: false };
+          const prevBest = getPreviousWorkoutLog(exercise.id, today);
+          const isCompleted = log.completed;
+          // Expand if active OR if it has sets but isn't marked complete yet
+          const isExpanded = activeExercise === exercise.id;
+
+          return (
+            <div 
+              key={exercise.id} 
+              onClick={() => setActiveExercise(isExpanded ? null : exercise.id)}
+              className={`rounded-2xl border transition-all duration-300 overflow-hidden relative
+                ${isCompleted
+                  ? 'bg-emerald-900/10 border-emerald-500/30 opacity-60' 
+                  : isExpanded 
+                    ? 'bg-dark-card/80 border-brand-500/30 shadow-[0_0_20px_rgba(14,165,233,0.1)]' 
+                    : 'bg-dark-card/40 border-white/5'}`}
+            >
+              <div className="p-4 flex flex-col gap-2 relative z-10">
+                <div className="flex justify-between items-start gap-4">
+                   <h3 className={`font-bold text-sm leading-tight transition-colors ${isCompleted ? 'text-emerald-400 line-through' : isExpanded ? 'text-white' : 'text-slate-400'}`}>
+                     {exercise.name}
+                   </h3>
+                   
+                   {/* Selection Checkbox */}
+                   <button 
+                    onClick={(e) => toggleExerciseComplete(exercise.id, e)}
+                    className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
+                      isCompleted 
+                        ? 'bg-emerald-500 border-emerald-500 scale-110 shadow-[0_0_10px_rgba(16,185,129,0.5)]' 
+                        : 'border-slate-600 hover:border-slate-400'
+                    }`}
+                   >
+                     {isCompleted && <Check size={14} className="text-white" strokeWidth={4} />}
+                   </button>
+                </div>
+
+                {/* Metadata Tags (Hidden if completed to save space, shown otherwise) */}
+                {!isCompleted && (
+                  <div className="flex gap-2 text-[10px] font-mono tracking-tight mt-1">
+                     <span className="text-slate-500 bg-slate-800/50 px-1.5 py-0.5 rounded border border-white/5">
+                       SETS: {exercise.targetSets}
+                     </span>
+                     <span className="text-slate-500 bg-slate-800/50 px-1.5 py-0.5 rounded border border-white/5">
+                       REPS: {exercise.targetReps}
+                     </span>
+                  </div>
+                )}
+
+                {/* History Pill */}
+                {prevBest && isExpanded && !isCompleted && (
+                  <div className="mt-2 text-xs flex items-center gap-2 text-gold-500/80 bg-gold-500/10 px-3 py-1.5 rounded-lg border border-gold-500/20 w-fit">
+                    <History size={12} />
+                    <span>Best: {prevBest.weight}kg × {prevBest.reps}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Interaction Area (Accordion) */}
+              {isExpanded && !isCompleted && (
+                <div className="px-4 pb-4 animate-in slide-in-from-top-2 duration-300 relative z-10">
+                  <div className="space-y-2">
+                    {/* Headers */}
+                    <div className="grid grid-cols-12 gap-2 text-[9px] text-slate-500 font-bold uppercase tracking-wider text-center mb-1 pl-6">
+                      <span className="col-span-4">Peso (kg)</span>
+                      <span className="col-span-4">Reps</span>
+                      <span className="col-span-4">RIR</span>
+                    </div>
+
+                    {/* Sets Rows */}
+                    {log.sets.map((set, idx) => (
+                      <div key={idx} className="relative group">
+                         {/* Remove Button Absolute Left */}
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); removeSet(exercise.id, idx); }}
+                          className="absolute -left-2 top-1/2 -translate-y-1/2 p-2 text-slate-600 hover:text-red-500 transition-colors"
+                        >
+                          <Minus size={14} />
+                        </button>
+
+                        <div className="grid grid-cols-12 gap-2 pl-6">
+                          <div className="col-span-4 bg-black/20 rounded-lg p-0.5 border border-white/5 focus-within:border-brand-500/50 transition-colors">
+                            <input 
+                              type="number" 
+                              placeholder="0"
+                              value={set.weight || ''}
+                              onChange={(e) => updateSet(exercise.id, idx, 'weight', parseFloat(e.target.value))}
+                              onBlur={() => saveWorkout()}
+                              className="w-full bg-transparent text-center text-white font-mono font-bold text-sm py-2 focus:outline-none"
+                            />
+                          </div>
+                          <div className="col-span-4 bg-black/20 rounded-lg p-0.5 border border-white/5 focus-within:border-brand-500/50 transition-colors">
+                            <input 
+                              type="number" 
+                              placeholder="0"
+                              value={set.reps || ''}
+                              onChange={(e) => updateSet(exercise.id, idx, 'reps', parseFloat(e.target.value))}
+                              onBlur={() => saveWorkout()}
+                              className="w-full bg-transparent text-center text-white font-mono font-bold text-sm py-2 focus:outline-none"
+                            />
+                          </div>
+                          <div className="col-span-4 bg-black/20 rounded-lg p-0.5 border border-white/5 focus-within:border-brand-500/50 transition-colors">
+                            <input 
+                              type="number" 
+                              placeholder="-"
+                              value={set.rir || ''}
+                              onChange={(e) => updateSet(exercise.id, idx, 'rir', parseFloat(e.target.value))}
+                              onBlur={() => saveWorkout()}
+                              className="w-full bg-transparent text-center text-brand-300 font-mono font-bold text-sm py-2 focus:outline-none placeholder-slate-700"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addSet(exercise.id); }}
+                    className="w-full mt-3 py-2.5 rounded-xl border border-dashed border-slate-700 hover:border-brand-500 hover:bg-brand-500/10 text-slate-400 hover:text-brand-400 transition-all flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wide"
+                  >
+                    <Plus size={14} /> Añadir Serie
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      
+      {/* Floating Save FAB */}
+      <div className="fixed bottom-24 right-5 z-40 animate-in zoom-in duration-300 pointer-events-none">
+        {/* Helper text or extra actions could go here, but main save is auto or via header */}
+         <button 
+             onClick={() => saveWorkout()}
+             className="bg-brand-500 hover:bg-brand-400 text-white w-14 h-14 rounded-full shadow-[0_0_20px_rgba(14,165,233,0.5)] flex items-center justify-center transition-transform hover:scale-105 pointer-events-auto"
+           >
+             <Save size={24} />
+           </button>
+      </div>
+    </div>
+  );
+};
+
+export default Workout;

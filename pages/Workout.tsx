@@ -3,7 +3,7 @@ import { ROUTINE_MAPPING, EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS } from 
 import { RoutineType, Exercise, WorkoutLogEntry, WorkoutSet } from '../types';
 import { getTodayDateString, getCurrentPhase } from '../utils';
 import { saveLog, getLogs, getPreviousWorkoutLog } from '../services/storage';
-import { ChevronDown, Save, History, Plus, Minus, Check, Trophy, Circle } from 'lucide-react';
+import { Save, History, Plus, Minus, Check, Trophy } from 'lucide-react';
 
 const Workout: React.FC = () => {
   const today = getTodayDateString();
@@ -16,6 +16,13 @@ const Workout: React.FC = () => {
   const [logs, setLogs] = useState<WorkoutLogEntry[]>([]);
   // activeExercise controls which accordion is expanded
   const [activeExercise, setActiveExercise] = useState<string | null>(null);
+
+  const TABS = [
+    { id: RoutineType.PUSH, label: 'Empuje' },
+    { id: RoutineType.PULL, label: 'Tirón' },
+    { id: RoutineType.LEGS, label: 'Pierna' },
+    { id: RoutineType.REST, label: 'Off' },
+  ];
 
   useEffect(() => {
     let list: Exercise[] = [];
@@ -94,13 +101,13 @@ const Workout: React.FC = () => {
   // Calculate Progress based on 'completed' flag
   const totalExercises = exercises.length;
   const completedExercises = logs.filter(l => l.completed).length;
-  const progressPercentage = Math.round((completedExercises / totalExercises) * 100) || 0;
+  const progressPercentage = totalExercises > 0 ? Math.round((completedExercises / totalExercises) * 100) : 0;
 
   return (
     <div className="pb-10 min-h-screen">
       {/* Premium Header */}
       <div className="relative pt-8 px-5 pb-6 bg-gradient-to-b from-brand-900/20 to-transparent">
-        <div className="flex justify-between items-start mb-4">
+        <div className="flex justify-between items-start mb-6">
           <div>
             <h1 className="text-3xl font-bold text-white mb-1">Entrenamiento</h1>
             <p className="text-brand-400 text-xs font-bold tracking-widest uppercase flex items-center gap-1">
@@ -141,152 +148,167 @@ const Workout: React.FC = () => {
           </div>
         </div>
 
-        {/* Custom Routine Dropdown */}
-        <div className="relative group z-20">
-          <div className="glass-panel rounded-xl p-1 flex items-center relative">
-            <select 
-              value={selectedRoutine}
-              onChange={(e) => setSelectedRoutine(e.target.value as RoutineType)}
-              className="w-full bg-transparent text-white font-bold text-sm px-3 py-2.5 appearance-none focus:outline-none z-10"
-            >
-              {Object.values(RoutineType).map(t => (
-                <option key={t} value={t} className="bg-dark-card text-white">{t}</option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-3 text-brand-500 pointer-events-none" size={18} />
-          </div>
+        {/* Custom Routine Tabs - Segmented Control */}
+        <div className="grid grid-cols-4 gap-1 p-1 bg-black/20 backdrop-blur-md rounded-xl border border-white/5 relative z-20">
+           {TABS.map((tab) => {
+              const isActive = selectedRoutine === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setSelectedRoutine(tab.id)}
+                  className={`
+                    relative py-2.5 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center justify-center
+                    ${isActive 
+                      ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/50' 
+                      : 'text-slate-500 hover:bg-white/5 hover:text-slate-300'}
+                  `}
+                >
+                  {tab.label}
+                </button>
+              )
+           })}
         </div>
       </div>
 
       {/* Exercises List */}
       <div className="px-5 space-y-4">
-        {exercises.map((exercise, i) => {
-          const log = logs.find(l => l.exerciseId === exercise.id) || { exerciseId: exercise.id, sets: [], completed: false };
-          const prevBest = getPreviousWorkoutLog(exercise.id, today);
-          const isCompleted = log.completed;
-          // Expand if active OR if it has sets but isn't marked complete yet
-          const isExpanded = activeExercise === exercise.id;
+        {selectedRoutine === RoutineType.REST ? (
+           <div className="flex flex-col items-center justify-center py-20 opacity-50">
+             <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+               <Trophy size={24} className="text-slate-500" />
+             </div>
+             <p className="text-slate-400 text-sm font-bold">Día de Descanso</p>
+             <p className="text-slate-600 text-xs mt-1">Recupera y crece.</p>
+           </div>
+        ) : (
+          exercises.map((exercise, i) => {
+            const log = logs.find(l => l.exerciseId === exercise.id) || { exerciseId: exercise.id, sets: [], completed: false };
+            const prevBest = getPreviousWorkoutLog(exercise.id, today);
+            const isCompleted = log.completed;
+            // Expand if active OR if it has sets but isn't marked complete yet
+            const isExpanded = activeExercise === exercise.id;
 
-          return (
-            <div 
-              key={exercise.id} 
-              onClick={() => setActiveExercise(isExpanded ? null : exercise.id)}
-              className={`rounded-2xl border transition-all duration-300 overflow-hidden relative
-                ${isCompleted
-                  ? 'bg-emerald-900/10 border-emerald-500/30 opacity-60' 
-                  : isExpanded 
-                    ? 'bg-dark-card/80 border-brand-500/30 shadow-[0_0_20px_rgba(14,165,233,0.1)]' 
-                    : 'bg-dark-card/40 border-white/5'}`}
-            >
-              <div className="p-4 flex flex-col gap-2 relative z-10">
-                <div className="flex justify-between items-start gap-4">
-                   <h3 className={`font-bold text-sm leading-tight transition-colors ${isCompleted ? 'text-emerald-400 line-through' : isExpanded ? 'text-white' : 'text-slate-400'}`}>
-                     {exercise.name}
-                   </h3>
-                   
-                   {/* Selection Checkbox */}
-                   <button 
-                    onClick={(e) => toggleExerciseComplete(exercise.id, e)}
-                    className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
-                      isCompleted 
-                        ? 'bg-emerald-500 border-emerald-500 scale-110 shadow-[0_0_10px_rgba(16,185,129,0.5)]' 
-                        : 'border-slate-600 hover:border-slate-400'
-                    }`}
-                   >
-                     {isCompleted && <Check size={14} className="text-white" strokeWidth={4} />}
-                   </button>
+            return (
+              <div 
+                key={exercise.id} 
+                onClick={() => setActiveExercise(isExpanded ? null : exercise.id)}
+                className={`rounded-2xl border transition-all duration-300 overflow-hidden relative
+                  ${isCompleted
+                    ? 'bg-emerald-900/10 border-emerald-500/30 opacity-60' 
+                    : isExpanded 
+                      ? 'bg-dark-card/80 border-brand-500/30 shadow-[0_0_20px_rgba(14,165,233,0.1)]' 
+                      : 'bg-dark-card/40 border-white/5'}`}
+              >
+                <div className="p-4 flex flex-col gap-2 relative z-10">
+                  <div className="flex justify-between items-start gap-4">
+                     <h3 className={`font-bold text-sm leading-tight transition-colors ${isCompleted ? 'text-emerald-400 line-through' : isExpanded ? 'text-white' : 'text-slate-400'}`}>
+                       {exercise.name}
+                     </h3>
+                     
+                     {/* Selection Checkbox */}
+                     <button 
+                      onClick={(e) => toggleExerciseComplete(exercise.id, e)}
+                      className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
+                        isCompleted 
+                          ? 'bg-emerald-500 border-emerald-500 scale-110 shadow-[0_0_10px_rgba(16,185,129,0.5)]' 
+                          : 'border-slate-600 hover:border-slate-400'
+                      }`}
+                     >
+                       {isCompleted && <Check size={14} className="text-white" strokeWidth={4} />}
+                     </button>
+                  </div>
+
+                  {/* Metadata Tags (Hidden if completed to save space, shown otherwise) */}
+                  {!isCompleted && (
+                    <div className="flex gap-2 text-[10px] font-mono tracking-tight mt-1">
+                       <span className="text-slate-500 bg-slate-800/50 px-1.5 py-0.5 rounded border border-white/5">
+                         SETS: {exercise.targetSets}
+                       </span>
+                       <span className="text-slate-500 bg-slate-800/50 px-1.5 py-0.5 rounded border border-white/5">
+                         REPS: {exercise.targetReps}
+                       </span>
+                    </div>
+                  )}
+
+                  {/* History Pill */}
+                  {prevBest && isExpanded && !isCompleted && (
+                    <div className="mt-2 text-xs flex items-center gap-2 text-gold-500/80 bg-gold-500/10 px-3 py-1.5 rounded-lg border border-gold-500/20 w-fit">
+                      <History size={12} />
+                      <span>Best: {prevBest.weight}kg × {prevBest.reps}</span>
+                    </div>
+                  )}
                 </div>
 
-                {/* Metadata Tags (Hidden if completed to save space, shown otherwise) */}
-                {!isCompleted && (
-                  <div className="flex gap-2 text-[10px] font-mono tracking-tight mt-1">
-                     <span className="text-slate-500 bg-slate-800/50 px-1.5 py-0.5 rounded border border-white/5">
-                       SETS: {exercise.targetSets}
-                     </span>
-                     <span className="text-slate-500 bg-slate-800/50 px-1.5 py-0.5 rounded border border-white/5">
-                       REPS: {exercise.targetReps}
-                     </span>
-                  </div>
-                )}
+                {/* Interaction Area (Accordion) */}
+                {isExpanded && !isCompleted && (
+                  <div className="px-4 pb-4 animate-in slide-in-from-top-2 duration-300 relative z-10">
+                    <div className="space-y-2">
+                      {/* Headers */}
+                      <div className="grid grid-cols-12 gap-2 text-[9px] text-slate-500 font-bold uppercase tracking-wider text-center mb-1 pl-6">
+                        <span className="col-span-4">Peso (kg)</span>
+                        <span className="col-span-4">Reps</span>
+                        <span className="col-span-4">RIR</span>
+                      </div>
 
-                {/* History Pill */}
-                {prevBest && isExpanded && !isCompleted && (
-                  <div className="mt-2 text-xs flex items-center gap-2 text-gold-500/80 bg-gold-500/10 px-3 py-1.5 rounded-lg border border-gold-500/20 w-fit">
-                    <History size={12} />
-                    <span>Best: {prevBest.weight}kg × {prevBest.reps}</span>
+                      {/* Sets Rows */}
+                      {log.sets.map((set, idx) => (
+                        <div key={idx} className="relative group">
+                           {/* Remove Button Absolute Left */}
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); removeSet(exercise.id, idx); }}
+                            className="absolute -left-2 top-1/2 -translate-y-1/2 p-2 text-slate-600 hover:text-red-500 transition-colors"
+                          >
+                            <Minus size={14} />
+                          </button>
+
+                          <div className="grid grid-cols-12 gap-2 pl-6">
+                            <div className="col-span-4 bg-black/20 rounded-lg p-0.5 border border-white/5 focus-within:border-brand-500/50 transition-colors">
+                              <input 
+                                type="number" 
+                                placeholder="0"
+                                value={set.weight || ''}
+                                onChange={(e) => updateSet(exercise.id, idx, 'weight', parseFloat(e.target.value))}
+                                onBlur={() => saveWorkout()}
+                                className="w-full bg-transparent text-center text-white font-mono font-bold text-sm py-2 focus:outline-none"
+                              />
+                            </div>
+                            <div className="col-span-4 bg-black/20 rounded-lg p-0.5 border border-white/5 focus-within:border-brand-500/50 transition-colors">
+                              <input 
+                                type="number" 
+                                placeholder="0"
+                                value={set.reps || ''}
+                                onChange={(e) => updateSet(exercise.id, idx, 'reps', parseFloat(e.target.value))}
+                                onBlur={() => saveWorkout()}
+                                className="w-full bg-transparent text-center text-white font-mono font-bold text-sm py-2 focus:outline-none"
+                              />
+                            </div>
+                            <div className="col-span-4 bg-black/20 rounded-lg p-0.5 border border-white/5 focus-within:border-brand-500/50 transition-colors">
+                              <input 
+                                type="number" 
+                                placeholder="-"
+                                value={set.rir || ''}
+                                onChange={(e) => updateSet(exercise.id, idx, 'rir', parseFloat(e.target.value))}
+                                onBlur={() => saveWorkout()}
+                                className="w-full bg-transparent text-center text-brand-300 font-mono font-bold text-sm py-2 focus:outline-none placeholder-slate-700"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); addSet(exercise.id); }}
+                      className="w-full mt-3 py-2.5 rounded-xl border border-dashed border-slate-700 hover:border-brand-500 hover:bg-brand-500/10 text-slate-400 hover:text-brand-400 transition-all flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wide"
+                    >
+                      <Plus size={14} /> Añadir Serie
+                    </button>
                   </div>
                 )}
               </div>
-
-              {/* Interaction Area (Accordion) */}
-              {isExpanded && !isCompleted && (
-                <div className="px-4 pb-4 animate-in slide-in-from-top-2 duration-300 relative z-10">
-                  <div className="space-y-2">
-                    {/* Headers */}
-                    <div className="grid grid-cols-12 gap-2 text-[9px] text-slate-500 font-bold uppercase tracking-wider text-center mb-1 pl-6">
-                      <span className="col-span-4">Peso (kg)</span>
-                      <span className="col-span-4">Reps</span>
-                      <span className="col-span-4">RIR</span>
-                    </div>
-
-                    {/* Sets Rows */}
-                    {log.sets.map((set, idx) => (
-                      <div key={idx} className="relative group">
-                         {/* Remove Button Absolute Left */}
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); removeSet(exercise.id, idx); }}
-                          className="absolute -left-2 top-1/2 -translate-y-1/2 p-2 text-slate-600 hover:text-red-500 transition-colors"
-                        >
-                          <Minus size={14} />
-                        </button>
-
-                        <div className="grid grid-cols-12 gap-2 pl-6">
-                          <div className="col-span-4 bg-black/20 rounded-lg p-0.5 border border-white/5 focus-within:border-brand-500/50 transition-colors">
-                            <input 
-                              type="number" 
-                              placeholder="0"
-                              value={set.weight || ''}
-                              onChange={(e) => updateSet(exercise.id, idx, 'weight', parseFloat(e.target.value))}
-                              onBlur={() => saveWorkout()}
-                              className="w-full bg-transparent text-center text-white font-mono font-bold text-sm py-2 focus:outline-none"
-                            />
-                          </div>
-                          <div className="col-span-4 bg-black/20 rounded-lg p-0.5 border border-white/5 focus-within:border-brand-500/50 transition-colors">
-                            <input 
-                              type="number" 
-                              placeholder="0"
-                              value={set.reps || ''}
-                              onChange={(e) => updateSet(exercise.id, idx, 'reps', parseFloat(e.target.value))}
-                              onBlur={() => saveWorkout()}
-                              className="w-full bg-transparent text-center text-white font-mono font-bold text-sm py-2 focus:outline-none"
-                            />
-                          </div>
-                          <div className="col-span-4 bg-black/20 rounded-lg p-0.5 border border-white/5 focus-within:border-brand-500/50 transition-colors">
-                            <input 
-                              type="number" 
-                              placeholder="-"
-                              value={set.rir || ''}
-                              onChange={(e) => updateSet(exercise.id, idx, 'rir', parseFloat(e.target.value))}
-                              onBlur={() => saveWorkout()}
-                              className="w-full bg-transparent text-center text-brand-300 font-mono font-bold text-sm py-2 focus:outline-none placeholder-slate-700"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); addSet(exercise.id); }}
-                    className="w-full mt-3 py-2.5 rounded-xl border border-dashed border-slate-700 hover:border-brand-500 hover:bg-brand-500/10 text-slate-400 hover:text-brand-400 transition-all flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wide"
-                  >
-                    <Plus size={14} /> Añadir Serie
-                  </button>
-                </div>
-              )}
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
       
       {/* Floating Save FAB */}

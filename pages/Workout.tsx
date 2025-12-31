@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ROUTINE_MAPPING, EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS } from '../constants';
+import { ROUTINE_MAPPING, EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS, EXERCISE_ALTERNATIVES } from '../constants';
 import { RoutineType, Exercise, WorkoutLogEntry, WorkoutSet } from '../types';
 import { getTodayDateString, getCurrentPhase } from '../utils';
 import { saveLog, getLogs, getPreviousWorkoutLog } from '../services/storage';
-import { Save, History, Plus, Minus, Check, Trophy } from 'lucide-react';
+import { Save, History, Plus, Minus, Check, Trophy, ArrowRightLeft, X, Dumbbell, Settings, Info, Bot } from 'lucide-react';
 
 const Workout: React.FC = () => {
   const today = getTodayDateString();
@@ -16,6 +16,8 @@ const Workout: React.FC = () => {
   const [logs, setLogs] = useState<WorkoutLogEntry[]>([]);
   // activeExercise controls which accordion is expanded
   const [activeExercise, setActiveExercise] = useState<string | null>(null);
+  // controls the alternatives modal
+  const [showAlternativeFor, setShowAlternativeFor] = useState<string | null>(null);
 
   const TABS = [
     { id: RoutineType.PUSH, label: 'Empuje' },
@@ -116,10 +118,9 @@ const Workout: React.FC = () => {
             </p>
           </div>
           
-          {/* Circular Progress (Fixed Centering & Clipping) */}
+          {/* Circular Progress */}
           <div className="relative w-14 h-14 flex items-center justify-center">
             <svg className="w-full h-full transform -rotate-90 overflow-visible" viewBox="0 0 36 36">
-              {/* Background Circle */}
               <path
                 d="M18 2.0845
                   a 15.9155 15.9155 0 0 1 0 31.831
@@ -128,7 +129,6 @@ const Workout: React.FC = () => {
                 stroke="rgba(255,255,255,0.1)"
                 strokeWidth="3"
               />
-              {/* Progress Circle - Circumference is approx 100 */}
               <path
                 d="M18 2.0845
                   a 15.9155 15.9155 0 0 1 0 31.831
@@ -185,8 +185,8 @@ const Workout: React.FC = () => {
             const log = logs.find(l => l.exerciseId === exercise.id) || { exerciseId: exercise.id, sets: [], completed: false };
             const prevBest = getPreviousWorkoutLog(exercise.id, today);
             const isCompleted = log.completed;
-            // Expand if active OR if it has sets but isn't marked complete yet
             const isExpanded = activeExercise === exercise.id;
+            const alternatives = EXERCISE_ALTERNATIVES[exercise.id];
 
             return (
               <div 
@@ -201,24 +201,41 @@ const Workout: React.FC = () => {
               >
                 <div className="p-4 flex flex-col gap-2 relative z-10">
                   <div className="flex justify-between items-start gap-4">
-                     <h3 className={`font-bold text-sm leading-tight transition-colors ${isCompleted ? 'text-emerald-400 line-through' : isExpanded ? 'text-white' : 'text-slate-400'}`}>
-                       {exercise.name}
-                     </h3>
+                     <div className="flex-1">
+                       <h3 className={`font-bold text-sm leading-tight transition-colors ${isCompleted ? 'text-emerald-400 line-through' : isExpanded ? 'text-white' : 'text-slate-400'}`}>
+                         {exercise.name}
+                       </h3>
+                     </div>
                      
-                     {/* Selection Checkbox */}
-                     <button 
-                      onClick={(e) => toggleExerciseComplete(exercise.id, e)}
-                      className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
-                        isCompleted 
-                          ? 'bg-emerald-500 border-emerald-500 scale-110 shadow-[0_0_10px_rgba(16,185,129,0.5)]' 
-                          : 'border-slate-600 hover:border-slate-400'
-                      }`}
-                     >
-                       {isCompleted && <Check size={14} className="text-white" strokeWidth={4} />}
-                     </button>
+                     <div className="flex items-center gap-3">
+                       {/* Alternative Button */}
+                       {alternatives && !isCompleted && (
+                         <button 
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             setShowAlternativeFor(exercise.id);
+                           }}
+                           className="text-slate-500 hover:text-brand-400 transition-colors p-1"
+                         >
+                           <ArrowRightLeft size={16} />
+                         </button>
+                       )}
+
+                       {/* Selection Checkbox */}
+                       <button 
+                        onClick={(e) => toggleExerciseComplete(exercise.id, e)}
+                        className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
+                          isCompleted 
+                            ? 'bg-emerald-500 border-emerald-500 scale-110 shadow-[0_0_10px_rgba(16,185,129,0.5)]' 
+                            : 'border-slate-600 hover:border-slate-400'
+                        }`}
+                       >
+                         {isCompleted && <Check size={14} className="text-white" strokeWidth={4} />}
+                       </button>
+                     </div>
                   </div>
 
-                  {/* Metadata Tags (Hidden if completed to save space, shown otherwise) */}
+                  {/* Metadata Tags */}
                   {!isCompleted && (
                     <div className="flex gap-2 text-[10px] font-mono tracking-tight mt-1">
                        <span className="text-slate-500 bg-slate-800/50 px-1.5 py-0.5 rounded border border-white/5">
@@ -243,17 +260,14 @@ const Workout: React.FC = () => {
                 {isExpanded && !isCompleted && (
                   <div className="px-4 pb-4 animate-in slide-in-from-top-2 duration-300 relative z-10">
                     <div className="space-y-2">
-                      {/* Headers */}
                       <div className="grid grid-cols-12 gap-2 text-[9px] text-slate-500 font-bold uppercase tracking-wider text-center mb-1 pl-6">
                         <span className="col-span-4">Peso (kg)</span>
                         <span className="col-span-4">Reps</span>
                         <span className="col-span-4">RIR</span>
                       </div>
 
-                      {/* Sets Rows */}
-                      {log.sets.map((set, idx) => (
+                      {logs.find(l => l.exerciseId === exercise.id)?.sets.map((set, idx) => (
                         <div key={idx} className="relative group">
-                           {/* Remove Button Absolute Left */}
                           <button 
                             onClick={(e) => { e.stopPropagation(); removeSet(exercise.id, idx); }}
                             className="absolute -left-2 top-1/2 -translate-y-1/2 p-2 text-slate-600 hover:text-red-500 transition-colors"
@@ -310,6 +324,79 @@ const Workout: React.FC = () => {
           })
         )}
       </div>
+
+      {/* Alternatives Modal */}
+      {showAlternativeFor && EXERCISE_ALTERNATIVES[showAlternativeFor] && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 animate-in fade-in duration-200">
+          <div 
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => setShowAlternativeFor(null)}
+          ></div>
+          <div className="relative w-full max-w-sm bg-slate-900/90 backdrop-blur-md border border-brand-500/20 rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setShowAlternativeFor(null)}
+              className="absolute top-4 right-4 text-slate-500 hover:text-white"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="flex items-center gap-2 mb-6 text-brand-400">
+               <Bot size={20} />
+               <span className="text-xs font-bold uppercase tracking-widest">Coach AI: Alternativas</span>
+            </div>
+
+            <h3 className="text-xl font-bold text-white mb-6 pr-6 leading-tight">
+              {exercises.find(e => e.id === showAlternativeFor)?.name}
+            </h3>
+
+            <div className="space-y-4">
+              {/* Main Alt */}
+              <div className="glass-card p-4 rounded-xl border-l-2 border-l-brand-500">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-brand-500/10 text-brand-400">
+                    <Dumbbell size={18} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-brand-400 uppercase font-bold mb-0.5">Opción Peso Libre</p>
+                    <p className="text-sm font-bold text-white">
+                      {EXERCISE_ALTERNATIVES[showAlternativeFor].main}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Secondary Alt */}
+              <div className="glass-card p-4 rounded-xl border-l-2 border-l-purple-500">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400">
+                    <Settings size={18} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-purple-400 uppercase font-bold mb-0.5">Opción Máquina/Cable</p>
+                    <p className="text-sm font-bold text-white">
+                      {EXERCISE_ALTERNATIVES[showAlternativeFor].secondary}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Note */}
+              <div className="glass-card p-4 rounded-xl bg-slate-800/50">
+                <div className="flex items-start gap-3">
+                  <Info size={16} className="text-slate-400 mt-0.5 shrink-0" />
+                  <p className="text-xs text-slate-300 italic leading-relaxed">
+                    "{EXERCISE_ALTERNATIVES[showAlternativeFor].note}"
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <p className="text-[10px] text-slate-500 text-center mt-6">
+              Recuerda ajustar el peso para mantener el RIR objetivo.
+            </p>
+          </div>
+        </div>
+      )}
       
       {/* Floating Save FAB */}
       <div className="fixed bottom-24 right-5 z-40 animate-in zoom-in duration-300 pointer-events-none">

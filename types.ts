@@ -21,6 +21,12 @@ export interface Exercise {
   notes?: string;
 }
 
+export interface ExerciseAlternative {
+  main: string; // Peso Libre
+  secondary: string; // Máquina/Cable
+  note: string;
+}
+
 export interface WorkoutSet {
   weight: number;
   reps: number;

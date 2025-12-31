@@ -1,4 +1,4 @@
-import { Exercise, PhaseType, PlanPhase, RoutineType } from './types';
+import { Exercise, PhaseType, PlanPhase, RoutineType, ExerciseAlternative } from './types';
 
 export const EXERCISES_PUSH: Exercise[] = [
   { id: 'p_bench_machine', name: 'Press de Banca en Máquina', targetSets: '2-3', targetReps: '6-10' },
@@ -30,6 +30,36 @@ export const EXERCISES_LEGS: Exercise[] = [
   { id: 'l_calves', name: 'Elevación de Talones', targetSets: '2-4', targetReps: '10-20' },
   { id: 'l_abs', name: 'Abdominales (Máquina/VKR)', targetSets: '2-4', targetReps: '12-15' },
 ];
+
+export const EXERCISE_ALTERNATIVES: Record<string, ExerciseAlternative> = {
+  // PUSH
+  'p_bench_machine': { main: 'Press de Banca con Barra', secondary: 'Press con Mancuernas', note: 'El peso libre requiere más estabilización. Las mancuernas permiten mayor estiramiento.' },
+  'p_incline_machine': { main: 'Press Inclinado con Barra', secondary: 'Press Inclinado con Mancuernas', note: 'La inclinación debe ser 30º-45º para incidir en la zona clavicular.' },
+  'p_dips': { main: 'Press Declinado', secondary: 'Press de Banca Agarre Cerrado', note: 'Si no hay paralelas, el press declinado ataca el pectoral inferior de forma similar.' },
+  'p_shoulder_machine': { main: 'Press Militar con Barra', secondary: 'Press Mancuernas Sentado', note: 'En el press militar con barra, mantén el core fuerte y no arquees la espalda.' },
+  'p_lat_raise': { main: 'Elevaciones Lat. en Polea', secondary: 'Elevaciones en Máquina', note: 'La polea mantiene la tensión constante en todo el recorrido.' },
+  'p_tri_press': { main: 'Fondos entre Bancos', secondary: 'Press Francés Mancuernas', note: 'Los fondos entre bancos son excelentes si añades lastre sobre los muslos.' },
+  'p_tri_ext': { main: 'Rompecráneos (Barra)', secondary: 'Patada de Tríceps', note: 'El press francés es un constructor de masa básico para las tres cabezas.' },
+  
+  // PULL
+  'pu_pullups': { main: 'Dominadas con ayuda (goma)', secondary: 'Jalón al Pecho en Polea', note: 'Si no puedes hacer dominadas libres, el jalón es biomecánicamente similar.' },
+  'pu_row_machine': { main: 'Remo con Barra (90º o 45º)', secondary: 'Remo Polea Baja (Gironda)', note: 'El remo con barra es el constructor de densidad por excelencia.' },
+  'pu_row_cable': { main: 'Remo Mancuerna a una mano', secondary: 'Remo en Punta (Barra T)', note: 'En el remo con mancuerna, mantén el tronco horizontal para proteger lumbares.' },
+  'pu_rear_delt': { main: 'Pájaros con Mancuernas', secondary: 'Cruces Poleas Invertido', note: 'Evita balancear el cuerpo para aislar el deltoides posterior.' },
+  'pu_shrugs': { main: 'Encogimientos con Barra', secondary: 'Remo al Cuello', note: 'El remo al cuello también trabaja deltoides, pero enfatiza trapecio superior.' },
+  'pu_curl_machine': { main: 'Curl con Barra de Pie', secondary: 'Curl con Barra Z', note: 'El curl con barra es el rey para masa de bíceps. No balancees.' },
+  'pu_curl_hammer': { main: 'Curl Martillo Polea (Cuerda)', secondary: 'Curl con Barra Romana', note: 'El agarre neutro enfoca el trabajo en el braquial y braquiorradial.' },
+
+  // LEGS
+  'l_hack': { main: 'Sentadilla con Barra', secondary: 'Sentadilla en Multipower', note: 'La sentadilla libre requiere más técnica; el multipower centra el empuje.' },
+  'l_press': { main: 'Zancadas (Barra/Mancuerna)', secondary: 'Sentadilla Jaca', note: 'Las zancadas requieren equilibrio pero trabajan glúteo y cuádriceps intensamente.' },
+  'l_curl': { main: 'Peso Muerto Rumano', secondary: 'Curl Femoral de Pie', note: 'El Peso Muerto Rumano es superior para la cadena posterior. Espalda recta.' },
+  'l_goblet': { main: 'Sentadilla Frontal Barra', secondary: 'Prensa (pies bajos/juntos)', note: 'La sentadilla frontal enfatiza más los cuádriceps y menos el glúteo.' },
+  'l_ext': { main: 'Sentadilla Sissy', secondary: 'Zancadas Cortas', note: 'La Sissy es dura. Úsala con precaución si tienes problemas de rodilla.' },
+  'l_hip': { main: 'Hip Thrust con Barra', secondary: 'Puente Glúteos Suelo', note: 'Aprieta arriba 1 segundo. El mejor constructor de glúteo.' },
+  'l_calves': { main: 'Elevación Talones "Burro"', secondary: 'Elevación en Prensa', note: 'Si lo haces tipo burro, protege la espalda baja.' },
+  'l_abs': { main: 'Crunch en Polea', secondary: 'Elevación Piernas Tumbado', note: 'Busca la sensación de "enrollamiento", no solo doblar la cintura.' },
+};
 
 export const PHASES: PlanPhase[] = [
   {

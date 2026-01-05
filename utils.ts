@@ -1,4 +1,4 @@
-import { PHASES } from './constants';
+import { PHASES, SPECIAL_GYM_HOURS } from './constants';
 import { PhaseType, PlanPhase } from './types';
 
 export const getTodayDateString = (): string => {
@@ -24,4 +24,13 @@ export const calculateOneRM = (weight: number, reps: number): number => {
   if (reps === 1) return weight;
   // Brzycki Formula
   return Math.round(weight * (36 / (37 - reps)));
+};
+
+export const getGymSchedule = (dateStr: string = getTodayDateString()): string | null => {
+  // Extract MM-DD from YYYY-MM-DD
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return null;
+  const key = `${parts[1]}-${parts[2]}`;
+  
+  return SPECIAL_GYM_HOURS[key] || null;
 };

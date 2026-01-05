@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { ROUTINE_MAPPING, EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS, EXERCISE_ALTERNATIVES } from '../constants';
 import { RoutineType, Exercise, WorkoutLogEntry, WorkoutSet } from '../types';
-import { getTodayDateString, getCurrentPhase } from '../utils';
+import { getTodayDateString, getCurrentPhase, getGymSchedule } from '../utils';
 import { saveLog, getLogs, getPreviousWorkoutLog } from '../services/storage';
-import { Save, History, Plus, Minus, Check, Trophy, ArrowRightLeft, X, Dumbbell, Settings, Info, Bot } from 'lucide-react';
+import { Save, History, Plus, Minus, Check, Trophy, ArrowRightLeft, X, Dumbbell, Settings, Info, Bot, AlertTriangle, Clock } from 'lucide-react';
 
 const Workout: React.FC = () => {
   const today = getTodayDateString();
   const dayOfWeek = new Date().getDay();
   const phase = getCurrentPhase();
+  const specialSchedule = getGymSchedule(today);
   
   const defaultRoutine = ROUTINE_MAPPING[dayOfWeek];
   const [selectedRoutine, setSelectedRoutine] = useState<RoutineType>(defaultRoutine);
@@ -169,6 +170,27 @@ const Workout: React.FC = () => {
            })}
         </div>
       </div>
+
+      {/* Special Hours Alert */}
+      {specialSchedule && (
+        <div className={`mx-5 mb-4 p-4 rounded-xl border flex items-center gap-3 animate-in slide-in-from-top-4 
+          ${specialSchedule === 'Cerrado' 
+            ? 'bg-red-900/20 border-red-500/30' 
+            : 'bg-gold-500/10 border-gold-500/30'}`}
+        >
+          <div className={`p-2 rounded-full ${specialSchedule === 'Cerrado' ? 'bg-red-500/10 text-red-500' : 'bg-gold-500/10 text-gold-500'}`}>
+             {specialSchedule === 'Cerrado' ? <AlertTriangle size={20} /> : <Clock size={20} />}
+          </div>
+          <div>
+            <p className={`text-xs font-bold uppercase tracking-wide ${specialSchedule === 'Cerrado' ? 'text-red-400' : 'text-gold-500'}`}>
+              Horario Especial Hoy
+            </p>
+            <p className="text-white font-bold text-lg leading-none mt-1">
+              {specialSchedule}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Exercises List */}
       <div className="px-5 space-y-4">

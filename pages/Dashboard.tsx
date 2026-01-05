@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentPhase, getTodayDateString } from '../utils';
+import { getCurrentPhase, getTodayDateString, getGymSchedule } from '../utils';
 import { getLogs, saveLog } from '../services/storage';
 import { DailyLog } from '../types';
-import { Activity, Battery, Moon, Scale, Utensils, CheckCircle2, Circle } from 'lucide-react';
+import { Activity, Battery, Moon, Scale, Utensils, CheckCircle2, Circle, AlertTriangle, Clock } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -11,6 +11,8 @@ const Dashboard: React.FC = () => {
   const phase = getCurrentPhase();
   const [log, setLog] = useState<DailyLog>({ date: today });
   const [weightInput, setWeightInput] = useState('');
+  
+  const specialSchedule = getGymSchedule(today);
 
   useEffect(() => {
     const saved = getLogs()[today];
@@ -76,6 +78,27 @@ const Dashboard: React.FC = () => {
           {phase.name.split(' ')[0]}
         </div>
       </header>
+
+      {/* Special Hours Alert */}
+      {specialSchedule && (
+        <div className={`p-4 rounded-xl border flex items-center gap-3 animate-in slide-in-from-top-4 
+          ${specialSchedule === 'Cerrado' 
+            ? 'bg-red-900/20 border-red-500/30' 
+            : 'bg-gold-500/10 border-gold-500/30'}`}
+        >
+          <div className={`p-2 rounded-full ${specialSchedule === 'Cerrado' ? 'bg-red-500/10 text-red-500' : 'bg-gold-500/10 text-gold-500'}`}>
+             {specialSchedule === 'Cerrado' ? <AlertTriangle size={20} /> : <Clock size={20} />}
+          </div>
+          <div>
+            <p className={`text-xs font-bold uppercase tracking-wide ${specialSchedule === 'Cerrado' ? 'text-red-400' : 'text-gold-500'}`}>
+              Horario Especial Hoy
+            </p>
+            <p className="text-white font-bold text-lg leading-none mt-1">
+              {specialSchedule}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Main Action Card */}
       <div 

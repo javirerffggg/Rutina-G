@@ -1,5 +1,24 @@
 import { Exercise, PhaseType, PlanPhase, RoutineType, ExerciseAlternative } from './types';
 
+export const SPECIAL_GYM_HOURS: Record<string, string> = {
+  '01-01': 'Cerrado',
+  '01-05': '08:00 - 15:00',
+  '01-06': 'Cerrado',
+  '02-28': '08:00 - 21:00',
+  '04-17': '08:00 - 21:00',
+  '04-18': '08:00 - 21:00',
+  '05-01': '08:00 - 21:00',
+  '06-02': '08:00 - 21:00',
+  '08-15': '08:00 - 21:00',
+  '09-08': '08:00 - 21:00',
+  '10-13': '08:00 - 21:00',
+  '11-01': '08:00 - 21:00',
+  '12-06': '08:00 - 21:00',
+  '12-08': '08:00 - 21:00',
+  '12-13': '08:00 - 16:00',
+  '12-14': '08:00 - 16:00'
+};
+
 export const EXERCISES_PUSH: Exercise[] = [
   { id: 'p_bench_machine', name: 'Press de Banca en Máquina', targetSets: '2-3', targetReps: '6-10' },
   { id: 'p_incline_machine', name: 'Press Inclinado en Máquina', targetSets: '2-3', targetReps: '8-12' },

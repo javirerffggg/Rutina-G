@@ -1,12 +1,24 @@
-import React from 'react';
-import { PHASES } from '../constants';
+import React, { useState } from 'react';
+import { PHASES, SPECIAL_GYM_HOURS } from '../constants';
 import { getCurrentPhase } from '../utils';
-import { Info, Target, Flame, HeartPulse, ChevronRight, Crown } from 'lucide-react';
+import { Info, Target, Flame, HeartPulse, ChevronRight, Crown, CalendarClock, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Plan: React.FC = () => {
   const currentPhase = getCurrentPhase();
   const navigate = useNavigate();
+  const [showSchedule, setShowSchedule] = useState(false);
+
+  // Month names for mapping
+  const monthNames = [
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+  ];
+
+  const getReadableDate = (key: string) => {
+    const [month, day] = key.split('-');
+    return `${parseInt(day)} ${monthNames[parseInt(month) - 1]}`;
+  };
 
   return (
     <div className="p-5 space-y-6">
@@ -20,6 +32,13 @@ const Plan: React.FC = () => {
             Elite Definition Program
           </p>
         </div>
+        
+        <button 
+          onClick={() => setShowSchedule(true)}
+          className="p-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700"
+        >
+          <CalendarClock size={20} />
+        </button>
       </header>
 
       {/* Hero Card - Current Phase */}
@@ -122,6 +141,42 @@ const Plan: React.FC = () => {
         </div>
       </div>
       <div className="h-4"></div>
+
+      {/* Special Hours Modal */}
+      {showSchedule && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 animate-in fade-in duration-200">
+           <div 
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => setShowSchedule(false)}
+          ></div>
+          <div className="relative w-full max-w-sm bg-slate-900/95 backdrop-blur-md border border-slate-700 rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 max-h-[80vh] flex flex-col">
+            <div className="p-4 border-b border-white/5 flex justify-between items-center bg-slate-900/50">
+               <div className="flex items-center gap-2 text-gold-500">
+                  <CalendarClock size={20} />
+                  <span className="font-bold text-sm uppercase tracking-wide">Horarios Festivos</span>
+               </div>
+               <button onClick={() => setShowSchedule(false)} className="text-slate-500 hover:text-white">
+                 <X size={20} />
+               </button>
+            </div>
+            
+            <div className="overflow-y-auto p-4 space-y-2">
+              {Object.entries(SPECIAL_GYM_HOURS)
+                .sort((a, b) => a[0].localeCompare(b[0]))
+                .map(([key, value]) => (
+                <div key={key} className="flex justify-between items-center p-3 rounded-lg bg-white/5 border border-white/5">
+                  <span className="text-slate-300 font-medium text-sm capitalize">
+                    {getReadableDate(key)}
+                  </span>
+                  <span className={`text-xs font-bold px-2 py-1 rounded ${value === 'Cerrado' ? 'bg-red-500/20 text-red-400' : 'bg-brand-500/20 text-brand-400'}`}>
+                    {value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

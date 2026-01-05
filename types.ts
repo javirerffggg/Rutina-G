@@ -42,9 +42,19 @@ export interface WorkoutLogEntry {
 export interface DailyLog {
   date: string; // ISO string YYYY-MM-DD
   weight?: number;
+  isRefeed?: boolean; // New: Gestion de Glucogeno
+  
+  // Antropometria
+  waist?: number;
+  chest?: number; // Hombros/Pecho
+  arm?: number;
+  thigh?: number;
+  
+  // Biofeedback
   sleep?: number; // 1-5
   energy?: number; // 1-5
   stress?: number; // 1-5
+  
   notes?: string;
   workoutCompleted?: boolean;
   workoutType?: RoutineType;

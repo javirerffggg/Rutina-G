@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Dumbbell, CalendarRange, LineChart } from 'lucide-react';
+import { LayoutDashboard, Dumbbell, CalendarRange, Scale } from 'lucide-react';
 
 const Layout: React.FC = () => {
   return (
@@ -56,8 +56,8 @@ const Layout: React.FC = () => {
           >
             {({ isActive }) => (
               <>
-                <LineChart size={22} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[10px] font-bold tracking-wide uppercase">Stats</span>
+                <Scale size={22} strokeWidth={isActive ? 2.5 : 2} />
+                <span className="text-[10px] font-bold tracking-wide uppercase">Peso</span>
               </>
             )}
           </NavLink>

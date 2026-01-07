@@ -128,3 +128,78 @@ export const ROUTINE_MAPPING: Record<number, RoutineType> = {
   6: RoutineType.LEGS, // Saturday
   0: RoutineType.REST  // Sunday
 };
+
+export const WARMUP_GUIDE = {
+  [RoutineType.PUSH]: [
+    {
+      title: "1. Movilidad Articular (Sin descanso)",
+      tasks: [
+        "Círculos de cuello y muñecas (30 seg)",
+        "Balanceos de brazos horizontales (15 reps)",
+        "Círculos de hombros (10 adelante / 10 atrás)",
+        "Rotaciones Externas 'en L' (15 reps)"
+      ]
+    },
+    {
+      title: "2. Activación Escapular (Descanso: 30s)",
+      tasks: [
+        "Flexiones Escapulares (Suelo): 2 series x 12 reps.",
+        "Tempo: 2:1:2:0 (Mantén brazos rectos)."
+      ]
+    },
+    {
+      title: "3. Aproximación (Press en Máquina)",
+      tasks: [
+        "Serie 1: 15 reps con 30% peso real (Desc: 45s).",
+        "Serie 2: 8 reps con 60% peso real (Desc: 60s)."
+      ]
+    }
+  ],
+  [RoutineType.PULL]: [
+    {
+      title: "1. Movilidad Articular (Sin descanso)",
+      tasks: [
+        "Rotaciones de Tronco (20 giros)",
+        "Círculos Escapulares (12 lentos)",
+        "Círculos de muñecas (30 seg)"
+      ]
+    },
+    {
+      title: "2. Activación Escapular (Descanso: 45s)",
+      tasks: [
+        "Aperturas 'Cactus' de pie: 2 series x 12 reps.",
+        "Tempo: 2:1:2:0 (Aprieta escápulas atrás)."
+      ]
+    },
+    {
+      title: "3. Aproximación (Dominada/Jalón)",
+      tasks: [
+        "Serie 1: 15 reps con 30% peso real (Desc: 45s).",
+        "Serie 2: 8 reps con 60% peso real (Desc: 60s)."
+      ]
+    }
+  ],
+  [RoutineType.LEGS]: [
+    {
+      title: "1. Elevación de Temperatura",
+      tasks: [
+        "Bicicleta o Elíptica: 5-7 min (Ritmo suave)."
+      ]
+    },
+    {
+      title: "2. Movilidad Articular (Sin descanso)",
+      tasks: [
+        "Balanceos de Pierna (15 frontales/15 laterales).",
+        "Sentadilla lateral dinámica 'Cossack' (10 reps).",
+        "Anclaje de Tobillo Dinámico (12 reps/pie)."
+      ]
+    },
+    {
+      title: "3. Aproximación (Sentadilla Hack)",
+      tasks: [
+        "Serie 1: 15 reps máquina vacía (Desc: 60s).",
+        "Serie 2: 8 reps con 50% peso real (Desc: 90s)."
+      ]
+    }
+  ]
+};

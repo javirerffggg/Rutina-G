@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ROUTINE_MAPPING, EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS, EXERCISE_ALTERNATIVES } from '../constants';
+import { ROUTINE_MAPPING, EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS, EXERCISE_ALTERNATIVES, WARMUP_GUIDE } from '../constants';
 import { RoutineType, Exercise, WorkoutLogEntry, WorkoutSet } from '../types';
 import { getTodayDateString, getCurrentPhase, getGymSchedule } from '../utils';
 import { saveLog, getLogs, getPreviousWorkoutLog } from '../services/storage';
-import { Save, History, Plus, Minus, Check, Trophy, ArrowRightLeft, X, Dumbbell, Settings, Info, Bot, AlertTriangle, Clock } from 'lucide-react';
+import { Save, History, Plus, Minus, Check, Trophy, ArrowRightLeft, X, Dumbbell, Settings, Info, Bot, AlertTriangle, Clock, Flame, ChevronRight, Timer } from 'lucide-react';
 
 const Workout: React.FC = () => {
   const today = getTodayDateString();
@@ -15,10 +15,13 @@ const Workout: React.FC = () => {
   const [selectedRoutine, setSelectedRoutine] = useState<RoutineType>(defaultRoutine);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [logs, setLogs] = useState<WorkoutLogEntry[]>([]);
+  
   // activeExercise controls which accordion is expanded
   const [activeExercise, setActiveExercise] = useState<string | null>(null);
   // controls the alternatives modal
   const [showAlternativeFor, setShowAlternativeFor] = useState<string | null>(null);
+  // controls the warmup modal
+  const [showWarmup, setShowWarmup] = useState(false);
 
   const TABS = [
     { id: RoutineType.PUSH, label: 'Empuje' },
@@ -192,6 +195,25 @@ const Workout: React.FC = () => {
         </div>
       )}
 
+      {/* Warmup Button */}
+      {selectedRoutine !== RoutineType.REST && (
+        <button 
+          onClick={() => setShowWarmup(true)}
+          className="mx-5 mb-6 p-3 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-between group active:scale-95 transition-all"
+        >
+          <div className="flex items-center gap-3">
+             <div className="bg-orange-500 text-white p-2 rounded-lg shadow-lg shadow-orange-500/20 animate-pulse">
+                <Flame size={20} fill="currentColor" />
+             </div>
+             <div className="text-left">
+                <p className="text-xs text-orange-400 font-bold uppercase tracking-wider">Antes de empezar</p>
+                <p className="text-white font-bold text-sm">Calentamiento y Activación</p>
+             </div>
+          </div>
+          <ChevronRight size={20} className="text-slate-500 group-hover:text-white transition-colors" />
+        </button>
+      )}
+
       {/* Exercises List */}
       <div className="px-5 space-y-4">
         {selectedRoutine === RoutineType.REST ? (
@@ -346,6 +368,63 @@ const Workout: React.FC = () => {
           })
         )}
       </div>
+
+      {/* Warmup Modal */}
+      {showWarmup && WARMUP_GUIDE[selectedRoutine] && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 animate-in fade-in duration-200">
+           <div 
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => setShowWarmup(false)}
+          ></div>
+          <div className="relative w-full max-w-sm bg-slate-900/90 backdrop-blur-md border border-orange-500/30 rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
+             {/* Header */}
+             <div className="flex items-center gap-3 mb-6">
+                <div className="bg-orange-500 text-white p-2 rounded-lg">
+                   <Flame size={24} fill="currentColor" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-white leading-none">Activación</h2>
+                  <p className="text-xs text-orange-400 font-bold uppercase tracking-wider mt-1">{selectedRoutine}</p>
+                </div>
+                <button 
+                  onClick={() => setShowWarmup(false)}
+                  className="absolute top-4 right-4 text-slate-500 hover:text-white"
+                >
+                  <X size={20} />
+                </button>
+             </div>
+
+             <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
+               {WARMUP_GUIDE[selectedRoutine].map((step: any, index: number) => (
+                 <div key={index} className="relative pl-4 border-l-2 border-slate-700">
+                    <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-slate-900 border-2 border-orange-500"></div>
+                    <h3 className="text-sm font-bold text-white mb-2">{step.title}</h3>
+                    <ul className="space-y-2">
+                      {step.tasks.map((task: string, i: number) => (
+                        <li key={i} className="text-xs text-slate-300 flex items-start gap-2">
+                           <div className="w-1 h-1 rounded-full bg-slate-500 mt-1.5 shrink-0"></div>
+                           <span>{task}</span>
+                        </li>
+                      ))}
+                    </ul>
+                 </div>
+               ))}
+             </div>
+
+             <div className="mt-6 pt-4 border-t border-white/10 bg-orange-500/5 -mx-6 -mb-6 p-4">
+                <div className="flex items-start gap-2">
+                   <Timer size={16} className="text-orange-400 mt-0.5 shrink-0" />
+                   <div>
+                     <p className="text-[10px] text-orange-400 font-bold uppercase mb-0.5">Nota sobre el Tempo</p>
+                     <p className="text-[10px] text-slate-400 leading-relaxed">
+                       Ejemplo 3:1:1:0 significa: 3s bajada lenta, 1s pausa abajo, 1s subida explosiva, 0s pausa arriba.
+                     </p>
+                   </div>
+                </div>
+             </div>
+          </div>
+        </div>
+      )}
 
       {/* Alternatives Modal */}
       {showAlternativeFor && EXERCISE_ALTERNATIVES[showAlternativeFor] && (

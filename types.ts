@@ -1,15 +1,19 @@
 export enum PhaseType {
-  TRANSITION = 'Transición y Mantenimiento',
-  DEFINITION_MAIN = 'Definición Principal',
-  FINAL_POLISH = 'Pulido Final',
-  SUMMER = 'Mantenimiento de Verano',
-  UNKNOWN = 'Fuera de Temporada'
+  CUT_JAN = 'Fase 1: Recorte Final',
+  RESET_FEB = 'Fase 2: Transición/Reset',
+  HYPERTROPHY_1 = 'Fase 3: Hipertrofia I',
+  SUMMER_SHRED = 'Fase 4: Summer Shred',
+  HYPERTROPHY_2 = 'Fase 5: Hipertrofia II',
+  CONSOLIDATION = 'Fase 6: Consolidación',
+  UNKNOWN = 'Fuera de Plan'
 }
 
 export enum RoutineType {
-  PUSH = 'Empuje (Pecho/Hombro/Tríceps)',
-  PULL = 'Tirón (Espalda/Bíceps)',
-  LEGS = 'Pierna',
+  PUSH = 'Push (Pecho/Hombro/Tríceps)',
+  PULL = 'Pull (Espalda/Bíceps)',
+  LEGS = 'Legs (Cuádriceps)',
+  UPPER = 'Upper (Torso Híbrido)',
+  LOWER = 'Lower (Glúteo/Femoral)',
   REST = 'Descanso'
 }
 

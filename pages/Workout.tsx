@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ROUTINE_MAPPING, EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS, EXERCISE_ALTERNATIVES, WARMUP_GUIDE } from '../constants';
+import { ROUTINE_MAPPING, EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS, EXERCISES_UPPER, EXERCISES_LOWER, EXERCISE_ALTERNATIVES, WARMUP_GUIDE } from '../constants';
 import { RoutineType, Exercise, WorkoutLogEntry, WorkoutSet } from '../types';
 import { getTodayDateString, getCurrentPhase, getGymSchedule } from '../utils';
 import { saveLog, getLogs, getPreviousWorkoutLog } from '../services/storage';
-import { Save, History, Plus, Minus, Check, Trophy, ArrowRightLeft, X, Dumbbell, Settings, Info, Bot, AlertTriangle, Clock, Flame, ChevronRight, Timer } from 'lucide-react';
+import { Save, History, Plus, Minus, Check, Trophy, ArrowRightLeft, X, Dumbbell, Settings, Info, Bot, AlertTriangle, Clock, Flame, ChevronRight, Timer, Flag } from 'lucide-react';
 
 const Workout: React.FC = () => {
   const today = getTodayDateString();
@@ -24,10 +24,12 @@ const Workout: React.FC = () => {
   const [showWarmup, setShowWarmup] = useState(false);
 
   const TABS = [
-    { id: RoutineType.PUSH, label: 'Empuje' },
-    { id: RoutineType.PULL, label: 'Tirón' },
-    { id: RoutineType.LEGS, label: 'Pierna' },
-    { id: RoutineType.REST, label: 'Off' },
+    { id: RoutineType.PUSH, label: 'Push' },
+    { id: RoutineType.PULL, label: 'Pull' },
+    { id: RoutineType.LEGS, label: 'Legs' },
+    { id: RoutineType.UPPER, label: 'Upper' },
+    { id: RoutineType.LOWER, label: 'Lower' },
+    { id: RoutineType.REST, label: 'Rest' },
   ];
 
   useEffect(() => {
@@ -35,6 +37,8 @@ const Workout: React.FC = () => {
     if (selectedRoutine === RoutineType.PUSH) list = EXERCISES_PUSH;
     if (selectedRoutine === RoutineType.PULL) list = EXERCISES_PULL;
     if (selectedRoutine === RoutineType.LEGS) list = EXERCISES_LEGS;
+    if (selectedRoutine === RoutineType.UPPER) list = EXERCISES_UPPER;
+    if (selectedRoutine === RoutineType.LOWER) list = EXERCISES_LOWER;
     setExercises(list);
     
     const existingDayLog = getLogs()[today];
@@ -152,25 +156,27 @@ const Workout: React.FC = () => {
           </div>
         </div>
 
-        {/* Custom Routine Tabs - Segmented Control */}
-        <div className="grid grid-cols-4 gap-1 p-1 bg-black/20 backdrop-blur-md rounded-xl border border-white/5 relative z-20">
-           {TABS.map((tab) => {
-              const isActive = selectedRoutine === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setSelectedRoutine(tab.id)}
-                  className={`
-                    relative py-2.5 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center justify-center
-                    ${isActive 
-                      ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/50' 
-                      : 'text-slate-500 hover:bg-white/5 hover:text-slate-300'}
-                  `}
-                >
-                  {tab.label}
-                </button>
-              )
-           })}
+        {/* Custom Routine Tabs - Scrollable for 6 items */}
+        <div className="overflow-x-auto no-scrollbar pb-2 -mx-5 px-5">
+          <div className="flex gap-2 min-w-max">
+             {TABS.map((tab) => {
+                const isActive = selectedRoutine === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setSelectedRoutine(tab.id)}
+                    className={`
+                      relative py-2 px-4 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center justify-center border
+                      ${isActive 
+                        ? 'bg-brand-600 border-brand-500 text-white shadow-lg shadow-brand-900/50' 
+                        : 'bg-black/20 border-white/5 text-slate-500 hover:bg-white/5 hover:text-slate-300'}
+                    `}
+                  >
+                    {tab.label}
+                  </button>
+                )
+             })}
+          </div>
         </div>
       </div>
 
@@ -281,13 +287,18 @@ const Workout: React.FC = () => {
 
                   {/* Metadata Tags */}
                   {!isCompleted && (
-                    <div className="flex gap-2 text-[10px] font-mono tracking-tight mt-1">
+                    <div className="flex flex-wrap gap-2 text-[10px] font-mono tracking-tight mt-1">
                        <span className="text-slate-500 bg-slate-800/50 px-1.5 py-0.5 rounded border border-white/5">
                          SETS: {exercise.targetSets}
                        </span>
                        <span className="text-slate-500 bg-slate-800/50 px-1.5 py-0.5 rounded border border-white/5">
                          REPS: {exercise.targetReps}
                        </span>
+                       {exercise.notes && (
+                         <span className="text-brand-400/80 bg-brand-900/20 px-1.5 py-0.5 rounded border border-brand-500/20 truncate max-w-full">
+                           {exercise.notes}
+                         </span>
+                       )}
                     </div>
                   )}
 
@@ -394,7 +405,7 @@ const Workout: React.FC = () => {
                 </button>
              </div>
 
-             <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
+             <div className="space-y-6 max-h-[50vh] overflow-y-auto pr-2">
                {WARMUP_GUIDE[selectedRoutine].map((step: any, index: number) => (
                  <div key={index} className="relative pl-4 border-l-2 border-slate-700">
                     <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-slate-900 border-2 border-orange-500"></div>
@@ -411,13 +422,24 @@ const Workout: React.FC = () => {
                ))}
              </div>
 
-             <div className="mt-6 pt-4 border-t border-white/10 bg-orange-500/5 -mx-6 -mb-6 p-4">
+             <div className="mt-6 pt-4 border-t border-white/10 bg-orange-500/5 -mx-6 -mb-6 p-4 space-y-3">
                 <div className="flex items-start gap-2">
-                   <Timer size={16} className="text-orange-400 mt-0.5 shrink-0" />
+                   <Flag size={16} className="text-orange-400 mt-0.5 shrink-0" />
                    <div>
-                     <p className="text-[10px] text-orange-400 font-bold uppercase mb-0.5">Nota sobre el Tempo</p>
-                     <p className="text-[10px] text-slate-400 leading-relaxed">
-                       Ejemplo 3:1:1:0 significa: 3s bajada lenta, 1s pausa abajo, 1s subida explosiva, 0s pausa arriba.
+                     <p className="text-[10px] text-orange-400 font-bold uppercase mb-0.5">Parámetros Clave</p>
+                     <p className="text-[10px] text-slate-300 leading-relaxed">
+                       • Objetivo: Preparar tejidos, sensación RIR 10 (fácil). <br/>
+                       • Transición: Descansa 90-120s antes de la 1ª serie efectiva.
+                     </p>
+                   </div>
+                </div>
+                
+                <div className="flex items-start gap-2 pt-2 border-t border-white/5">
+                   <Timer size={16} className="text-slate-500 mt-0.5 shrink-0" />
+                   <div>
+                     <p className="text-[10px] text-slate-500 font-bold uppercase mb-0.5">Nota sobre el Tempo</p>
+                     <p className="text-[10px] text-slate-500 leading-relaxed">
+                       Ej: 3:1:1:0 (3s bajada : 1s pausa : 1s subida : 0s arriba).
                      </p>
                    </div>
                 </div>

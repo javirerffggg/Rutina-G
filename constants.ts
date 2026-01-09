@@ -19,186 +19,204 @@ export const SPECIAL_GYM_HOURS: Record<string, string> = {
   '12-14': '08:00 - 16:00'
 };
 
+// --- TRAINING SPLIT CONSTANTS (2026 PLAN) ---
+
 export const EXERCISES_PUSH: Exercise[] = [
-  { id: 'p_bench_machine', name: 'Press de Banca en Máquina', targetSets: '2-3', targetReps: '6-10' },
-  { id: 'p_incline_machine', name: 'Press Inclinado en Máquina', targetSets: '2-3', targetReps: '8-12' },
-  { id: 'p_dips', name: 'Fondos en Paralelas/Máquina', targetSets: '2-3', targetReps: '8-12' },
-  { id: 'p_shoulder_machine', name: 'Press de Hombro en Máquina', targetSets: '2-3', targetReps: '6-10' },
-  { id: 'p_lat_raise', name: 'Elevaciones Laterales', targetSets: '2-4', targetReps: '10-15' },
-  { id: 'p_tri_press', name: 'Máquina Press Tríceps Sentado', targetSets: '2-3', targetReps: '8-12' },
-  { id: 'p_tri_ext', name: 'Ext. Tríceps Polea Cuerda', targetSets: '2-3', targetReps: '12-15' },
+  { id: 'push_bench_mach', name: 'Press Banca Máquina', targetSets: '3', targetReps: '6-10', notes: 'RIR 1-2. Retracción escapular.' },
+  { id: 'push_incline_mach', name: 'Press Inclinado Máquina', targetSets: '3', targetReps: '8-12', notes: 'RIR 1-2. Foco en clavicular.' },
+  { id: 'push_shoulder_mach', name: 'Press Hombro Máquina', targetSets: '3', targetReps: '6-10', notes: 'RIR 1-2. Codos a 30°.' },
+  { id: 'push_lat_raise', name: 'Elevaciones Laterales', targetSets: '3', targetReps: '10-15', notes: 'RIR 1-2. Alejar manos del cuerpo.' },
+  { id: 'push_tri_ext', name: 'Extensión Tríceps Polea', targetSets: '3', targetReps: '12-15', notes: 'RIR 1-2. Tempo 3s excéntrica.' },
 ];
 
 export const EXERCISES_PULL: Exercise[] = [
-  { id: 'pu_pullups', name: 'Dominadas o Jalón al Pecho', targetSets: '2-3', targetReps: '6-10' },
-  { id: 'pu_row_machine', name: 'Remo Máquina Horiz. Divergente', targetSets: '2-3', targetReps: '6-10' },
-  { id: 'pu_row_cable', name: 'Remo Sentado Polea Baja', targetSets: '2-3', targetReps: '10-12', notes: 'Agarre Neutro/Cerrado' },
-  { id: 'pu_rear_delt', name: 'Vuelos Posteriores en Máquina', targetSets: '2-4', targetReps: '12-15' },
-  { id: 'pu_shrugs', name: 'Encogimientos con Mancuernas', targetSets: '2-3', targetReps: '10-15' },
-  { id: 'pu_curl_machine', name: 'Curl de Bíceps en Máquina', targetSets: '2-3', targetReps: '8-12' },
-  { id: 'pu_curl_hammer', name: 'Curl Martillo con Mancuernas', targetSets: '2-3', targetReps: '10-15' },
+  { id: 'pull_pullups', name: 'Dominadas (con Straps)', targetSets: '3', targetReps: '6-10', notes: 'RIR 1-2. Deprimir escápulas.' },
+  { id: 'pull_row_mach', name: 'Remo Máq. Horizontal', targetSets: '3', targetReps: '6-10', notes: 'RIR 1-2. Tracciona hacia el ombligo.' },
+  { id: 'pull_rear_delt', name: 'Vuelos Posteriores', targetSets: '3', targetReps: '12-15', notes: 'RIR 1-2. Aislamiento, evita trapecio.' },
+  { id: 'pull_shrugs', name: 'Encogimientos Manc.', targetSets: '3', targetReps: '10-15', notes: 'RIR 1-2. Pausa 1s arriba.' },
+  { id: 'pull_curl_mach', name: 'Curl Bíceps Máquina', targetSets: '3', targetReps: '8-12', notes: 'RIR 1-2. Conexión mente-músculo.' },
 ];
 
 export const EXERCISES_LEGS: Exercise[] = [
-  { id: 'l_hack', name: 'Sentadilla Hack en Máquina', targetSets: '2-4', targetReps: '6-12' },
-  { id: 'l_press', name: 'Prensa de Piernas', targetSets: '2-4', targetReps: '8-15' },
-  { id: 'l_curl', name: 'Curl Femoral', targetSets: '2-3', targetReps: '10-15' },
-  { id: 'l_goblet', name: 'Sentadilla Goblet Mancuerna', targetSets: '2-4', targetReps: '6-15' },
-  { id: 'l_ext', name: 'Extensiones de Cuádriceps', targetSets: '2-3', targetReps: '12-20' },
-  { id: 'l_hip', name: 'Hip Thrust en Máquina', targetSets: '2-3', targetReps: '8-15' },
-  { id: 'l_calves', name: 'Elevación de Talones', targetSets: '2-4', targetReps: '10-20' },
-  { id: 'l_abs', name: 'Abdominales (Máquina/VKR)', targetSets: '2-4', targetReps: '12-15' },
+  { id: 'legs_hack', name: 'Sentadilla Hack', targetSets: '3', targetReps: '8-12', notes: 'RIR 1-2. Cadera pasa la rodilla.' },
+  { id: 'legs_press', name: 'Prensa de Piernas', targetSets: '3', targetReps: '8-15', notes: 'RIR 1-2. No bloquear rodillas.' },
+  { id: 'legs_ext', name: 'Extensión Cuádriceps', targetSets: '3', targetReps: '12-20', notes: 'RIR 1-2. Estrés metabólico (quemazón).' },
+  { id: 'legs_calves', name: 'Elevación Talones', targetSets: '4', targetReps: '10-20', notes: 'RIR 1-2. Estira abajo 1s.' },
+];
+
+export const EXERCISES_UPPER: Exercise[] = [
+  { id: 'upp_lat_pulldown', name: 'Jalón al Pecho (Prono)', targetSets: '3', targetReps: '6-10', notes: 'RIR 1-2. Alternancia controlada.' },
+  { id: 'upp_dips', name: 'Fondos en Paralelas', targetSets: '3', targetReps: '8-12', notes: 'RIR 1-2. Inclina cuerpo adelante.' },
+  { id: 'upp_low_row', name: 'Remo Polea Baja', targetSets: '3', targetReps: '10-12', notes: 'RIR 1-2. Rango completo estiramiento.' },
+  { id: 'upp_tri_press', name: 'Press Tríceps Sentado', targetSets: '3', targetReps: '8-12', notes: 'RIR 1-2. Baja carga por detrás nuca.' },
+  { id: 'upp_hammer', name: 'Curl Martillo Manc.', targetSets: '3', targetReps: '10-15', notes: 'RIR 1-2. Trabaja el braquial.' },
+];
+
+export const EXERCISES_LOWER: Exercise[] = [
+  { id: 'legs_hip_thrust', name: 'Hip Thrust Máquina', targetSets: '3', targetReps: '10-15', notes: 'RIR 1-2. Bloquea pelvis arriba.' },
+  { id: 'legs_curl', name: 'Curl Femoral', targetSets: '3', targetReps: '10-15', notes: 'RIR 1-2. Punta pies hacia espinilla.' },
+  { id: 'legs_goblet', name: 'Sentadilla Goblet', targetSets: '3', targetReps: '8-15', notes: 'RIR 1-2. Activa abdomen fuerte.' },
+  { id: 'legs_calves_b', name: 'Elevación Talones', targetSets: '4', targetReps: '10-20', notes: 'RIR 1-2. Protocolo intensidad.' },
+  { id: 'legs_abs', name: 'Abdominales (VKR)', targetSets: '3-4', targetReps: '12-15', notes: 'RIR 1-2. No usar psoas.' },
 ];
 
 export const EXERCISE_ALTERNATIVES: Record<string, ExerciseAlternative> = {
-  // PUSH
-  'p_bench_machine': { main: 'Press de Banca con Barra', secondary: 'Press con Mancuernas', note: 'El peso libre requiere más estabilización. Las mancuernas permiten mayor estiramiento.' },
-  'p_incline_machine': { main: 'Press Inclinado con Barra', secondary: 'Press Inclinado con Mancuernas', note: 'La inclinación debe ser 30º-45º para incidir en la zona clavicular.' },
-  'p_dips': { main: 'Press Declinado', secondary: 'Press de Banca Agarre Cerrado', note: 'Si no hay paralelas, el press declinado ataca el pectoral inferior de forma similar.' },
-  'p_shoulder_machine': { main: 'Press Militar con Barra', secondary: 'Press Mancuernas Sentado', note: 'En el press militar con barra, mantén el core fuerte y no arquees la espalda.' },
-  'p_lat_raise': { main: 'Elevaciones Lat. en Polea', secondary: 'Elevaciones en Máquina', note: 'La polea mantiene la tensión constante en todo el recorrido.' },
-  'p_tri_press': { main: 'Fondos entre Bancos', secondary: 'Press Francés Mancuernas', note: 'Los fondos entre bancos son excelentes si añades lastre sobre los muslos.' },
-  'p_tri_ext': { main: 'Rompecráneos (Barra)', secondary: 'Patada de Tríceps', note: 'El press francés es un constructor de masa básico para las tres cabezas.' },
-  
-  // PULL
-  'pu_pullups': { main: 'Dominadas con ayuda (goma)', secondary: 'Jalón al Pecho en Polea', note: 'Si no puedes hacer dominadas libres, el jalón es biomecánicamente similar.' },
-  'pu_row_machine': { main: 'Remo con Barra (90º o 45º)', secondary: 'Remo Polea Baja (Gironda)', note: 'El remo con barra es el constructor de densidad por excelencia.' },
-  'pu_row_cable': { main: 'Remo Mancuerna a una mano', secondary: 'Remo en Punta (Barra T)', note: 'En el remo con mancuerna, mantén el tronco horizontal para proteger lumbares.' },
-  'pu_rear_delt': { main: 'Pájaros con Mancuernas', secondary: 'Cruces Poleas Invertido', note: 'Evita balancear el cuerpo para aislar el deltoides posterior.' },
-  'pu_shrugs': { main: 'Encogimientos con Barra', secondary: 'Remo al Cuello', note: 'El remo al cuello también trabaja deltoides, pero enfatiza trapecio superior.' },
-  'pu_curl_machine': { main: 'Curl con Barra de Pie', secondary: 'Curl con Barra Z', note: 'El curl con barra es el rey para masa de bíceps. No balancees.' },
-  'pu_curl_hammer': { main: 'Curl Martillo Polea (Cuerda)', secondary: 'Curl con Barra Romana', note: 'El agarre neutro enfoca el trabajo en el braquial y braquiorradial.' },
-
-  // LEGS
-  'l_hack': { main: 'Sentadilla con Barra', secondary: 'Sentadilla en Multipower', note: 'La sentadilla libre requiere más técnica; el multipower centra el empuje.' },
-  'l_press': { main: 'Zancadas (Barra/Mancuerna)', secondary: 'Sentadilla Jaca', note: 'Las zancadas requieren equilibrio pero trabajan glúteo y cuádriceps intensamente.' },
-  'l_curl': { main: 'Peso Muerto Rumano', secondary: 'Curl Femoral de Pie', note: 'El Peso Muerto Rumano es superior para la cadena posterior. Espalda recta.' },
-  'l_goblet': { main: 'Sentadilla Frontal Barra', secondary: 'Prensa (pies bajos/juntos)', note: 'La sentadilla frontal enfatiza más los cuádriceps y menos el glúteo.' },
-  'l_ext': { main: 'Sentadilla Sissy', secondary: 'Zancadas Cortas', note: 'La Sissy es dura. Úsala con precaución si tienes problemas de rodilla.' },
-  'l_hip': { main: 'Hip Thrust con Barra', secondary: 'Puente Glúteos Suelo', note: 'Aprieta arriba 1 segundo. El mejor constructor de glúteo.' },
-  'l_calves': { main: 'Elevación Talones "Burro"', secondary: 'Elevación en Prensa', note: 'Si lo haces tipo burro, protege la espalda baja.' },
-  'l_abs': { main: 'Crunch en Polea', secondary: 'Elevación Piernas Tumbado', note: 'Busca la sensación de "enrollamiento", no solo doblar la cintura.' },
+  'push_bench_mach': { main: 'Press Banca Barra', secondary: 'Press Mancuernas', note: 'Prioriza estabilidad.' },
+  'pull_pullups': { main: 'Jalón al Pecho', secondary: 'Dominadas Asistidas', note: 'Rango completo es clave.' },
+  'legs_hack': { main: 'Sentadilla Barra Alta', secondary: 'Sentadilla Multipower', note: 'Profundidad > Carga.' },
+  'upp_dips': { main: 'Press Declinado', secondary: 'Flexiones Lastradas', note: 'Cuidado con el hombro.' },
 };
 
 export const PHASES: PlanPhase[] = [
   {
-    name: PhaseType.TRANSITION,
-    startDate: '2025-11-04',
-    endDate: '2025-12-01',
-    description: "Transición y Mantenimiento. Recuperación del ciclo de hipertrofia.",
-    nutritionGoal: "Calorías de Mantenimiento",
-    cardio: "1-2 sesiones LISS",
-    trainingFocus: "Descarga (RIR 3-4)"
-  },
-  {
-    name: PhaseType.DEFINITION_MAIN,
-    startDate: '2025-12-02',
-    endDate: '2026-03-30',
-    description: "Definición Principal. Pérdida gradual (0.5-1% peso/semana).",
-    nutritionGoal: "Déficit Calórico. Proteína ALTA",
-    cardio: "3 sesiones LISS",
+    name: PhaseType.CUT_JAN,
+    startDate: '2026-01-01',
+    endDate: '2026-01-31',
+    description: "Recorte Final. Déficit -400kcal. Tensión mecánica para retener músculo.",
+    nutritionGoal: "Déficit / Prot 2.2g",
+    cardio: "30-40 min Post-Pesas",
     trainingFocus: "Fuerza RIR 1-2"
   },
   {
-    name: PhaseType.FINAL_POLISH,
-    startDate: '2026-04-01',
-    endDate: '2026-06-15',
-    description: "Pulido Final. Alcanzar pico de definición.",
-    nutritionGoal: "Déficit Agresivo",
-    cardio: "4 sesiones LISS / HIIT",
-    trainingFocus: "Intensidad Máxima"
+    name: PhaseType.RESET_FEB,
+    startDate: '2026-02-01',
+    endDate: '2026-02-28',
+    description: "Transición y Reset. Estabilización del peso y hormonas (Leptina/Ghrelina).",
+    nutritionGoal: "Normocalórica",
+    cardio: "30 min x 3 días",
+    trainingFocus: "Técnica / Descarga"
   },
   {
-    name: PhaseType.SUMMER,
+    name: PhaseType.HYPERTROPHY_1,
+    startDate: '2026-03-01',
+    endDate: '2026-06-15',
+    description: "Hipertrofia I (Lean Bulk). Superávit +250kcal. Maximizar síntesis proteica.",
+    nutritionGoal: "Superávit Ligero",
+    cardio: "Mantenimiento",
+    trainingFocus: "Volumen Alto (4 series)"
+  },
+  {
+    name: PhaseType.SUMMER_SHRED,
     startDate: '2026-06-16',
+    endDate: '2026-07-31',
+    description: "Summer Shred. Peak Estético. Reducción grasa subcutánea vía AMPK.",
+    nutritionGoal: "Déficit / Ciclado Carbos",
+    cardio: "45 min LISS + 12k Pasos",
+    trainingFocus: "Intensidad / Menos Volumen"
+  },
+  {
+    name: PhaseType.HYPERTROPHY_2,
+    startDate: '2026-08-01',
+    endDate: '2026-11-30',
+    description: "Hipertrofia II. El día de la bestia. Intensificación y cargas máximas.",
+    nutritionGoal: "Superávit +300-450kcal",
+    cardio: "Mínimo",
+    trainingFocus: "Carga Máxima / RIR 0-1"
+  },
+  {
+    name: PhaseType.CONSOLIDATION,
+    startDate: '2026-12-01',
     endDate: '2026-12-31',
-    description: "Mantenimiento de Verano.",
-    nutritionGoal: "Dieta Inversa",
-    cardio: "1-2 sesiones",
-    trainingFocus: "Mantenimiento RIR 2-3"
+    description: "Consolidación y Longevidad. Recuperación articular y reseteo del SNC.",
+    nutritionGoal: "Normocalórica",
+    cardio: "Lúdico",
+    trainingFocus: "RIR 3-4 / Tempo Lento"
   }
 ];
 
 export const ROUTINE_MAPPING: Record<number, RoutineType> = {
-  1: RoutineType.PUSH, // Monday
-  2: RoutineType.PULL, // Tuesday
-  3: RoutineType.LEGS, // Wednesday
-  4: RoutineType.PUSH, // Thursday
-  5: RoutineType.PULL, // Friday
-  6: RoutineType.LEGS, // Saturday
-  0: RoutineType.REST  // Sunday
+  1: RoutineType.PUSH,    // Lunes
+  2: RoutineType.PULL,    // Martes
+  3: RoutineType.LEGS,    // Miércoles
+  4: RoutineType.REST,    // Jueves
+  5: RoutineType.UPPER,   // Viernes
+  6: RoutineType.LOWER,   // Sábado
+  0: RoutineType.REST     // Domingo
 };
 
 export const WARMUP_GUIDE = {
   [RoutineType.PUSH]: [
     {
-      title: "1. Movilidad Articular (Sin descanso)",
+      title: "1. Movilidad (Universal)",
       tasks: [
-        "Círculos de cuello y muñecas (30 seg)",
-        "Balanceos de brazos horizontales (15 reps)",
-        "Círculos de hombros (10 adelante / 10 atrás)",
-        "Rotaciones Externas 'en L' (15 reps)"
+        "Cuello y Muñecas (30s)",
+        "Balanceos de brazos (15 reps)",
+        "Círculos de hombros (20 reps)",
+        "Rotaciones 'en L' (15 reps)"
       ]
     },
     {
-      title: "2. Activación Escapular (Descanso: 30s)",
+      title: "2. Activación PUSH",
       tasks: [
-        "Flexiones Escapulares (Suelo): 2 series x 12 reps.",
-        "Tempo: 2:1:2:0 (Mantén brazos rectos)."
-      ]
-    },
-    {
-      title: "3. Aproximación (Press en Máquina)",
-      tasks: [
-        "Serie 1: 15 reps con 30% peso real (Desc: 45s).",
-        "Serie 2: 8 reps con 60% peso real (Desc: 60s)."
+        "Flexiones Escapulares: 2 x 12",
+        "Aproximación Press: 1x15 (30%), 1x8 (60%)"
       ]
     }
   ],
   [RoutineType.PULL]: [
     {
-      title: "1. Movilidad Articular (Sin descanso)",
+      title: "1. Movilidad (Universal)",
       tasks: [
-        "Rotaciones de Tronco (20 giros)",
-        "Círculos Escapulares (12 lentos)",
-        "Círculos de muñecas (30 seg)"
+        "Rotaciones de Tronco (20 reps)",
+        "Círculos Escapulares (12 reps)",
+        "Muñecas (30s)"
       ]
     },
     {
-      title: "2. Activación Escapular (Descanso: 45s)",
+      title: "2. Activación PULL",
       tasks: [
-        "Aperturas 'Cactus' de pie: 2 series x 12 reps.",
-        "Tempo: 2:1:2:0 (Aprieta escápulas atrás)."
+        "Aperturas 'Cactus': 2 x 12",
+        "Aproximación Jalón: 1x15 (30%), 1x8 (60%)"
+      ]
+    }
+  ],
+  [RoutineType.UPPER]: [
+    {
+      title: "1. Movilidad Híbrida",
+      tasks: [
+        "Círculos de hombros completos (30s)",
+        "Aperturas pectorales dinámicas (15 reps)",
+        "Rotaciones torácicas (10/lado)"
       ]
     },
     {
-      title: "3. Aproximación (Dominada/Jalón)",
+      title: "2. Aproximación",
       tasks: [
-        "Serie 1: 15 reps con 30% peso real (Desc: 45s).",
-        "Serie 2: 8 reps con 60% peso real (Desc: 60s)."
+        "Jalón al pecho: 1x12 ligero",
+        "Fondos (o flexiones): 1x10 controlado"
       ]
     }
   ],
   [RoutineType.LEGS]: [
     {
-      title: "1. Elevación de Temperatura",
+      title: "1. Temp y Movilidad",
       tasks: [
-        "Bicicleta o Elíptica: 5-7 min (Ritmo suave)."
+        "Bici/Elíptica (5 min)",
+        "Balanceos de Pierna (15/lado)",
+        "Sentadilla Cossack (10 total)"
       ]
     },
     {
-      title: "2. Movilidad Articular (Sin descanso)",
+      title: "2. Activación Rodilla",
       tasks: [
-        "Balanceos de Pierna (15 frontales/15 laterales).",
-        "Sentadilla lateral dinámica 'Cossack' (10 reps).",
-        "Anclaje de Tobillo Dinámico (12 reps/pie)."
+        "Anclaje de Tobillo: 12 reps",
+        "Aproximación Hack: 1x15 (vacía), 1x8 (50%)"
+      ]
+    }
+  ],
+  [RoutineType.LOWER]: [
+    {
+      title: "1. Temp y Movilidad",
+      tasks: [
+        "Caminata inclinada (5 min)",
+        "Balanceos de Pierna (15/lado)",
+        "Puente de Glúteo suelo (15 reps)"
       ]
     },
     {
-      title: "3. Aproximación (Sentadilla Hack)",
+      title: "2. Activación Cadera",
       tasks: [
-        "Serie 1: 15 reps máquina vacía (Desc: 60s).",
-        "Serie 2: 8 reps con 50% peso real (Desc: 90s)."
+        "Aproximación Hip Thrust: 1x15 (30%), 1x8 (60%)"
       ]
     }
   ]

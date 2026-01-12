@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ROUTINE_MAPPING, EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS, EXERCISES_UPPER, EXERCISES_LOWER, EXERCISE_ALTERNATIVES, WARMUP_GUIDE } from '../constants';
-import { RoutineType, Exercise, WorkoutLogEntry, WorkoutSet } from '../types';
+import { RoutineType, Exercise, WorkoutLogEntry, WorkoutSet, PhaseType } from '../types';
 import { getTodayDateString, getCurrentPhase, getGymSchedule } from '../utils';
 import { saveLog, getLogs, getPreviousWorkoutLog } from '../services/storage';
-import { Save, History, Plus, Minus, Check, Trophy, ArrowRightLeft, X, Dumbbell, Settings, Info, Bot, AlertTriangle, Clock, Flame, ChevronRight, Timer, Flag } from 'lucide-react';
+import { Save, History, Plus, Minus, Check, Trophy, ArrowRightLeft, X, Dumbbell, Settings, Info, Bot, AlertTriangle, Clock, Flame, ChevronRight, Timer, Flag, Milk } from 'lucide-react';
 
 const Workout: React.FC = () => {
   const today = getTodayDateString();
@@ -31,6 +31,10 @@ const Workout: React.FC = () => {
     { id: RoutineType.LOWER, label: 'Lower' },
     { id: RoutineType.REST, label: 'Rest' },
   ];
+
+  // Logic to determine volume adjustment based on phase
+  const isDeficitPhase = phase.name.includes('Fase 1') || phase.name.includes('Fase 4');
+  const showSupplementAlert = selectedRoutine === RoutineType.LEGS || selectedRoutine === RoutineType.LOWER || selectedRoutine === RoutineType.UPPER;
 
   useEffect(() => {
     let list: Exercise[] = [];
@@ -201,6 +205,21 @@ const Workout: React.FC = () => {
         </div>
       )}
 
+      {/* Peri-Workout Supplement Alert */}
+      {selectedRoutine !== RoutineType.REST && showSupplementAlert && (
+         <div className="mx-5 mb-4 p-3 rounded-xl bg-blue-900/20 border border-blue-500/30 flex items-center gap-3">
+             <div className="bg-blue-500/20 p-2 rounded-lg text-blue-400">
+               <Milk size={18} />
+             </div>
+             <div>
+               <p className="text-[10px] text-blue-400 font-bold uppercase">Intra-Entreno Obligatorio</p>
+               <p className="text-xs text-slate-300">
+                 Ciclodextrina (25-50g) + Sal Marina requeridos hoy.
+               </p>
+             </div>
+         </div>
+      )}
+
       {/* Warmup Button */}
       {selectedRoutine !== RoutineType.REST && (
         <button 
@@ -228,7 +247,7 @@ const Workout: React.FC = () => {
                <Trophy size={24} className="text-slate-500" />
              </div>
              <p className="text-slate-400 text-sm font-bold">Día de Descanso</p>
-             <p className="text-slate-600 text-xs mt-1">Recupera y crece.</p>
+             <p className="text-slate-600 text-xs mt-1">Recupera y crece. Prohibido cardio intenso.</p>
            </div>
         ) : (
           exercises.map((exercise, i) => {
@@ -237,6 +256,15 @@ const Workout: React.FC = () => {
             const isCompleted = log.completed;
             const isExpanded = activeExercise === exercise.id;
             const alternatives = EXERCISE_ALTERNATIVES[exercise.id];
+
+            // Logic for Set Volume Display
+            let displaySets = exercise.targetSets;
+            let showVolumeReduction = false;
+            
+            if (isDeficitPhase && (exercise.targetSets === '3-4' || exercise.targetSets === '4')) {
+               displaySets = "3";
+               showVolumeReduction = true;
+            }
 
             return (
               <div 
@@ -288,8 +316,9 @@ const Workout: React.FC = () => {
                   {/* Metadata Tags */}
                   {!isCompleted && (
                     <div className="flex flex-wrap gap-2 text-[10px] font-mono tracking-tight mt-1">
-                       <span className="text-slate-500 bg-slate-800/50 px-1.5 py-0.5 rounded border border-white/5">
-                         SETS: {exercise.targetSets}
+                       <span className={`px-1.5 py-0.5 rounded border ${showVolumeReduction ? 'bg-amber-500/20 border-amber-500/30 text-amber-400' : 'bg-slate-800/50 border-white/5 text-slate-500'}`}>
+                         SETS: {showVolumeReduction ? <span className="line-through opacity-50 mr-1">{exercise.targetSets}</span> : ''}
+                         {displaySets} {showVolumeReduction && '(Déficit)'}
                        </span>
                        <span className="text-slate-500 bg-slate-800/50 px-1.5 py-0.5 rounded border border-white/5">
                          REPS: {exercise.targetReps}

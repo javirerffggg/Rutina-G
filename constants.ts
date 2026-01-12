@@ -19,45 +19,55 @@ export const SPECIAL_GYM_HOURS: Record<string, string> = {
   '12-14': '08:00 - 16:00'
 };
 
-// --- TRAINING SPLIT CONSTANTS (2026 PLAN) ---
+// --- TRAINING SPLIT CONSTANTS (2026 MASTER PLAN) ---
 
 export const EXERCISES_PUSH: Exercise[] = [
-  { id: 'push_bench_mach', name: 'Press Banca Máquina', targetSets: '3', targetReps: '6-10', notes: 'RIR 1-2. Retracción escapular.' },
-  { id: 'push_incline_mach', name: 'Press Inclinado Máquina', targetSets: '3', targetReps: '8-12', notes: 'RIR 1-2. Foco en clavicular.' },
-  { id: 'push_shoulder_mach', name: 'Press Hombro Máquina', targetSets: '3', targetReps: '6-10', notes: 'RIR 1-2. Codos a 30°.' },
-  { id: 'push_lat_raise', name: 'Elevaciones Laterales', targetSets: '3', targetReps: '10-15', notes: 'RIR 1-2. Alejar manos del cuerpo.' },
-  { id: 'push_tri_ext', name: 'Extensión Tríceps Polea', targetSets: '3', targetReps: '12-15', notes: 'RIR 1-2. Tempo 3s excéntrica.' },
+  { id: 'push_bench_mach', name: 'Press Banca Máquina', targetSets: '3-4', targetReps: '6-8', notes: 'Fuerza base. Retracción escapular.' },
+  { id: 'push_incline_mach', name: 'Press Inclinado Máquina', targetSets: '3-4', targetReps: '8-10', notes: 'Enfoque superior.' },
+  { id: 'push_dips', name: 'Fondos en Paralelas', targetSets: '3-4', targetReps: '8-12', notes: 'Lastre progresivo.' },
+  { id: 'push_shoulder_mach', name: 'Press Hombro Máquina', targetSets: '3', targetReps: '8-10', notes: 'Potencia vertical.' },
+  { id: 'push_lat_raise', name: 'Elevaciones Laterales', targetSets: '3-4', targetReps: '12-15', notes: 'Anchura. Lejos del cuerpo.' },
+  { id: 'push_tri_seat', name: 'Press Tríceps Sentado', targetSets: '3', targetReps: '10-12', notes: 'Estabilidad máxima.' },
+  { id: 'push_tri_rope', name: 'Extensión Tríceps Cuerda', targetSets: '3', targetReps: '12-15', notes: 'Bombeo final.' },
 ];
 
 export const EXERCISES_PULL: Exercise[] = [
-  { id: 'pull_pullups', name: 'Dominadas (con Straps)', targetSets: '3', targetReps: '6-10', notes: 'RIR 1-2. Deprimir escápulas.' },
-  { id: 'pull_row_mach', name: 'Remo Máq. Horizontal', targetSets: '3', targetReps: '6-10', notes: 'RIR 1-2. Tracciona hacia el ombligo.' },
-  { id: 'pull_rear_delt', name: 'Vuelos Posteriores', targetSets: '3', targetReps: '12-15', notes: 'RIR 1-2. Aislamiento, evita trapecio.' },
-  { id: 'pull_shrugs', name: 'Encogimientos Manc.', targetSets: '3', targetReps: '10-15', notes: 'RIR 1-2. Pausa 1s arriba.' },
-  { id: 'pull_curl_mach', name: 'Curl Bíceps Máquina', targetSets: '3', targetReps: '8-12', notes: 'RIR 1-2. Conexión mente-músculo.' },
+  { id: 'pull_pullups', name: 'Dominadas (o Jalón)', targetSets: '3-4', targetReps: 'Fallo', notes: 'USA STRAPS. Depresión escapular.' },
+  { id: 'pull_row_div', name: 'Remo Máq. Divergente', targetSets: '3-4', targetReps: '8-10', notes: 'Densidad.' },
+  { id: 'pull_row_low', name: 'Remo Polea Baja', targetSets: '3-4', targetReps: '10-12', notes: 'Amplitud.' },
+  { id: 'pull_rear_fly', name: 'Vuelos Posteriores Máq.', targetSets: '3-4', targetReps: '12-15', notes: 'Hombro 3D.' },
+  { id: 'pull_shrugs', name: 'Encogimientos Manc.', targetSets: '3-4', targetReps: '10-12', notes: 'Usa Straps.' },
+  { id: 'pull_curl_preach', name: 'Curl Bíceps Predicador', targetSets: '3', targetReps: '10-12', notes: 'Aislamiento estricto.' },
+  { id: 'pull_hammer', name: 'Curl Martillo Manc.', targetSets: '3', targetReps: '10-12', notes: 'Enfoque Braquial.' },
 ];
 
 export const EXERCISES_LEGS: Exercise[] = [
-  { id: 'legs_hack', name: 'Sentadilla Hack', targetSets: '3', targetReps: '8-12', notes: 'RIR 1-2. Cadera pasa la rodilla.' },
-  { id: 'legs_press', name: 'Prensa de Piernas', targetSets: '3', targetReps: '8-15', notes: 'RIR 1-2. No bloquear rodillas.' },
-  { id: 'legs_ext', name: 'Extensión Cuádriceps', targetSets: '3', targetReps: '12-20', notes: 'RIR 1-2. Estrés metabólico (quemazón).' },
-  { id: 'legs_calves', name: 'Elevación Talones', targetSets: '4', targetReps: '10-20', notes: 'RIR 1-2. Estira abajo 1s.' },
+  { id: 'legs_hack', name: 'Sentadilla Hack', targetSets: '4', targetReps: '8-10', notes: 'Ejercicio Principal. Profundidad.' },
+  { id: 'legs_press', name: 'Prensa de Piernas', targetSets: '3-4', targetReps: '10-12', notes: 'Carga masiva sin bloquear.' },
+  { id: 'legs_ext', name: 'Extensión Cuádriceps', targetSets: '3', targetReps: '15-20', notes: 'Detalle y quemazón.' },
+  { id: 'legs_calves', name: 'Elevación Talones', targetSets: '4', targetReps: '12-15', notes: 'Prensa o Máquina.' },
+  { id: 'legs_abs_vkr', name: 'Abdominales VKR', targetSets: '4-6', targetReps: '15', notes: 'Flexión de cadera controlada.' },
 ];
 
 export const EXERCISES_UPPER: Exercise[] = [
-  { id: 'upp_lat_pulldown', name: 'Jalón al Pecho (Prono)', targetSets: '3', targetReps: '6-10', notes: 'RIR 1-2. Alternancia controlada.' },
-  { id: 'upp_dips', name: 'Fondos en Paralelas', targetSets: '3', targetReps: '8-12', notes: 'RIR 1-2. Inclina cuerpo adelante.' },
-  { id: 'upp_low_row', name: 'Remo Polea Baja', targetSets: '3', targetReps: '10-12', notes: 'RIR 1-2. Rango completo estiramiento.' },
-  { id: 'upp_tri_press', name: 'Press Tríceps Sentado', targetSets: '3', targetReps: '8-12', notes: 'RIR 1-2. Baja carga por detrás nuca.' },
-  { id: 'upp_hammer', name: 'Curl Martillo Manc.', targetSets: '3', targetReps: '10-15', notes: 'RIR 1-2. Trabaja el braquial.' },
+  { id: 'upp_inc_db', name: 'Press Inclinado Manc.', targetSets: '3-4', targetReps: '10', notes: 'Estabilidad.' },
+  { id: 'upp_lat_pull', name: 'Jalón al Pecho Prono', targetSets: '3-4', targetReps: '8-10', notes: 'V-Taper.' },
+  { id: 'upp_dips', name: 'Fondos en Paralelas', targetSets: '3-4', targetReps: '10-12', notes: 'Potencia.' },
+  { id: 'upp_low_row', name: 'Remo Polea Baja', targetSets: '3-4', targetReps: '10-12', notes: 'Agarre ancho. Grosor.' },
+  { id: 'upp_peck', name: 'Peck Deck (Aperturas)', targetSets: '3-4', targetReps: '12-15', notes: 'Aislamiento.' },
+  { id: 'upp_pullover', name: 'Pullover Polea Alta', targetSets: '3', targetReps: '15', notes: 'Expansión / Serratos.' },
+  { id: 'upp_tri_mach', name: 'Press Tríceps Sentado', targetSets: '3-4', targetReps: '10-12', notes: 'Aislamiento.' },
+  { id: 'upp_curl_pre', name: 'Curl Predicador Máq.', targetSets: '3-4', targetReps: '10-12', notes: 'Aislamiento.' },
 ];
 
 export const EXERCISES_LOWER: Exercise[] = [
-  { id: 'legs_hip_thrust', name: 'Hip Thrust Máquina', targetSets: '3', targetReps: '10-15', notes: 'RIR 1-2. Bloquea pelvis arriba.' },
-  { id: 'legs_curl', name: 'Curl Femoral', targetSets: '3', targetReps: '10-15', notes: 'RIR 1-2. Punta pies hacia espinilla.' },
-  { id: 'legs_goblet', name: 'Sentadilla Goblet', targetSets: '3', targetReps: '8-15', notes: 'RIR 1-2. Activa abdomen fuerte.' },
-  { id: 'legs_calves_b', name: 'Elevación Talones', targetSets: '4', targetReps: '10-20', notes: 'RIR 1-2. Protocolo intensidad.' },
-  { id: 'legs_abs', name: 'Abdominales (VKR)', targetSets: '3-4', targetReps: '12-15', notes: 'RIR 1-2. No usar psoas.' },
+  { id: 'low_hip', name: 'Hip Thrust Máquina', targetSets: '4', targetReps: '10-12', notes: 'Glúteo/Isquio. Bloquea arriba.' },
+  { id: 'low_rdl', name: 'Peso Muerto Rumano', targetSets: '4', targetReps: '10-12', notes: 'Mancuernas. Isquios.' },
+  { id: 'low_curl', name: 'Curl Femoral', targetSets: '4', targetReps: '12-15', notes: 'Sentado o acostado.' },
+  { id: 'low_press_high', name: 'Prensa Pies Altos', targetSets: '3-4', targetReps: '12', notes: 'Énfasis Glúteo.' },
+  { id: 'low_goblet', name: 'Sentadilla Goblet', targetSets: '3', targetReps: '12-15', notes: 'Bombeo final.' },
+  { id: 'low_calves', name: 'Elevación Talones', targetSets: '4', targetReps: '15-20', notes: 'De pie o sentado.' },
+  { id: 'low_crunch', name: 'Crunch Abdominal Máq.', targetSets: '4-6', targetReps: '15', notes: 'Flexión tronco.' },
 ];
 
 export const EXERCISE_ALTERNATIVES: Record<string, ExerciseAlternative> = {
@@ -72,35 +82,35 @@ export const PHASES: PlanPhase[] = [
     name: PhaseType.CUT_JAN,
     startDate: '2026-01-01',
     endDate: '2026-01-31',
-    description: "Recorte Final. Déficit -400kcal. Tensión mecánica para retener músculo.",
-    nutritionGoal: "Déficit / Prot 2.2g",
+    description: "Fase I: Recorte Final. Eficiencia metabólica. Mantener cargas, bajar volumen.",
+    nutritionGoal: "Déficit -400kcal (12G/9P)",
     cardio: "30-40 min Post-Pesas",
-    trainingFocus: "Fuerza RIR 1-2"
+    trainingFocus: "Fuerza RIR 1-2 (3 Series)"
   },
   {
     name: PhaseType.RESET_FEB,
     startDate: '2026-02-01',
     endDate: '2026-02-28',
-    description: "Transición y Reset. Estabilización del peso y hormonas (Leptina/Ghrelina).",
-    nutritionGoal: "Normocalórica",
+    description: "Fase II: Reset Hormonal. Estabilización del set-point y recuperación del SNC.",
+    nutritionGoal: "Normocalórica (10G/8P)",
     cardio: "30 min x 3 días",
     trainingFocus: "Técnica / Descarga"
   },
   {
     name: PhaseType.HYPERTROPHY_1,
     startDate: '2026-03-01',
-    endDate: '2026-06-15',
-    description: "Hipertrofia I (Lean Bulk). Superávit +250kcal. Maximizar síntesis proteica.",
-    nutritionGoal: "Superávit Ligero",
+    endDate: '2026-05-31',
+    description: "Fase III: Hipertrofia I. Ganancia muscular limpia (Lean Bulk).",
+    nutritionGoal: "Superávit +250kcal (18G/12P)",
     cardio: "Mantenimiento",
-    trainingFocus: "Volumen Alto (4 series)"
+    trainingFocus: "Volumen Alto (3-4 Series)"
   },
   {
     name: PhaseType.SUMMER_SHRED,
-    startDate: '2026-06-16',
+    startDate: '2026-06-01',
     endDate: '2026-07-31',
-    description: "Summer Shred. Peak Estético. Reducción grasa subcutánea vía AMPK.",
-    nutritionGoal: "Déficit / Ciclado Carbos",
+    description: "Fase IV: Summer Shred. Peak Estético (12% grasa).",
+    nutritionGoal: "Déficit -400kcal (12G/9P)",
     cardio: "45 min LISS + 12k Pasos",
     trainingFocus: "Intensidad / Menos Volumen"
   },
@@ -108,8 +118,8 @@ export const PHASES: PlanPhase[] = [
     name: PhaseType.HYPERTROPHY_2,
     startDate: '2026-08-01',
     endDate: '2026-11-30',
-    description: "Hipertrofia II. El día de la bestia. Intensificación y cargas máximas.",
-    nutritionGoal: "Superávit +300-450kcal",
+    description: "Fase V: Hipertrofia II. Máxima densidad. El día de la bestia.",
+    nutritionGoal: "Superávit +400kcal (18G/12P)",
     cardio: "Mínimo",
     trainingFocus: "Carga Máxima / RIR 0-1"
   },
@@ -117,10 +127,10 @@ export const PHASES: PlanPhase[] = [
     name: PhaseType.CONSOLIDATION,
     startDate: '2026-12-01',
     endDate: '2026-12-31',
-    description: "Consolidación y Longevidad. Recuperación articular y reseteo del SNC.",
-    nutritionGoal: "Normocalórica",
+    description: "Fase VI: Consolidación. Salud articular y reseteo metabólico.",
+    nutritionGoal: "Normocalórica (10G/8P)",
     cardio: "Lúdico",
-    trainingFocus: "RIR 3-4 / Tempo Lento"
+    trainingFocus: "RIR 3-4 / Salud"
   }
 ];
 

@@ -77,6 +77,100 @@ export const EXERCISE_ALTERNATIVES: Record<string, ExerciseAlternative> = {
   'upp_dips': { main: 'Press Declinado', secondary: 'Flexiones Lastradas', note: 'Cuidado con el hombro.' },
 };
 
+export const TECHNICAL_GUIDES: Record<string, string> = {
+  'push_bench_mach': `• Configuración: Ajusta el asiento para que los manillares queden a la altura de la parte media-baja del pecho.
+• Posición: Pies firmemente plantados en el suelo para generar "Leg Drive". Retracción escapular (junta las escápulas atrás) y saca pecho.
+• Ejecución: Empuja de forma explosiva pero controlada. No bloquees los codos al 100% para mantener la tensión en el pectoral.
+• Fase Excéntrica: Baja en 3 segundos. Siente el estiramiento en la parte externa del pecho.
+• Clave Mental: "Intenta juntar tus bíceps entre sí" al final del movimiento para una contracción máxima.`,
+
+  'push_incline_mach': `• Foco: Porción clavicular (Pecho alto).
+• Técnica: Mantén los codos ligeramente hacia adentro (unos 45 grados respecto al torso). No permitas que tus hombros se adelanten en el punto de máxima contracción.
+• Error Común: Arquear demasiado la espalda baja para compensar el peso. Mantén el core firme.`,
+
+  'push_dips': `• Intención Pecho: Inclina el torso hacia adelante unos 30 grados. Abre ligeramente los codos. Baja hasta que el hombro esté por debajo del nivel del codo.
+• Intención Tríceps: Mantén el torso vertical y los codos pegados a las costillas.
+• Lastre: Sujeta la mancuerna/disco entre las piernas de forma que no se balancee. Inicia el movimiento de forma controlada para evitar tirones en el esternón.`,
+  
+  'upp_dips': `• Intención Pecho: Inclina el torso hacia adelante unos 30 grados. Abre ligeramente los codos. Baja hasta que el hombro esté por debajo del nivel del codo.
+• Intención Tríceps: Mantén el torso vertical y los codos pegados a las costillas.
+• Lastre: Sujeta la mancuerna/disco entre las piernas de forma que no se balancee.`,
+
+  'push_shoulder_mach': `• Configuración: Los codos no deben estar alineados lateralmente con el cuerpo, sino unos 30 grados hacia adelante (plano escapular).
+• Rango: Baja hasta que los manillares estén a la altura de tus orejas. Sube sin bloquear codos.
+• Seguridad: Mantén la cabeza apoyada en el respaldo para evitar tensión cervical.`,
+
+  'push_lat_raise': `• Postura: Ligera inclinación del torso hacia adelante. Escápulas neutras (no las juntes).
+• Movimiento: Imagina que quieres alejar las mancuernas de tu cuerpo, no subirlas. Los brazos casi rectos (ligera flexión en el codo).
+• Punto Máximo: No subas más allá de la altura del hombro para evitar involucrar el trapecio.`,
+
+  'push_tri_seat': `• Estabilidad: Presiona tu espalda y glúteo contra el soporte.
+• Codos: Deben quedar fijos, sin moverse hacia adelante o atrás durante el ejercicio.
+• Contracción: Aprieta el tríceps con fuerza abajo durante 1 segundo.`,
+  
+  'upp_tri_mach': `• Estabilidad: Presiona tu espalda y glúteo contra el soporte.
+• Codos: Deben quedar fijos, sin moverse hacia adelante o atrás durante el ejercicio.
+• Contracción: Aprieta el tríceps con fuerza abajo durante 1 segundo.`,
+
+  'pull_pullups': `• El Agarre: Usa Straps. Agarre algo más ancho que tus hombros.
+• Inicio: El movimiento comienza "deprimiendo" las escápulas (bajando los hombros), no doblando los brazos.
+• Final: Lleva el pecho hacia la barra, no la barbilla. Imagina que quieres clavar tus codos en tus bolsillos traseros.`,
+
+  'upp_lat_pull': `• El Agarre: Usa Straps. Agarre algo más ancho que tus hombros.
+• Inicio: El movimiento comienza "deprimiendo" las escápulas (bajando los hombros), no doblando los brazos.
+• Final: Lleva el pecho hacia la barra, no la barbilla. Imagina que quieres clavar tus codos en tus bolsillos traseros.`,
+
+  'pull_row_div': `• Ajuste: Pecho apoyado contra el cojín. Pies fuertes en los soportes.
+• Tracción: Tira con los codos. En la parte final, junta las escápulas con fuerza.
+• Estiramiento: Permite que la máquina estire tus dorsales al frente, pero sin perder la tensión en el core.`,
+
+  'pull_row_low': `• Torso: Mantén una posición erguida, evita el balanceo excesivo.
+• Agarre: Usa el agarre en "V" o neutro.
+• Foco: Estira completamente los brazos sintiendo el dorsal. Al tirar, lleva el agarre hacia tu ombligo.`,
+  
+  'upp_low_row': `• Torso: Mantén una posición erguida, evita el balanceo excesivo.
+• Agarre: Usa el agarre ancho para mayor énfasis en la espalda alta.
+• Foco: Estira completamente los brazos sintiendo el dorsal.`,
+
+  'pull_rear_fly': `• Posición: Pecho contra el respaldo. Brazos a la altura de los hombros.
+• Movimiento: Abre los brazos manteniendo los codos ligeramente flexionados. No permitas que el trapecio haga el trabajo; concéntrate en la parte trasera del hombro.
+• Error: Usar demasiado peso y "rebotar". Usa un peso que te permita controlar la parada atrás.`,
+
+  'pull_curl_preach': `• Ajuste: Las axilas deben estar encajadas en el borde del cojín. El tríceps totalmente apoyado.
+• Seguridad: No extiendas el brazo al 100% de forma explosiva; deja un pequeño margen para proteger el tendón del bíceps.
+• Conexión: Aprieta el bíceps arriba con fuerza.`,
+
+  'upp_curl_pre': `• Ajuste: Las axilas deben estar encajadas en el borde del cojín. El tríceps totalmente apoyado.
+• Seguridad: No extiendas el brazo al 100% de forma explosiva; deja un pequeño margen para proteger el tendón del bíceps.
+• Conexión: Aprieta el bíceps arriba con fuerza.`,
+
+  'legs_hack': `• Pies: Posición media-baja en la plataforma. Separación a anchura de hombros.
+• Profundidad: Baja hasta que la cadera rompa el ángulo de 90 grados. No despegues los talones.
+• Seguridad: Mantén la espalda baja pegada al soporte. NUNCA bloquees las rodillas al subir; mantén una micro-flexión.`,
+
+  'legs_press': `• Colocación: Pies a la anchura de las caderas.
+• Ejecución: Baja el peso de forma muy lenta. No dejes que la plataforma te aplaste el pecho; detente justo antes de que tu espalda baja se empiece a despegar del asiento (retroversión pélvica).`,
+
+  'low_press_high': `• Colocación: Pies altos en la plataforma para enfatizar glúteo e isquios.
+• Ejecución: Baja controlando la excéntrica. Evita el bloqueo de rodillas.`,
+
+  'low_hip': `• Posición: La almohadilla debe estar justo encima del hueso de la pelvis. Pies a una distancia donde al subir formen un ángulo de 90 grados en la rodilla.
+• Empuje: Empuja con los talones. Arriba, realiza un bloqueo pélvico (aprieta glúteos fuerte).
+• Mirada: Mantén la barbilla pegada al pecho en todo momento para proteger la zona lumbar.`,
+
+  'low_rdl': `• Bisagra de Cadera: El movimiento no es bajar la mancuerna, es llevar el glúteo hacia atrás (como si quisieras cerrar una puerta con el culo).
+• Espalda: Mantén una línea recta desde la cabeza hasta el coxis. Las mancuernas bajan pegadas a tus muslos.
+• Estiramiento: Baja solo hasta donde tus isquios te permitan sin que tu espalda se curve.`,
+
+  'legs_abs_vkr': `• Colgado: Apoya bien los antebrazos y mantén los hombros activos (no te hundas).
+• Ejecución: No solo subas las rodillas. Imagina que quieres llevar tu pelvis hacia tu esternón. Enrolla tu columna abdominal.
+• Control: Baja las piernas lentamente para evitar el balanceo.`,
+
+  'low_crunch': `• Ajuste: La bisagra de la máquina debe coincidir con tu zona lumbar/abdominal.
+• Fuerza: El esfuerzo nace de "enrollar" el torso, no de empujar con los brazos o hombros.
+• Respiración: Suelta el aire totalmente en la contracción máxima para vaciar el abdomen y activar el transverso.`
+};
+
 export const PHASES: PlanPhase[] = [
   {
     name: PhaseType.CUT_JAN,

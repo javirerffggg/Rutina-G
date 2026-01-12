@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ROUTINE_MAPPING, EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS, EXERCISES_UPPER, EXERCISES_LOWER, EXERCISE_ALTERNATIVES, WARMUP_GUIDE } from '../constants';
+import { ROUTINE_MAPPING, EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS, EXERCISES_UPPER, EXERCISES_LOWER, EXERCISE_ALTERNATIVES, WARMUP_GUIDE, TECHNICAL_GUIDES } from '../constants';
 import { RoutineType, Exercise, WorkoutLogEntry, WorkoutSet, PhaseType } from '../types';
 import { getTodayDateString, getCurrentPhase, getGymSchedule } from '../utils';
 import { saveLog, getLogs, getPreviousWorkoutLog } from '../services/storage';
-import { Save, History, Plus, Minus, Check, Trophy, ArrowRightLeft, X, Dumbbell, Settings, Info, Bot, AlertTriangle, Clock, Flame, ChevronRight, Timer, Flag, Milk } from 'lucide-react';
+import { Save, History, Plus, Minus, Check, Trophy, ArrowRightLeft, X, Dumbbell, Settings, Info, Bot, AlertTriangle, Clock, Flame, ChevronRight, Timer, Flag, Milk, BookOpen, GraduationCap } from 'lucide-react';
 
 const Workout: React.FC = () => {
   const today = getTodayDateString();
@@ -20,6 +20,8 @@ const Workout: React.FC = () => {
   const [activeExercise, setActiveExercise] = useState<string | null>(null);
   // controls the alternatives modal
   const [showAlternativeFor, setShowAlternativeFor] = useState<string | null>(null);
+  // controls the technical guide modal
+  const [showTechFor, setShowTechFor] = useState<string | null>(null);
   // controls the warmup modal
   const [showWarmup, setShowWarmup] = useState(false);
 
@@ -256,6 +258,7 @@ const Workout: React.FC = () => {
             const isCompleted = log.completed;
             const isExpanded = activeExercise === exercise.id;
             const alternatives = EXERCISE_ALTERNATIVES[exercise.id];
+            const hasTechGuide = !!TECHNICAL_GUIDES[exercise.id];
 
             // Logic for Set Volume Display
             let displaySets = exercise.targetSets;
@@ -286,6 +289,19 @@ const Workout: React.FC = () => {
                      </div>
                      
                      <div className="flex items-center gap-3">
+                       {/* Technical Guide Button */}
+                       {hasTechGuide && !isCompleted && (
+                         <button 
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             setShowTechFor(exercise.id);
+                           }}
+                           className="text-slate-500 hover:text-brand-400 transition-colors p-1"
+                         >
+                           <BookOpen size={16} />
+                         </button>
+                       )}
+
                        {/* Alternative Button */}
                        {alternatives && !isCompleted && (
                          <button 
@@ -473,6 +489,45 @@ const Workout: React.FC = () => {
                    </div>
                 </div>
              </div>
+          </div>
+        </div>
+      )}
+
+      {/* Technical Guide Modal */}
+      {showTechFor && TECHNICAL_GUIDES[showTechFor] && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 animate-in fade-in duration-200">
+          <div 
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => setShowTechFor(null)}
+          ></div>
+          <div className="relative w-full max-w-sm bg-slate-900/90 backdrop-blur-md border border-brand-500/20 rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setShowTechFor(null)}
+              className="absolute top-4 right-4 text-slate-500 hover:text-white"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="flex items-center gap-2 mb-6 text-brand-400">
+               <GraduationCap size={20} />
+               <span className="text-xs font-bold uppercase tracking-widest">Biblia de Ejecución</span>
+            </div>
+
+            <h3 className="text-xl font-bold text-white mb-6 pr-6 leading-tight">
+              {exercises.find(e => e.id === showTechFor)?.name}
+            </h3>
+
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="glass-card p-4 rounded-xl border-l-2 border-l-brand-500 bg-slate-800/50">
+                 <div className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">
+                   {TECHNICAL_GUIDES[showTechFor]}
+                 </div>
+              </div>
+            </div>
+            
+            <p className="text-[10px] text-slate-500 text-center mt-6 italic">
+              "La técnica es el lenguaje con el que hablas a tus músculos."
+            </p>
           </div>
         </div>
       )}

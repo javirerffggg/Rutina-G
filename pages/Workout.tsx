@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { ROUTINE_MAPPING, EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS, EXERCISES_UPPER, EXERCISES_LOWER, EXERCISE_ALTERNATIVES, WARMUP_GUIDE, TECHNICAL_GUIDES } from '../constants';
 import { RoutineType, Exercise, WorkoutLogEntry, WorkoutSet, PhaseType } from '../types';
 import { getTodayDateString, getCurrentPhase, getGymSchedule } from '../utils';
-import { saveLog, getLogs, getPreviousWorkoutLog } from '../services/storage';
-import { Save, History, Plus, Minus, Check, Trophy, ArrowRightLeft, X, Dumbbell, Settings, Info, Bot, AlertTriangle, Clock, Flame, ChevronRight, Timer, Flag, Milk, BookOpen, GraduationCap } from 'lucide-react';
+import { saveLog, getLogs, getPreviousWorkoutLog, getExerciseHistory } from '../services/storage';
+import { Save, History, Plus, Minus, Check, Trophy, ArrowRightLeft, X, Dumbbell, Settings, Info, Bot, AlertTriangle, Clock, Flame, ChevronRight, Timer, Flag, Milk, BookOpen, GraduationCap, CalendarDays } from 'lucide-react';
 
 const Workout: React.FC = () => {
   const today = getTodayDateString();
@@ -24,6 +24,8 @@ const Workout: React.FC = () => {
   const [showTechFor, setShowTechFor] = useState<string | null>(null);
   // controls the warmup modal
   const [showWarmup, setShowWarmup] = useState(false);
+  // controls the history modal
+  const [showHistoryFor, setShowHistoryFor] = useState<string | null>(null);
 
   const TABS = [
     { id: RoutineType.PUSH, label: 'Push' },
@@ -69,8 +71,18 @@ const Workout: React.FC = () => {
   const addSet = (exerciseId: string) => {
     const newLogs = logs.map(log => {
       if (log.exerciseId !== exerciseId) return log;
-      const lastSet = log.sets[log.sets.length - 1] || { weight: 0, reps: 0 };
-      return { ...log, sets: [...log.sets, { ...lastSet }] };
+      
+      let newSet = { weight: 0, reps: 0 };
+      if (log.sets.length > 0) {
+        newSet = { ...log.sets[log.sets.length - 1] };
+      } else {
+        const prevLog = getPreviousWorkoutLog(exerciseId, today);
+        if (prevLog && prevLog.sets.length > 0) {
+          newSet = { weight: prevLog.sets[0].weight, reps: prevLog.sets[0].reps };
+        }
+      }
+      
+      return { ...log, sets: [...log.sets, newSet] };
     });
     setLogs(newLogs);
     // Automatically expand when adding a set
@@ -254,7 +266,7 @@ const Workout: React.FC = () => {
         ) : (
           exercises.map((exercise, i) => {
             const log = logs.find(l => l.exerciseId === exercise.id) || { exerciseId: exercise.id, sets: [], completed: false };
-            const prevBest = getPreviousWorkoutLog(exercise.id, today);
+            const prevLog = getPreviousWorkoutLog(exercise.id, today);
             const isCompleted = log.completed;
             const isExpanded = activeExercise === exercise.id;
             const alternatives = EXERCISE_ALTERNATIVES[exercise.id];
@@ -347,11 +359,28 @@ const Workout: React.FC = () => {
                     </div>
                   )}
 
-                  {/* History Pill */}
-                  {prevBest && isExpanded && !isCompleted && (
-                    <div className="mt-2 text-xs flex items-center gap-2 text-gold-500/80 bg-gold-500/10 px-3 py-1.5 rounded-lg border border-gold-500/20 w-fit">
-                      <History size={12} />
-                      <span>Best: {prevBest.weight}kg × {prevBest.reps}</span>
+                  {/* Previous Session */}
+                  {prevLog && isExpanded && !isCompleted && (
+                    <div className="mt-3 bg-slate-800/50 rounded-xl border border-white/5 p-3">
+                      <div className="flex justify-between items-center mb-2">
+                        <div className="flex items-center gap-2 text-gold-500">
+                          <History size={14} />
+                          <span className="text-[10px] font-bold uppercase tracking-wider">Última Sesión</span>
+                        </div>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setShowHistoryFor(exercise.id); }}
+                          className="text-[10px] text-slate-400 hover:text-brand-400 font-bold uppercase flex items-center gap-1 transition-colors"
+                        >
+                          <CalendarDays size={12} /> Ver Historial
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {prevLog.sets.map((set, idx) => (
+                          <span key={idx} className="text-xs font-mono text-slate-300 bg-black/20 px-2 py-1 rounded border border-white/5">
+                            {set.weight}kg × {set.reps}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -601,6 +630,53 @@ const Workout: React.FC = () => {
             <p className="text-[10px] text-slate-500 text-center mt-6">
               Recuerda ajustar el peso para mantener el RIR objetivo.
             </p>
+          </div>
+        </div>
+      )}
+      
+      {/* History Modal */}
+      {showHistoryFor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 animate-in fade-in duration-200">
+          <div 
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => setShowHistoryFor(null)}
+          ></div>
+          <div className="relative w-full max-w-sm bg-slate-900/90 backdrop-blur-md border border-brand-500/20 rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setShowHistoryFor(null)}
+              className="absolute top-4 right-4 text-slate-500 hover:text-white"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="flex items-center gap-2 mb-6 text-brand-400">
+               <CalendarDays size={20} />
+               <span className="text-xs font-bold uppercase tracking-widest">Historial</span>
+            </div>
+
+            <h3 className="text-xl font-bold text-white mb-6 pr-6 leading-tight">
+              {exercises.find(e => e.id === showHistoryFor)?.name}
+            </h3>
+
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+              {getExerciseHistory(showHistoryFor).map((entry, idx) => (
+                <div key={idx} className="glass-card p-4 rounded-xl border-l-2 border-l-brand-500 bg-slate-800/50">
+                  <p className="text-xs font-bold text-brand-400 mb-2">
+                    {new Date(entry.date).toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {entry.log.sets.map((set, setIdx) => (
+                      <span key={setIdx} className="text-xs font-mono text-slate-300 bg-black/20 px-2 py-1 rounded border border-white/5">
+                        {set.weight}kg × {set.reps}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {getExerciseHistory(showHistoryFor).length === 0 && (
+                <p className="text-sm text-slate-400 text-center py-4">No hay historial para este ejercicio.</p>
+              )}
+            </div>
           </div>
         </div>
       )}

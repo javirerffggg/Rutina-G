@@ -1,4 +1,4 @@
-import { DailyLog } from '../types';
+import { DailyLog, WorkoutLogEntry } from '../types';
 
 const STORAGE_KEY = 'fitness_pro_logs_v1';
 
@@ -25,7 +25,7 @@ export const getLogByDate = (date: string): DailyLog | undefined => {
   return logs[date];
 };
 
-export const getPreviousWorkoutLog = (exerciseId: string, beforeDate: string): { weight: number, reps: number } | null => {
+export const getPreviousWorkoutLog = (exerciseId: string, beforeDate: string): WorkoutLogEntry | null => {
   const logs = getLogs();
   const sortedDates = Object.keys(logs).sort().reverse();
   
@@ -36,11 +36,27 @@ export const getPreviousWorkoutLog = (exerciseId: string, beforeDate: string): {
     if (entry.exercises) {
       const exerciseLog = entry.exercises.find(e => e.exerciseId === exerciseId);
       if (exerciseLog && exerciseLog.sets.length > 0) {
-        // Return best set (max weight, then max reps)
-        const bestSet = [...exerciseLog.sets].sort((a, b) => (b.weight * b.reps) - (a.weight * a.reps))[0];
-        return bestSet;
+        return exerciseLog;
       }
     }
   }
   return null;
+};
+
+export const getExerciseHistory = (exerciseId: string, limit: number = 5): { date: string, log: WorkoutLogEntry }[] => {
+  const logs = getLogs();
+  const sortedDates = Object.keys(logs).sort().reverse();
+  const history: { date: string, log: WorkoutLogEntry }[] = [];
+  
+  for (const date of sortedDates) {
+    const entry = logs[date];
+    if (entry.exercises) {
+      const exerciseLog = entry.exercises.find(e => e.exerciseId === exerciseId);
+      if (exerciseLog && exerciseLog.sets.length > 0) {
+        history.push({ date, log: exerciseLog });
+        if (history.length >= limit) break;
+      }
+    }
+  }
+  return history;
 };

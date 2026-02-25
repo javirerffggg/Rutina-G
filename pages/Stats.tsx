@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { ResponsiveContainer, ComposedChart, Line, Area, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceDot } from 'recharts';
 import { getLogs, saveLog } from '../services/storage';
-import { getTodayDateString, calculateMovingAverage, calculateLinearRegression } from '../utils';
+import { getTodayDateString, calculateMovingAverage, calculateLinearRegression, calculateOneRM } from '../utils';
 import { DailyLog } from '../types';
-import { Scale, Info, Ruler, Camera, Copy, Check, TrendingDown, Pizza, AlertCircle } from 'lucide-react';
+import { Scale, Info, Ruler, Camera, Copy, Check, TrendingDown, Pizza, AlertCircle, Dumbbell } from 'lucide-react';
+import { EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS, EXERCISES_UPPER, EXERCISES_LOWER } from '../constants';
 
 const Stats: React.FC = () => {
   const today = getTodayDateString();
   const [logs, setLogs] = useState<Record<string, DailyLog>>({});
   const [todayLog, setTodayLog] = useState<DailyLog>({ date: today });
   const [copied, setCopied] = useState(false);
+
+  const allExercises = [...EXERCISES_PUSH, ...EXERCISES_PULL, ...EXERCISES_LEGS, ...EXERCISES_UPPER, ...EXERCISES_LOWER];
+  const [selectedExercise, setSelectedExercise] = useState<string>(allExercises[0].id);
 
   // Load data
   useEffect(() => {
@@ -48,6 +52,28 @@ const Stats: React.FC = () => {
     trend: (slope * i + intercept).toFixed(2),
     isRefeed: log.isRefeed
   })).slice(-30); // Show last 30 entries
+
+  // Exercise Progression Chart Data
+  const exerciseLogs = sortedDates
+    .map(date => {
+      const entry = logs[date];
+      if (!entry.exercises) return null;
+      const exLog = entry.exercises.find(e => e.exerciseId === selectedExercise);
+      if (!exLog || exLog.sets.length === 0) return null;
+      
+      // Calculate 1RM (max of all sets)
+      const max1RM = Math.max(...exLog.sets.map(set => calculateOneRM(set.weight, set.reps)));
+      
+      // Calculate Volume
+      const volume = exLog.sets.reduce((acc, set) => acc + (set.weight * set.reps), 0);
+      
+      return {
+        date: new Date(date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }),
+        oneRM: max1RM,
+        volume: volume
+      };
+    })
+    .filter(Boolean) as { date: string, oneRM: number, volume: number }[];
 
   // Statistics
   const currentWeight = todayLog.weight || (weightLogs.length > 0 ? weightLogs[weightLogs.length - 1].weight : 0);
@@ -201,6 +227,59 @@ Estrés: ${todayLog.stress || '-'}/5
                 </ComposedChart>
             </ResponsiveContainer>
          </div>
+      </div>
+
+      {/* Exercise Progression Section */}
+      <div className="space-y-3">
+        <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider px-1 flex items-center gap-2">
+          <Dumbbell size={16} /> Progresión de Ejercicios
+        </h2>
+        
+        <div className="glass-panel p-4 rounded-2xl">
+          <select 
+            value={selectedExercise}
+            onChange={(e) => setSelectedExercise(e.target.value)}
+            className="w-full bg-slate-800 text-white text-sm font-bold p-3 rounded-xl border border-white/10 mb-4 focus:outline-none focus:border-brand-500"
+          >
+            {allExercises.map(ex => (
+              <option key={ex.id} value={ex.id}>{ex.name}</option>
+            ))}
+          </select>
+
+          {exerciseLogs.length > 0 ? (
+            <div className="h-48 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={exerciseLogs}>
+                  <defs>
+                    <linearGradient id="color1RM" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                  <XAxis dataKey="date" hide />
+                  <YAxis 
+                    domain={['auto', 'auto']} 
+                    orientation="right" 
+                    tick={{fontSize: 9, fill: '#64748b'}} 
+                    axisLine={false}
+                    width={30}
+                  />
+                  <Tooltip 
+                    contentStyle={{backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '12px'}}
+                    itemStyle={{padding: 0}}
+                    labelStyle={{color: '#94a3b8', marginBottom: '4px'}}
+                  />
+                  <Area type="monotone" dataKey="oneRM" name="1RM Est. (kg)" stroke="#10b981" fill="url(#color1RM)" strokeWidth={2} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-48 flex items-center justify-center text-slate-500 text-sm">
+              No hay datos para este ejercicio.
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Anthropometry Section */}

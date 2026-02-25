@@ -287,18 +287,28 @@ Estrés: ${todayLog.stress || '-'}/5
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
                   <XAxis dataKey="date" hide />
                   <YAxis 
+                    yAxisId="left"
                     domain={['auto', 'auto']} 
-                    orientation="right" 
-                    tick={{fontSize: 9, fill: '#64748b'}} 
+                    orientation="left" 
+                    tick={{fontSize: 9, fill: '#10b981'}} 
                     axisLine={false}
                     width={30}
+                  />
+                  <YAxis 
+                    yAxisId="right"
+                    domain={['auto', 'auto']} 
+                    orientation="right" 
+                    tick={{fontSize: 9, fill: '#8b5cf6'}} 
+                    axisLine={false}
+                    width={40}
                   />
                   <Tooltip 
                     contentStyle={{backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '12px'}}
                     itemStyle={{padding: 0}}
                     labelStyle={{color: '#94a3b8', marginBottom: '4px'}}
                   />
-                  <Area type="monotone" dataKey="oneRM" name="1RM Est. (kg)" stroke="#10b981" fill="url(#color1RM)" strokeWidth={2} />
+                  <Area yAxisId="left" type="monotone" dataKey="oneRM" name="1RM Est. (kg)" stroke="#10b981" fill="url(#color1RM)" strokeWidth={2} />
+                  <Line yAxisId="right" type="monotone" dataKey="volume" name="Tonelaje (kg)" stroke="#8b5cf6" dot={false} strokeWidth={2} />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>

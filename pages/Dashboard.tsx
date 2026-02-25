@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getCurrentPhase, getTodayDateString, getGymSchedule } from '../utils';
 import { getLogs, saveLog } from '../services/storage';
 import { DailyLog } from '../types';
-import { Activity, Battery, Moon, Scale, Utensils, CheckCircle2, Circle, AlertTriangle, Clock, Flame } from 'lucide-react';
+import { Activity, Battery, Moon, Scale, Utensils, CheckCircle2, Circle, AlertTriangle, Clock, Flame, Settings2 } from 'lucide-react';
 
 // --- NUEVO: Mapa de implicación muscular por ejercicio ---
 const EXERCISE_MUSCLE_MAP: Record<string, string[]> = {
@@ -58,7 +58,26 @@ const Dashboard: React.FC = () => {
   // --- NUEVO: Estado para el volumen muscular ---
   const [muscleVolume, setMuscleVolume] = useState<Record<string, number>>({});
   
+  // --- NUEVO: Estado para el modo OLED ---
+  const [isOledMode, setIsOledMode] = useState(() => {
+    return localStorage.getItem('oledMode') === 'true';
+  });
+
   const specialSchedule = getGymSchedule(today);
+
+  useEffect(() => {
+    if (isOledMode) {
+      document.body.classList.add('oled-mode');
+    } else {
+      document.body.classList.remove('oled-mode');
+    }
+  }, [isOledMode]);
+
+  const toggleOledMode = () => {
+    const newValue = !isOledMode;
+    setIsOledMode(newValue);
+    localStorage.setItem('oledMode', newValue.toString());
+  };
 
   useEffect(() => {
     const saved = getLogs();
@@ -145,11 +164,20 @@ const Dashboard: React.FC = () => {
           </p>
           <h1 className="text-3xl font-bold text-white">Resumen Diario</h1>
         </div>
-        <div 
-          onClick={() => navigate('/')}
-          className="bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700 text-[10px] text-slate-300 cursor-pointer"
-        >
-          {phase.name.split(' ')[0]}
+        <div className="flex gap-2">
+          <button 
+            onClick={toggleOledMode}
+            className={`p-2 rounded-lg border transition-colors ${isOledMode ? 'bg-brand-500/20 border-brand-500/50 text-brand-400' : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:text-white'}`}
+            title="Modo OLED (Ahorro de batería)"
+          >
+            <Settings2 size={16} />
+          </button>
+          <div 
+            onClick={() => navigate('/')}
+            className="bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700 text-[10px] text-slate-300 cursor-pointer flex items-center"
+          >
+            {phase.name.split(' ')[0]}
+          </div>
         </div>
       </header>
 

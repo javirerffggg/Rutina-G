@@ -1,6 +1,17 @@
 import { DailyLog, WorkoutLogEntry } from '../types';
+import { ACHIEVEMENTS } from '../achievements';
 
 const STORAGE_KEY = 'fitness_pro_logs_v1';
+const ACHIEVEMENTS_KEY = 'fitness_pro_achievements_v1';
+
+export const getUnlockedAchievements = (): Record<string, string> => {
+  try {
+    const data = localStorage.getItem(ACHIEVEMENTS_KEY);
+    return data ? JSON.parse(data) : {};
+  } catch (e) {
+    return {};
+  }
+};
 
 export const getLogs = (): Record<string, DailyLog> => {
   try {
@@ -18,6 +29,24 @@ export const saveLog = (log: DailyLog) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   // Dispatch event for reactive updates across components if needed
   window.dispatchEvent(new Event('storage-update'));
+
+  // Check achievements
+  const unlocked = getUnlockedAchievements();
+  const newlyUnlocked: string[] = [];
+  
+  ACHIEVEMENTS.forEach(ach => {
+    if (!unlocked[ach.id]) {
+      if (ach.condition(updated, log.date)) {
+        unlocked[ach.id] = new Date().toISOString();
+        newlyUnlocked.push(ach.id);
+      }
+    }
+  });
+
+  if (newlyUnlocked.length > 0) {
+    localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(unlocked));
+    window.dispatchEvent(new CustomEvent('achievements-unlocked', { detail: newlyUnlocked }));
+  }
 };
 
 export const getLogByDate = (date: string): DailyLog | undefined => {

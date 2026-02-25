@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import Workout from './pages/Workout';
 import Plan from './pages/Plan';
 import Stats from './pages/Stats';
+import TrophyRoom from './pages/TrophyRoom';
 
 const App: React.FC = () => {
   return (
@@ -15,6 +16,7 @@ const App: React.FC = () => {
           <Route path="today" element={<Dashboard />} />
           <Route path="plan" element={<Plan />} />
           <Route path="stats" element={<Stats />} />
+          <Route path="trophies" element={<TrophyRoom />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

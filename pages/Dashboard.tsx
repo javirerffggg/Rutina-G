@@ -3,7 +3,50 @@ import { useNavigate } from 'react-router-dom';
 import { getCurrentPhase, getTodayDateString, getGymSchedule } from '../utils';
 import { getLogs, saveLog } from '../services/storage';
 import { DailyLog } from '../types';
-import { Activity, Battery, Moon, Scale, Utensils, CheckCircle2, Circle, AlertTriangle, Clock } from 'lucide-react';
+import { Activity, Battery, Moon, Scale, Utensils, CheckCircle2, Circle, AlertTriangle, Clock, Flame } from 'lucide-react';
+
+// --- NUEVO: Mapa de implicación muscular por ejercicio ---
+const EXERCISE_MUSCLE_MAP: Record<string, string[]> = {
+  // PUSH
+  'push_bench_mach': ['chest', 'triceps'],
+  'push_incline_mach': ['chest', 'triceps'],
+  'push_dips': ['chest', 'triceps'],
+  'push_shoulder_mach': ['shoulders', 'triceps'],
+  'push_lat_raise': ['shoulders'],
+  'push_tri_seat': ['triceps'],
+  'push_tri_rope': ['triceps'],
+  // PULL
+  'pull_pullups': ['back', 'biceps'],
+  'pull_row_div': ['back', 'biceps'],
+  'pull_row_low': ['back', 'biceps'],
+  'pull_rear_fly': ['shoulders', 'back'],
+  'pull_shrugs': ['back'],
+  'pull_curl_preach': ['biceps'],
+  'pull_hammer': ['biceps'],
+  // LEGS
+  'legs_hack': ['quads', 'glutes'],
+  'legs_press': ['quads', 'glutes'],
+  'legs_ext': ['quads'],
+  'legs_calves': ['calves'],
+  'legs_abs_vkr': ['abs'],
+  // UPPER
+  'upp_inc_db': ['chest', 'triceps'],
+  'upp_lat_pull': ['back', 'biceps'],
+  'upp_dips': ['chest', 'triceps'],
+  'upp_low_row': ['back', 'biceps'],
+  'upp_peck': ['chest'],
+  'upp_pullover': ['back'],
+  'upp_tri_mach': ['triceps'],
+  'upp_curl_pre': ['biceps'],
+  // LOWER
+  'low_hip': ['glutes', 'hamstrings'],
+  'low_rdl': ['hamstrings', 'glutes'],
+  'low_curl': ['hamstrings'],
+  'low_press_high': ['glutes', 'hamstrings'],
+  'low_goblet': ['quads'],
+  'low_calves': ['calves'],
+  'low_crunch': ['abs'],
+};
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -12,14 +55,45 @@ const Dashboard: React.FC = () => {
   const [log, setLog] = useState<DailyLog>({ date: today });
   const [weightInput, setWeightInput] = useState('');
   
+  // --- NUEVO: Estado para el volumen muscular ---
+  const [muscleVolume, setMuscleVolume] = useState<Record<string, number>>({});
+  
   const specialSchedule = getGymSchedule(today);
 
   useEffect(() => {
-    const saved = getLogs()[today];
+    const saved = getLogs();
     if (saved) {
-      setLog(saved);
-      if (saved.weight) setWeightInput(saved.weight.toString());
+      setLog(saved[today] || { date: today });
+      if (saved[today]?.weight) setWeightInput(saved[today].weight.toString());
     }
+
+    // --- NUEVO: Cálculo de fatiga semanal ---
+    const calculateWeeklyVolume = () => {
+      const todayDate = new Date(today);
+      const volumeData: Record<string, number> = {
+        chest: 0, back: 0, shoulders: 0, biceps: 0, triceps: 0,
+        quads: 0, hamstrings: 0, glutes: 0, calves: 0, abs: 0
+      };
+
+      Object.keys(saved).forEach(dateStr => {
+        const logDate = new Date(dateStr);
+        const diffTime = Math.abs(todayDate.getTime() - logDate.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays <= 7 && saved[dateStr].exercises) {
+          saved[dateStr].exercises!.forEach(ex => {
+             const muscles = EXERCISE_MUSCLE_MAP[ex.exerciseId] || [];
+             const reps = ex.sets.reduce((sum, set) => sum + (set.reps || 0), 0);
+             muscles.forEach(m => {
+               if (volumeData[m] !== undefined) volumeData[m] += reps;
+             });
+          });
+        }
+      });
+      setMuscleVolume(volumeData);
+    };
+
+    calculateWeeklyVolume();
   }, [today]);
 
   const handleWeightSave = () => {
@@ -168,8 +242,107 @@ const Dashboard: React.FC = () => {
         {renderRating('sleep', <Moon size={16} />, 'text-purple-400')}
         {renderRating('stress', <Activity size={16} />, 'text-red-400')}
       </section>
+
+      {/* --- NUEVO: MAPA DE CALOR MUSCULAR --- */}
+      <section className="glass-panel p-5 rounded-2xl space-y-4">
+        <div className="flex justify-between items-end">
+          <div>
+            <h2 className="text-sm font-bold text-white flex items-center gap-2">
+              <Flame size={16} className="text-brand-400" /> Carga Muscular (7D)
+            </h2>
+            <p className="text-[10px] text-slate-400 mt-1">Volumen acumulado por grupo</p>
+          </div>
+          <div className="flex flex-col gap-1 text-[9px] font-bold uppercase tracking-wider">
+            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-slate-800 border border-slate-600"></div> Descanso</span>
+            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-amber-500"></div> Óptimo</span>
+            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"></div> Fatiga</span>
+          </div>
+        </div>
+
+        <div className="flex justify-around items-center pt-4 pb-2">
+          {/* FIGURA FRONTAL */}
+          <div className="flex flex-col items-center">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Frontal</span>
+            <div className="flex flex-col items-center gap-1">
+              <div className="w-6 h-6 bg-slate-800 rounded-full mb-0.5 border border-white/5" /> {/* Cabeza */}
+              <div className="flex gap-1">
+                {/* Brazo Izquierdo */}
+                <div className="flex flex-col gap-1 mt-1">
+                  <div className={`w-4 h-5 rounded-full transition-colors ${getVolumeColor(muscleVolume.shoulders)}`} />
+                  <div className={`w-3 h-7 rounded-full mx-auto transition-colors ${getVolumeColor(muscleVolume.biceps)}`} />
+                </div>
+                {/* Torso */}
+                <div className="flex flex-col gap-1">
+                  <div className="flex gap-1">
+                    <div className={`w-7 h-8 rounded-tl-xl rounded-bl-sm transition-colors ${getVolumeColor(muscleVolume.chest)}`} />
+                    <div className={`w-7 h-8 rounded-tr-xl rounded-br-sm transition-colors ${getVolumeColor(muscleVolume.chest)}`} />
+                  </div>
+                  <div className={`w-10 h-10 mx-auto rounded-md transition-colors ${getVolumeColor(muscleVolume.abs)}`} />
+                </div>
+                {/* Brazo Derecho */}
+                <div className="flex flex-col gap-1 mt-1">
+                  <div className={`w-4 h-5 rounded-full transition-colors ${getVolumeColor(muscleVolume.shoulders)}`} />
+                  <div className={`w-3 h-7 rounded-full mx-auto transition-colors ${getVolumeColor(muscleVolume.biceps)}`} />
+                </div>
+              </div>
+              {/* Piernas (Quads) */}
+              <div className="flex gap-1.5 mt-1">
+                <div className={`w-6 h-14 rounded-lg transition-colors ${getVolumeColor(muscleVolume.quads)}`} />
+                <div className={`w-6 h-14 rounded-lg transition-colors ${getVolumeColor(muscleVolume.quads)}`} />
+              </div>
+            </div>
+          </div>
+
+          {/* FIGURA TRASERA */}
+          <div className="flex flex-col items-center">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Trasero</span>
+            <div className="flex flex-col items-center gap-1">
+              <div className="w-6 h-6 bg-slate-800 rounded-full mb-0.5 border border-white/5" /> {/* Cabeza */}
+              <div className="flex gap-1">
+                {/* Brazo Izquierdo */}
+                <div className="flex flex-col gap-1 mt-1">
+                  <div className={`w-4 h-5 rounded-full transition-colors ${getVolumeColor(muscleVolume.shoulders)}`} />
+                  <div className={`w-3 h-7 rounded-full mx-auto transition-colors ${getVolumeColor(muscleVolume.triceps)}`} />
+                </div>
+                {/* Torso Trasero */}
+                <div className="flex flex-col gap-1">
+                  <div className={`w-[52px] h-8 rounded-t-xl rounded-b-sm transition-colors ${getVolumeColor(muscleVolume.back)}`} />
+                  <div className={`w-10 h-10 mx-auto rounded-md transition-colors ${getVolumeColor(muscleVolume.back)}`} />
+                </div>
+                {/* Brazo Derecho */}
+                <div className="flex flex-col gap-1 mt-1">
+                  <div className={`w-4 h-5 rounded-full transition-colors ${getVolumeColor(muscleVolume.shoulders)}`} />
+                  <div className={`w-3 h-7 rounded-full mx-auto transition-colors ${getVolumeColor(muscleVolume.triceps)}`} />
+                </div>
+              </div>
+              {/* Tren Inferior Trasero */}
+              <div className="flex flex-col gap-1 mt-1 items-center">
+                <div className="flex gap-1">
+                  <div className={`w-7 h-5 rounded-t-lg rounded-b-sm transition-colors ${getVolumeColor(muscleVolume.glutes)}`} />
+                  <div className={`w-7 h-5 rounded-t-lg rounded-b-sm transition-colors ${getVolumeColor(muscleVolume.glutes)}`} />
+                </div>
+                <div className="flex gap-1">
+                  <div className={`w-6 h-8 rounded-sm transition-colors ${getVolumeColor(muscleVolume.hamstrings)}`} />
+                  <div className={`w-6 h-8 rounded-sm transition-colors ${getVolumeColor(muscleVolume.hamstrings)}`} />
+                </div>
+                <div className="flex gap-1">
+                  <div className={`w-5 h-7 rounded-b-lg transition-colors ${getVolumeColor(muscleVolume.calves)}`} />
+                  <div className={`w-5 h-7 rounded-b-lg transition-colors ${getVolumeColor(muscleVolume.calves)}`} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
+};
+
+// --- Función Helper para el Color ---
+const getVolumeColor = (reps: number = 0) => {
+  if (reps < 30) return 'bg-slate-800 border border-slate-700'; // Descansado (menos de ~3 series)
+  if (reps < 120) return 'bg-amber-500 border border-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.2)]'; // Óptimo (~3 a 12 series)
+  return 'bg-red-500 border border-red-400 shadow-[0_0_15px_rgba(239,68,68,0.5)]'; // Fatigado / Frecuencia alta (más de ~12 series)
 };
 
 export default Dashboard;

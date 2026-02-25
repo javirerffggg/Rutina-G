@@ -3,7 +3,7 @@ import { ResponsiveContainer, ComposedChart, Line, Area, XAxis, YAxis, Tooltip, 
 import { getLogs, saveLog } from '../services/storage';
 import { getTodayDateString, calculateMovingAverage, calculateLinearRegression, calculateOneRM } from '../utils';
 import { DailyLog } from '../types';
-import { Scale, Info, Ruler, Camera, Copy, Check, TrendingDown, Pizza, AlertCircle, Dumbbell } from 'lucide-react';
+import { Scale, Info, Ruler, Camera, Copy, Check, TrendingDown, Pizza, AlertCircle, Dumbbell, Trophy, TrendingUp } from 'lucide-react';
 import { EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS, EXERCISES_UPPER, EXERCISES_LOWER } from '../constants';
 
 const Stats: React.FC = () => {
@@ -74,6 +74,10 @@ const Stats: React.FC = () => {
       };
     })
     .filter(Boolean) as { date: string, oneRM: number, volume: number }[];
+
+  // --- NUEVO: Cálculos para las tarjetas de resumen del ejercicio ---
+  const maxExercise1RM = exerciseLogs.length > 0 ? Math.max(...exerciseLogs.map(l => l.oneRM)) : 0;
+  const progress1RM = exerciseLogs.length > 1 ? exerciseLogs[exerciseLogs.length - 1].oneRM - exerciseLogs[0].oneRM : 0;
 
   // Statistics
   const currentWeight = todayLog.weight || (weightLogs.length > 0 ? weightLogs[weightLogs.length - 1].weight : 0);
@@ -245,6 +249,30 @@ Estrés: ${todayLog.stress || '-'}/5
               <option key={ex.id} value={ex.id}>{ex.name}</option>
             ))}
           </select>
+
+          {/* NUEVO: Tarjetas de resumen añadidas */}
+          {exerciseLogs.length > 0 && (
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="bg-slate-900/40 p-3 rounded-xl border border-white/5">
+                <div className="flex items-center gap-1.5 text-amber-500 mb-1">
+                  <Trophy size={14} />
+                  <span className="text-[9px] font-bold uppercase tracking-wider">Récord 1RM</span>
+                </div>
+                <p className="text-xl font-bold text-white">
+                  {maxExercise1RM} <span className="text-xs text-slate-500 font-normal">kg</span>
+                </p>
+              </div>
+              <div className="bg-slate-900/40 p-3 rounded-xl border border-white/5">
+                <div className="flex items-center gap-1.5 text-emerald-400 mb-1">
+                  <TrendingUp size={14} />
+                  <span className="text-[9px] font-bold uppercase tracking-wider">Evolución</span>
+                </div>
+                <p className="text-xl font-bold text-white">
+                  {progress1RM > 0 ? '+' : ''}{progress1RM.toFixed(1)} <span className="text-xs text-slate-500 font-normal">kg</span>
+                </p>
+              </div>
+            </div>
+          )}
 
           {exerciseLogs.length > 0 ? (
             <div className="h-48 w-full">

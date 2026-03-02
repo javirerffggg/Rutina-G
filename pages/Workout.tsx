@@ -387,7 +387,10 @@ const Workout: React.FC = () => {
 
                 {/* Interaction Area (Accordion) */}
                 {isExpanded && !isCompleted && (
-                  <div className="px-4 pb-4 animate-in slide-in-from-top-2 duration-300 relative z-10">
+                  <div 
+                    onClick={(e) => e.stopPropagation()}
+                    className="px-4 pb-4 animate-in slide-in-from-top-2 duration-300 relative z-10"
+                  >
                     <div className="space-y-2">
                       <div className="grid grid-cols-12 gap-2 text-[9px] text-slate-500 font-bold uppercase tracking-wider text-center mb-1 pl-6">
                         <span className="col-span-4">Peso (kg)</span>

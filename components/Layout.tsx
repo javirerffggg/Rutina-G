@@ -56,21 +56,21 @@ const Layout: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen text-dark-text overflow-hidden font-sans">
+    <div className="flex flex-col h-screen text-white overflow-hidden font-sans bg-black">
       {/* Toast Notification */}
       {toastAchievement && (
-        <div className="fixed top-4 left-4 right-4 z-[100] animate-in slide-in-from-top-10 fade-in duration-500">
-          <div className={`p-4 rounded-2xl border shadow-2xl flex items-center gap-4 bg-slate-900/95 backdrop-blur-xl ${getTierStyles(toastAchievement.tier).border}`}>
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 animate-[spin_3s_ease-in-out] ${getTierStyles(toastAchievement.tier).bg}`}>
+        <div className="fixed top-6 left-6 right-6 z-[100] animate-in slide-in-from-top-10 fade-in duration-700">
+          <div className={`p-5 rounded-3xl border shadow-2xl flex items-center gap-5 glass-panel premium-bisel ${getTierStyles(toastAchievement.tier).border}`}>
+            <div className={`w-14 h-14 rounded-full flex items-center justify-center shrink-0 animate-[spin_3s_ease-in-out] ${getTierStyles(toastAchievement.tier).bg}`}>
               {React.createElement((Icons as any)[toastAchievement.icon] || Icons.Trophy, { 
-                size: 24, 
+                size: 28, 
                 className: getTierStyles(toastAchievement.tier).text 
               })}
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-brand-400 mb-0.5">¡Logro Desbloqueado!</p>
-              <h3 className="text-white font-bold leading-tight">{toastAchievement.title}</h3>
-              <p className="text-xs text-slate-400 mt-0.5">{toastAchievement.description}</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-400 mb-1">¡Logro Desbloqueado!</p>
+              <h3 className="text-white font-display font-bold text-lg leading-tight tracking-tight">{toastAchievement.title}</h3>
+              <p className="text-xs text-zinc-400 mt-1 leading-relaxed">{toastAchievement.description}</p>
             </div>
           </div>
         </div>
@@ -86,70 +86,70 @@ const Layout: React.FC = () => {
         }
         setLastScrollY(currentScrollY);
       }}>
-        <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-brand-900/20 to-transparent pointer-events-none z-0"></div>
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-brand-900/10 to-transparent pointer-events-none z-0"></div>
         <div className="relative z-10">
           <Outlet />
         </div>
       </main>
       
-      <nav className={`fixed bottom-0 left-0 right-0 glass-panel pb-safe pt-2 px-6 z-50 rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.3)] transition-transform duration-300 ${showNav ? 'translate-y-0' : 'translate-y-full'}`}>
-        <div className="flex justify-between items-center h-16 max-w-md mx-auto">
+      <nav className={`fixed bottom-0 left-0 right-0 glass-panel pb-safe pt-2 px-6 z-50 rounded-t-[32px] shadow-[0_-8px_40px_rgba(0,0,0,0.6)] transition-premium ${showNav ? 'translate-y-0' : 'translate-y-full'}`}>
+        <div className="flex justify-between items-center h-20 max-w-md mx-auto">
           <NavLink 
             to="/plan" 
-            className={({ isActive }) => `flex flex-col items-center gap-1.5 transition-all duration-300 ${isActive ? 'text-gold-500 scale-110' : 'text-slate-500 hover:text-slate-300'}`}
+            className={({ isActive }) => `flex flex-col items-center gap-1.5 transition-premium ${isActive ? 'text-gold-500 scale-110' : 'text-zinc-500 hover:text-zinc-300'}`}
           >
             {({ isActive }) => (
               <>
-                <CalendarRange size={22} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[10px] font-bold tracking-wide uppercase">Plan</span>
+                <CalendarRange size={24} strokeWidth={isActive ? 2.5 : 2} />
+                <span className="text-[10px] font-bold tracking-[0.15em] uppercase">Plan</span>
               </>
             )}
           </NavLink>
 
           <NavLink 
             to="/today" 
-            className={({ isActive }) => `flex flex-col items-center gap-1.5 transition-all duration-300 ${isActive ? 'text-brand-500 scale-110' : 'text-slate-500 hover:text-slate-300'}`}
+            className={({ isActive }) => `flex flex-col items-center gap-1.5 transition-premium ${isActive ? 'text-brand-500 scale-110' : 'text-zinc-500 hover:text-zinc-300'}`}
           >
             {({ isActive }) => (
               <>
-                <LayoutDashboard size={22} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[10px] font-bold tracking-wide uppercase">Hoy</span>
+                <LayoutDashboard size={24} strokeWidth={isActive ? 2.5 : 2} />
+                <span className="text-[10px] font-bold tracking-[0.15em] uppercase">Hoy</span>
               </>
             )}
           </NavLink>
           
           <NavLink 
             to="/" 
-            className={({ isActive }) => `flex flex-col items-center gap-1.5 transition-all duration-300 ${isActive ? 'text-emerald-400 scale-110' : 'text-slate-500 hover:text-slate-300'}`}
+            className={({ isActive }) => `flex flex-col items-center gap-1.5 transition-premium ${isActive ? 'text-emerald-400 scale-110' : 'text-zinc-500 hover:text-zinc-300'}`}
           >
             {({ isActive }) => (
               <>
-                <Dumbbell size={22} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[10px] font-bold tracking-wide uppercase">Entreno</span>
+                <Dumbbell size={24} strokeWidth={isActive ? 2.5 : 2} />
+                <span className="text-[10px] font-bold tracking-[0.15em] uppercase">Entreno</span>
               </>
             )}
           </NavLink>
           
           <NavLink 
             to="/stats" 
-            className={({ isActive }) => `flex flex-col items-center gap-1.5 transition-all duration-300 ${isActive ? 'text-purple-400 scale-110' : 'text-slate-500 hover:text-slate-300'}`}
+            className={({ isActive }) => `flex flex-col items-center gap-1.5 transition-premium ${isActive ? 'text-purple-400 scale-110' : 'text-zinc-500 hover:text-zinc-300'}`}
           >
             {({ isActive }) => (
               <>
-                <Scale size={22} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[10px] font-bold tracking-wide uppercase">Peso</span>
+                <Scale size={24} strokeWidth={isActive ? 2.5 : 2} />
+                <span className="text-[10px] font-bold tracking-[0.15em] uppercase">Peso</span>
               </>
             )}
           </NavLink>
 
           <NavLink 
             to="/trophies" 
-            className={({ isActive }) => `flex flex-col items-center gap-1.5 transition-all duration-300 ${isActive ? 'text-amber-500 scale-110' : 'text-slate-500 hover:text-slate-300'}`}
+            className={({ isActive }) => `flex flex-col items-center gap-1.5 transition-premium ${isActive ? 'text-amber-500 scale-110' : 'text-zinc-500 hover:text-zinc-300'}`}
           >
             {({ isActive }) => (
               <>
-                <Trophy size={22} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[10px] font-bold tracking-wide uppercase">Logros</span>
+                <Trophy size={24} strokeWidth={isActive ? 2.5 : 2} />
+                <span className="text-[10px] font-bold tracking-[0.15em] uppercase">Logros</span>
               </>
             )}
           </NavLink>

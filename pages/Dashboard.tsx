@@ -115,25 +115,25 @@ const Dashboard: React.FC = () => {
   );
 
   return (
-    <div className="p-5 space-y-6">
-      <header className="flex justify-between items-end">
+    <div className="p-6 space-y-8 pb-32">
+      <header className="flex justify-between items-start">
         <div>
-          <p className="text-slate-400 text-xs font-medium mb-1 uppercase tracking-wider">
+          <p className="text-zinc-500 text-[10px] font-bold mb-1 uppercase tracking-[0.2em]">
             {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
           </p>
-          <h1 className="text-3xl font-bold text-white">Resumen Diario</h1>
+          <h1 className="text-4xl font-display font-bold text-white tracking-tight">Resumen Diario</h1>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <button 
             onClick={toggleOledMode}
-            className={`p-2 rounded-lg border transition-colors ${isOledMode ? 'bg-brand-500/20 border-brand-500/50 text-brand-400' : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:text-white'}`}
+            className={`p-2.5 rounded-xl border transition-premium ${isOledMode ? 'bg-brand-500/20 border-brand-500/50 text-brand-400' : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-white'}`}
             title="Modo OLED (Ahorro de batería)"
           >
-            <Settings2 size={16} />
+            <Settings2 size={18} />
           </button>
           <div 
-            onClick={() => navigate('/')}
-            className="bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700 text-[10px] text-slate-300 cursor-pointer flex items-center"
+            onClick={() => navigate('/plan')}
+            className="bg-zinc-900 px-4 py-2 rounded-xl border border-zinc-800 text-[10px] font-bold uppercase tracking-widest text-zinc-400 cursor-pointer flex items-center transition-premium hover:border-zinc-700"
           >
             {phase.name.split(' ')[0]}
           </div>
@@ -142,19 +142,19 @@ const Dashboard: React.FC = () => {
 
       {/* Special Hours Alert */}
       {specialSchedule && (
-        <div className={`p-4 rounded-xl border flex items-center gap-3 animate-in slide-in-from-top-4 
+        <div className={`p-5 rounded-3xl border flex items-center gap-4 animate-in slide-in-from-top-4 transition-premium
           ${specialSchedule === 'Cerrado' 
-            ? 'bg-red-900/20 border-red-500/30' 
-            : 'bg-gold-500/10 border-gold-500/30'}`}
+            ? 'bg-red-950/30 border-red-500/30' 
+            : 'bg-amber-950/30 border-amber-500/30'}`}
         >
-          <div className={`p-2 rounded-full ${specialSchedule === 'Cerrado' ? 'bg-red-500/10 text-red-500' : 'bg-gold-500/10 text-gold-500'}`}>
-             {specialSchedule === 'Cerrado' ? <AlertTriangle size={20} /> : <Clock size={20} />}
+          <div className={`p-3 rounded-full ${specialSchedule === 'Cerrado' ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500'}`}>
+             {specialSchedule === 'Cerrado' ? <AlertTriangle size={24} /> : <Clock size={24} />}
           </div>
           <div>
-            <p className={`text-xs font-bold uppercase tracking-wide ${specialSchedule === 'Cerrado' ? 'text-red-400' : 'text-gold-500'}`}>
+            <p className={`text-[10px] font-bold uppercase tracking-[0.15em] ${specialSchedule === 'Cerrado' ? 'text-red-400' : 'text-amber-500'}`}>
               Horario Especial Hoy
             </p>
-            <p className="text-white font-bold text-lg leading-none mt-1">
+            <p className="text-white font-display font-bold text-2xl leading-none mt-1">
               {specialSchedule}
             </p>
           </div>
@@ -163,40 +163,40 @@ const Dashboard: React.FC = () => {
 
       {/* Main Action Card */}
       <div 
-        onClick={() => navigate('/workout')}
-        className={`relative overflow-hidden p-5 rounded-2xl border transition-all duration-500 cursor-pointer group
+        onClick={() => navigate('/')}
+        className={`relative overflow-hidden p-6 rounded-[32px] border transition-premium cursor-pointer group shadow-2xl
           ${log.workoutCompleted 
-            ? 'bg-gradient-to-br from-emerald-900/40 to-slate-900 border-emerald-500/30' 
-            : 'bg-gradient-to-br from-brand-600 to-brand-800 border-brand-400/50 shadow-lg shadow-brand-900/40'}`}
+            ? 'bg-zinc-900 border-emerald-500/30' 
+            : 'bg-brand-600 border-brand-400/50 shadow-brand-900/20'}`}
       >
         <div className="flex justify-between items-start z-10 relative">
           <div>
-             <h3 className={`text-xl font-bold mb-1 ${log.workoutCompleted ? 'text-emerald-400' : 'text-white'}`}>
+             <h3 className={`text-2xl font-display font-bold mb-1 ${log.workoutCompleted ? 'text-emerald-400' : 'text-white'}`}>
                {log.workoutCompleted ? 'Entreno Completado' : 'Entreno de Hoy'}
              </h3>
-             <p className={`text-xs ${log.workoutCompleted ? 'text-emerald-200/60' : 'text-brand-100'}`}>
+             <p className={`text-xs font-medium ${log.workoutCompleted ? 'text-zinc-500' : 'text-brand-100'}`}>
                {log.workoutCompleted ? '¡Buen trabajo! Descansa.' : 'Toca registrar tu sesión.'}
              </p>
           </div>
-          <div className={`p-2 rounded-full ${log.workoutCompleted ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/20 text-white'}`}>
-            {log.workoutCompleted ? <CheckCircle2 size={24} /> : <Activity size={24} />}
+          <div className={`p-3 rounded-full transition-premium group-hover:scale-110 ${log.workoutCompleted ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/20 text-white'}`}>
+            {log.workoutCompleted ? <CheckCircle2 size={28} /> : <Activity size={28} />}
           </div>
         </div>
         
         {/* Progress bar decoration */}
         {!log.workoutCompleted && (
-           <div className="mt-4 w-full bg-black/20 h-1.5 rounded-full overflow-hidden">
+           <div className="mt-6 w-full bg-black/20 h-2 rounded-full overflow-hidden">
              <div className="h-full bg-white/40 w-1/3 rounded-full"></div>
            </div>
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-5">
         {/* Weight Input - Premium */}
-        <section className="glass-card p-4 rounded-xl flex flex-col justify-between">
-          <div className="flex items-center gap-2 mb-3 text-brand-400">
+        <section className="glass-card p-6 rounded-3xl flex flex-col justify-between premium-bisel">
+          <div className="flex items-center gap-2 mb-4 text-brand-400">
             <Scale size={18} />
-            <span className="text-xs font-bold uppercase">Peso (kg)</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest">Peso</span>
           </div>
           <div className="flex items-baseline gap-1">
              <input 
@@ -205,44 +205,47 @@ const Dashboard: React.FC = () => {
               onChange={(e) => setWeightInput(e.target.value)}
               onBlur={handleWeightSave}
               placeholder="00.0" 
-              className="w-full bg-transparent text-3xl font-bold text-white placeholder-slate-700 focus:outline-none"
+              className="w-full bg-transparent text-4xl font-display font-bold text-white placeholder-zinc-800 focus:outline-none tracking-tighter"
             />
+            <span className="text-xs font-bold text-zinc-500 uppercase">kg</span>
           </div>
         </section>
 
         {/* Nutrition Info */}
-        <section className="glass-card p-4 rounded-xl flex flex-col justify-between">
-          <div className="flex items-center gap-2 mb-2 text-orange-400">
+        <section className="glass-card p-6 rounded-3xl flex flex-col justify-between premium-bisel">
+          <div className="flex items-center gap-2 mb-3 text-amber-500">
             <Utensils size={18} />
-            <span className="text-xs font-bold uppercase">Nutrición</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest">Nutrición</span>
           </div>
-          <p className="text-xs text-slate-300 leading-tight">
+          <p className="text-xs font-medium text-zinc-300 leading-relaxed">
             {phase.nutritionGoal.split('.')[0]}
           </p>
         </section>
       </div>
 
       {/* Biofeedback */}
-      <section className="space-y-3">
-        <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider px-1">Biofeedback</h2>
-        {renderRating('energy', <Battery size={16} />, 'text-yellow-400')}
-        {renderRating('sleep', <Moon size={16} />, 'text-purple-400')}
-        {renderRating('stress', <Activity size={16} />, 'text-red-400')}
+      <section className="space-y-4">
+        <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] px-1">Biofeedback</h2>
+        <div className="space-y-3">
+          {renderRating('energy', <Battery size={18} />, 'text-yellow-400')}
+          {renderRating('sleep', <Moon size={18} />, 'text-purple-400')}
+          {renderRating('stress', <Activity size={18} />, 'text-red-400')}
+        </div>
       </section>
 
       {/* --- NUEVO: MAPA DE CALOR MUSCULAR --- */}
-      <section className="glass-panel p-5 rounded-2xl space-y-4">
+      <section className="glass-panel p-6 rounded-[32px] space-y-6 premium-bisel">
         <div className="flex justify-between items-end">
           <div>
-            <h2 className="text-sm font-bold text-white flex items-center gap-2">
-              <Flame size={16} className="text-brand-400" /> Carga Muscular (7D)
+            <h2 className="text-lg font-display font-bold text-white flex items-center gap-2">
+              <Flame size={20} className="text-brand-400" /> Carga Muscular
             </h2>
-            <p className="text-[10px] text-slate-400 mt-1">Volumen acumulado por grupo</p>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Volumen 7 Días</p>
           </div>
-          <div className="flex flex-col gap-1 text-[9px] font-bold uppercase tracking-wider">
-            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-slate-800 border border-slate-600"></div> Descanso</span>
-            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-amber-500"></div> Óptimo</span>
-            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"></div> Fatiga</span>
+          <div className="flex flex-col gap-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-500">
+            <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-zinc-800 border border-zinc-700"></div> Descanso</span>
+            <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-amber-500"></div> Óptimo</span>
+            <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]"></div> Fatiga</span>
           </div>
         </div>
 

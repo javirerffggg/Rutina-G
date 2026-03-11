@@ -92,3 +92,20 @@ export const calculateLinearRegression = (xValues: number[], yValues: number[]) 
 
   return { slope, intercept };
 };
+
+export const calculatePlates = (totalWeight: number, barWeight: number = 20): number[] => {
+  const plates = [25, 20, 15, 10, 5, 2.5, 1.25];
+  let weightOnSide = (totalWeight - barWeight) / 2;
+  const result: number[] = [];
+
+  if (weightOnSide <= 0) return [];
+
+  for (const plate of plates) {
+    while (weightOnSide >= plate) {
+      result.push(plate);
+      weightOnSide -= plate;
+    }
+  }
+
+  return result;
+};

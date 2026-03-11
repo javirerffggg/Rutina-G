@@ -6,6 +6,9 @@
     <meta name="theme-color" content="#020617" />
     <title>Fitness Pro Elite</title>
     <link rel="manifest" href="/manifest.json" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -13,6 +16,7 @@
           extend: {
             fontFamily: {
               sans: ['Inter', 'system-ui', 'sans-serif'],
+              display: ['Outfit', 'sans-serif'],
             },
             colors: {
               brand: {
@@ -28,17 +32,21 @@
                 600: '#d97706',
               },
               dark: {
-                bg: '#020617', // Slate 950
-                card: '#0f172a', // Slate 900
-                glass: 'rgba(15, 23, 42, 0.6)',
-                text: '#f8fafc',
-                muted: '#64748b'
+                bg: '#000000', // True OLED Black
+                card: '#09090b', // Zinc 950
+                glass: 'rgba(9, 9, 11, 0.7)',
+                text: '#ffffff',
+                muted: '#71717a' // Zinc 500
               }
             },
+            borderRadius: {
+              '3xl': '32px',
+            },
             backgroundImage: {
-              'premium-gradient': 'linear-gradient(to bottom right, #020617, #0f172a)',
+              'premium-gradient': 'linear-gradient(to bottom right, #000000, #09090b)',
               'gold-gradient': 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)',
               'blue-gradient': 'linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)',
+              'bisel-top': 'linear-gradient(to bottom, rgba(255,255,255,0.1) 0%, transparent 100%)',
             }
           }
         }
@@ -46,12 +54,17 @@
     </script>
     <style>
       body {
-        background-color: #020617;
-        background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #020617 70%);
-        color: #f8fafc;
+        background-color: #000000;
+        color: #ffffff;
         -webkit-tap-highlight-color: transparent;
         font-family: 'Inter', sans-serif;
+        overflow-x: hidden;
       }
+      
+      h1, h2, h3, .font-display {
+        font-family: 'Outfit', sans-serif;
+      }
+
       /* Hide scrollbar for Chrome, Safari and Opera */
       .no-scrollbar::-webkit-scrollbar {
         display: none;
@@ -63,31 +76,57 @@
       }
       
       .glass-panel {
-        background: rgba(15, 23, 42, 0.6);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        background: rgba(9, 9, 11, 0.7);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .glass-panel::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
       }
       
       .glass-card {
-        background: rgba(30, 41, 59, 0.4);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
+        background: rgba(24, 24, 27, 0.4);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
         border: 1px solid rgba(255, 255, 255, 0.08);
+        transition: all 0.3s ease-out;
       }
 
-      /* OLED Mode Styles */
-      body.oled-mode {
-        background-color: #000000;
-        background-image: none;
+      .glass-card:active {
+        transform: scale(0.98);
+        background: rgba(24, 24, 27, 0.6);
       }
-      body.oled-mode .glass-panel {
-        background: rgba(10, 10, 10, 0.8);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+
+      .premium-bisel {
+        position: relative;
       }
-      body.oled-mode .glass-card {
-        background: rgba(15, 15, 15, 0.8);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+      
+      .premium-bisel::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        padding: 1px;
+        background: linear-gradient(to bottom, rgba(255,255,255,0.15), transparent, rgba(0,0,0,0.2));
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        pointer-events: none;
+      }
+
+      .transition-premium {
+        transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
       }
     </style>
   <script type="importmap">

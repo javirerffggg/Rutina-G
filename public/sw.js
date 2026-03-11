@@ -6,7 +6,7 @@ self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 
 // Active timer state
 let restTimerInterval = null;
-let restEndsAt = 0; // absolute epoch ms
+let restEndsAt = 0;
 
 const clearRestTimer = () => {
   if (restTimerInterval) { clearInterval(restTimerInterval); restTimerInterval = null; }
@@ -21,7 +21,7 @@ self.addEventListener('message', (event) => {
   const data = event.data;
   if (!data) return;
 
-  // ── Start a new background rest timer ──────────────────────────────────────
+  // ── Start / restart rest timer ──────────────────────────────────────────────
   if (data.type === 'START_REST_TIMER') {
     clearRestTimer();
     const { seconds } = data;
@@ -29,12 +29,10 @@ self.addEventListener('message', (event) => {
 
     restTimerInterval = setInterval(async () => {
       const remaining = Math.max(0, Math.round((restEndsAt - Date.now()) / 1000));
-      // Broadcast tick to all open clients so they can sync their UI
       await broadcastToClients({ type: 'REST_TIMER_TICK', remaining });
 
       if (remaining <= 0) {
         clearRestTimer();
-        // Fire notification
         self.registration.showNotification('¡Descanso terminado!', {
           body: 'Prepárate para la siguiente serie 💪',
           icon: '/icons/icon-192.png',
@@ -45,26 +43,32 @@ self.addEventListener('message', (event) => {
           vibrate: [200, 100, 200, 100, 400],
           data: { url: '/' },
           actions: [
-            { action: 'open', title: 'Abrir app' }
+            { action: 'open', title: '💪 Volver al entreno' }
           ]
         });
       }
     }, 1000);
   }
 
-  // ── Cancel rest timer (set completed early) ─────────────────────────────────
-  if (data.type === 'CANCEL_REST_TIMER') {
-    clearRestTimer();
+  // ── Add 30s ─────────────────────────────────────────────────────────────────
+  if (data.type === 'ADD_REST_SECONDS') {
+    restEndsAt += (data.seconds || 30) * 1000;
   }
 
-  // ── Legacy: one-shot notification (keep for backwards compat) ───────────────
+  // ── Cancel ──────────────────────────────────────────────────────────────────
+  if (data.type === 'CANCEL_REST_TIMER') {
+    clearRestTimer();
+    broadcastToClients({ type: 'REST_TIMER_TICK', remaining: null });
+  }
+
+  // ── Legacy ───────────────────────────────────────────────────────────────────
   if (data.type === 'SCHEDULE_NOTIFICATION') {
     const { title, options, delay } = data;
     setTimeout(() => self.registration.showNotification(title, options), delay);
   }
 });
 
-// ── Notification click: focus or open the app ───────────────────────────────
+// ── Notification click ────────────────────────────────────────────────────────
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const targetUrl = event.notification.data?.url || '/';

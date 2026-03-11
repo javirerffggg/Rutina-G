@@ -3,6 +3,8 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { LayoutDashboard, Dumbbell, CalendarRange, Scale, Trophy } from 'lucide-react';
 import { ACHIEVEMENTS, AchievementDef } from '../achievements';
 import * as Icons from 'lucide-react';
+import { useLiveActivity } from '../hooks/useLiveActivity';
+import { LiveActivityPill } from './LiveActivityPill';
 
 const TIER_META: Record<string, { border: string; bg: string; text: string }> = {
   BRONZE:  { border: 'border-orange-700/50',                                       bg: 'bg-orange-900/20',  text: 'text-orange-500' },
@@ -19,6 +21,15 @@ const Layout: React.FC = () => {
   const lastScrollYRef = useRef(0);
   const [toastQueue, setToastQueue] = useState<AchievementDef[]>([]);
   const toastAchievement = toastQueue[0] ?? null;
+  const liveActivity = useLiveActivity();
+
+  // Expose rest-timer control to Workout via custom events
+  const handleDismissRest = useCallback(() => {
+    window.dispatchEvent(new CustomEvent('live-activity-dismiss-rest'));
+  }, []);
+  const handleAddRest = useCallback(() => {
+    window.dispatchEvent(new CustomEvent('live-activity-add-rest'));
+  }, []);
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('nav-visibility-change', { detail: showNav }));
@@ -58,7 +69,7 @@ const Layout: React.FC = () => {
   return (
     <div className="flex flex-col h-screen text-white overflow-hidden font-sans bg-black">
 
-      {/* Achievement toast — respects iOS notch (safe-area-inset-top) */}
+      {/* Achievement toast */}
       {toastAchievement && (() => {
         const styles = getTierStyles(toastAchievement.tier);
         return (
@@ -92,11 +103,6 @@ const Layout: React.FC = () => {
         );
       })()}
 
-      {/*
-        <main> respects iOS notch (safe-area-inset-top) via paddingTop.
-        pb-28 keeps content above the floating nav bar.
-        The extra safe-area-inset-bottom is handled by the nav pill itself.
-      */}
       <main
         className="flex-1 overflow-y-auto no-scrollbar pb-28 relative z-10"
         style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
@@ -108,11 +114,14 @@ const Layout: React.FC = () => {
         </div>
       </main>
 
-      {/*
-        Nav pill — bottom-4 + safe-area-inset-bottom so it clears the
-        home indicator on iPhone 13 Pro Max (34 pt).
-        pb-2 gives internal breathing room above that inset.
-      */}
+      {/* Live Activity Pill — visible en todas las pantallas durante el entreno */}
+      <LiveActivityPill
+        state={liveActivity}
+        onDismissRest={handleDismissRest}
+        onAddRest={handleAddRest}
+        showNav={showNav}
+      />
+
       <nav
         className={`fixed left-0 right-0 flex justify-center z-50 transition-all duration-300 ease-in-out ${
           showNav ? 'translate-y-0 opacity-100' : 'translate-y-[120%] opacity-0'

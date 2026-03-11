@@ -1,9 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { ROUTINE_MAPPING, EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS, EXERCISES_UPPER, EXERCISES_LOWER, EXERCISE_ALTERNATIVES, WARMUP_GUIDE, TECHNICAL_GUIDES } from '../constants';
 import { RoutineType, Exercise, WorkoutLogEntry, WorkoutSet, PhaseType } from '../types';
-import { getTodayDateString, getCurrentPhase, getGymSchedule } from '../utils';
+import { getTodayDateString, getCurrentPhase, getGymSchedule, calculateOneRM } from '../utils';
 import { saveLog, getLogs, getPreviousWorkoutLog, getExerciseHistory } from '../services/storage';
-import { Save, History, Plus, Minus, Check, Trophy, ArrowRightLeft, X, Dumbbell, Settings, Info, Bot, AlertTriangle, Clock, Flame, ChevronRight, Timer, Flag, Milk, BookOpen, GraduationCap, CalendarDays } from 'lucide-react';
+import { 
+  Save, 
+  History, 
+  Plus, 
+  Minus, 
+  Check, 
+  Trophy, 
+  ArrowRightLeft, 
+  X, 
+  Dumbbell, 
+  Settings, 
+  Info, 
+  Bot, 
+  AlertTriangle, 
+  Clock, 
+  Flame, 
+  ChevronRight, 
+  Timer, 
+  Flag, 
+  Milk, 
+  BookOpen, 
+  GraduationCap, 
+  CalendarDays,
+  Award,
+  Zap,
+  TrendingUp,
+  ArrowUpRight
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { EXERCISE_MUSCLE_MAP } from '../constants';
 
 const Workout: React.FC = () => {
   const today = getTodayDateString();
@@ -30,6 +59,8 @@ const Workout: React.FC = () => {
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
   // controls the gym mode
   const [isGymMode, setIsGymMode] = useState(false);
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [analysisData, setAnalysisData] = useState<any>(null);
 
   // Session State
   const [sessionState, setSessionState] = useState<'idle' | 'active' | 'finished'>(() => {
@@ -248,6 +279,52 @@ const Workout: React.FC = () => {
     saveWorkout(newLogs);
   };
 
+  const calculateSessionAnalysis = (currentLogs: WorkoutLogEntry[], routine: RoutineType) => {
+    const tonnage = currentLogs.reduce((acc, ex) => {
+      return acc + ex.sets.reduce((sAcc, s) => sAcc + (s.weight * s.reps), 0);
+    }, 0);
+
+    // Find last session of same type
+    const allLogs = getLogs();
+    const sameTypeLogs = Object.values(allLogs)
+      .filter(l => l.workoutType === routine && l.date !== today)
+      .sort((a, b) => b.date.localeCompare(a.date));
+    
+    const lastSession = sameTypeLogs[0];
+    let tonnageDiff = 0;
+    if (lastSession && lastSession.exercises) {
+      const lastTonnage = lastSession.exercises.reduce((acc, ex) => {
+        return acc + ex.sets.reduce((sAcc, s) => sAcc + (s.weight * s.reps), 0);
+      }, 0);
+      tonnageDiff = lastTonnage > 0 ? ((tonnage - lastTonnage) / lastTonnage) * 100 : 0;
+    }
+
+    // Check for 1RM PRs
+    const prs: string[] = [];
+    currentLogs.forEach(ex => {
+      const exercise = [...EXERCISES_PUSH, ...EXERCISES_PULL, ...EXERCISES_LEGS, ...EXERCISES_UPPER, ...EXERCISES_LOWER].find(e => e.id === ex.exerciseId);
+      if (!exercise) return;
+
+      const currentMax1RM = Math.max(...ex.sets.map(s => calculateOneRM(s.weight, s.reps)));
+      
+      // Get history for this exercise
+      const history = getExerciseHistory(ex.exerciseId, 10);
+      const pastMax1RM = history.length > 0 
+        ? Math.max(...history.filter(h => h.date !== today).map(h => Math.max(...h.log.sets.map(s => calculateOneRM(s.weight, s.reps))))) 
+        : 0;
+
+      if (currentMax1RM > pastMax1RM && pastMax1RM > 0) {
+        prs.push(`${exercise.name}: ${currentMax1RM}kg (Est. 1RM)`);
+      }
+    });
+
+    return {
+      tonnage,
+      tonnageDiff,
+      prs
+    };
+  };
+
   const saveWorkout = (currentLogs = logs, finish = false) => {
     const currentLog = getLogs()[today] || { date: today };
     
@@ -271,6 +348,10 @@ const Workout: React.FC = () => {
     saveLog(updated);
 
     if (finish) {
+      const analysis = calculateSessionAnalysis(currentLogs, selectedRoutine);
+      setAnalysisData(analysis);
+      setShowAnalysis(true);
+      
       setSessionState('finished');
       localStorage.setItem(`workoutSessionState_${today}`, 'finished');
       setRestTimer(null);
@@ -311,6 +392,78 @@ const Workout: React.FC = () => {
 
   return (
     <div className="pb-10 min-h-screen">
+      {/* Session Analysis Modal */}
+      <AnimatePresence>
+        {showAnalysis && analysisData && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="glass-panel w-full max-w-md p-6 rounded-3xl space-y-6 overflow-hidden relative"
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-sky-500 to-violet-500" />
+              
+              <div className="text-center space-y-2">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 mb-2">
+                  <Trophy size={32} />
+                </div>
+                <h2 className="text-2xl font-black text-white italic uppercase tracking-tight">¡Sesión Finalizada!</h2>
+                <p className="text-slate-400 text-sm">Resumen de tu rendimiento hoy</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="glass-panel p-4 rounded-2xl bg-white/5">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Volumen Total</p>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-xl font-black text-white">{(analysisData.tonnage / 1000).toFixed(2)}</span>
+                    <span className="text-xs text-slate-400 font-bold">Tons</span>
+                  </div>
+                  {analysisData.tonnageDiff !== 0 && (
+                    <div className={`flex items-center gap-1 mt-1 text-[10px] font-bold ${analysisData.tonnageDiff > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {analysisData.tonnageDiff > 0 ? <ArrowUpRight size={10} /> : <TrendingUp size={10} className="rotate-180" />}
+                      {Math.abs(analysisData.tonnageDiff).toFixed(1)}% vs anterior
+                    </div>
+                  )}
+                </div>
+                <div className="glass-panel p-4 rounded-2xl bg-white/5">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Ejercicios</p>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-xl font-black text-white">{completedExercises}</span>
+                    <span className="text-xs text-slate-400 font-bold">/{totalExercises}</span>
+                  </div>
+                  <div className="text-[10px] text-slate-400 font-bold mt-1">
+                    {progressPercentage}% completado
+                  </div>
+                </div>
+              </div>
+
+              {analysisData.prs.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-2">
+                    <Award size={12} /> Nuevos Récords Estimados
+                  </h3>
+                  <div className="space-y-2">
+                    {analysisData.prs.map((pr: string, i: number) => (
+                      <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                        <Zap size={14} className="text-emerald-400 shrink-0" />
+                        <span className="text-xs font-bold text-emerald-100">{pr}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={() => setShowAnalysis(false)}
+                className="w-full py-4 bg-white text-black font-black uppercase tracking-widest rounded-2xl hover:bg-slate-200 transition-colors"
+              >
+                Cerrar Resumen
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
       {/* Rest Timer Banner */}
       {restTimer !== null && (
         <div className="fixed top-0 left-0 right-0 bg-brand-600 text-white px-4 py-3 flex items-center justify-between z-50 shadow-lg shadow-brand-900/50 animate-in slide-in-from-top-full">

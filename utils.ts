@@ -26,6 +26,36 @@ export const calculateOneRM = (weight: number, reps: number): number => {
   return Math.round(weight * (36 / (37 - reps)));
 };
 
+export const getEstimated1RM = (weight: number, reps: number): number => {
+  return calculateOneRM(weight, reps);
+};
+
+export const getWeeklyMuscleVolume = (logs: Record<string, any>, muscleMap: Record<string, string[]>) => {
+  const today = new Date();
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - 7);
+  
+  const volume: Record<string, number> = {};
+  
+  Object.keys(logs).forEach(date => {
+    const logDate = new Date(date);
+    if (logDate >= startOfWeek && logDate <= today) {
+      const log = logs[date];
+      if (log.exercises) {
+        log.exercises.forEach((ex: any) => {
+          const muscles = muscleMap[ex.exerciseId] || [];
+          const completedSets = ex.sets.filter((s: any) => s.completed).length;
+          muscles.forEach(m => {
+            volume[m] = (volume[m] || 0) + completedSets;
+          });
+        });
+      }
+    }
+  });
+  
+  return volume;
+};
+
 export const getGymSchedule = (dateStr: string = getTodayDateString()): string | null => {
   // Extract MM-DD from YYYY-MM-DD
   const parts = dateStr.split('-');

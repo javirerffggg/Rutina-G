@@ -2,8 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { ResponsiveContainer, ComposedChart, Line, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, Cell } from 'recharts';
 import { DailyLog } from '../../types';
 import { Dumbbell, Trophy, TrendingUp, Flame, Activity, Clock, Calendar as CalendarIcon, Target } from 'lucide-react';
-import { EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS, EXERCISES_UPPER, EXERCISES_LOWER, EXERCISE_MUSCLE_MAP } from '../../constants';
-import { calculateOneRM } from '../../utils';
+import { EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS, EXERCISES_UPPER, EXERCISES_LOWER, EXERCISE_MUSCLE_MAP, MUSCLE_VOLUME_RECOMMENDATIONS } from '../../constants';
+import { calculateOneRM, getWeeklyMuscleVolume } from '../../utils';
 import { BodyHeatmap } from '../BodyHeatmap';
 
 interface PerformanceTabProps {
@@ -91,6 +91,8 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs }) => {
     .map(([muscle, sets]) => ({ name: muscle, sets }))
     .sort((a, b) => b.sets - a.sets);
 
+  const weeklyMuscleVolume = getWeeklyMuscleVolume(logs, EXERCISE_MUSCLE_MAP);
+
   // --- Exercise Stats ---
   const exerciseLogs = sortedDates
     .map(date => {
@@ -102,15 +104,17 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs }) => {
       const max1RM = Math.max(...exLog.sets.map(set => calculateOneRM(set.weight, set.reps)));
       const volume = exLog.sets.reduce((acc, set) => acc + (set.weight * set.reps), 0);
       const maxWeight = Math.max(...exLog.sets.map(set => set.weight));
+      const avgRIR = exLog.sets.filter(s => s.rir !== undefined).reduce((acc, s) => acc + s.rir!, 0) / (exLog.sets.filter(s => s.rir !== undefined).length || 1);
       
       return {
         date: new Date(date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }),
         oneRM: max1RM,
         volume: volume,
-        maxWeight: maxWeight
+        maxWeight: maxWeight,
+        rir: avgRIR
       };
     })
-    .filter(Boolean) as { date: string, oneRM: number, volume: number, maxWeight: number }[];
+    .filter(Boolean) as { date: string, oneRM: number, volume: number, maxWeight: number, rir: number }[];
 
   const maxExercise1RM = exerciseLogs.length > 0 ? Math.max(...exerciseLogs.map(l => l.oneRM)) : 0;
   const maxExercisePR = exerciseLogs.length > 0 ? Math.max(...exerciseLogs.map(l => l.maxWeight)) : 0;
@@ -243,6 +247,36 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs }) => {
           <BodyHeatmap muscleVolume={muscleVolume} />
         </div>
 
+        {/* Weekly Volume Ratio */}
+        <div className="glass-panel p-4 rounded-2xl">
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Fatiga Semanal (Series)</h3>
+          <div className="space-y-3">
+            {Object.entries(MUSCLE_VOLUME_RECOMMENDATIONS).map(([muscle, range]) => {
+              const sets = weeklyMuscleVolume[muscle] || 0;
+              const isLow = sets < range.min;
+              const isHigh = sets > range.max;
+              const colorClass = isLow ? 'text-amber-400' : isHigh ? 'text-red-400' : 'text-emerald-400';
+              const bgClass = isLow ? 'bg-amber-400/10' : isHigh ? 'bg-red-400/10' : 'bg-emerald-400/10';
+              const progress = Math.min(100, (sets / range.max) * 100);
+
+              return (
+                <div key={muscle} className="space-y-1.5">
+                  <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
+                    <span className="text-slate-300">{muscle}</span>
+                    <span className={colorClass}>{sets} / {range.min}-{range.max}</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-500 ${isLow ? 'bg-amber-400' : isHigh ? 'bg-red-400' : 'bg-emerald-400'}`}
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         {muscleChartData.length > 0 && (
           <div className="glass-panel p-4 rounded-2xl">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Series por Grupo Muscular</h3>
@@ -327,43 +361,77 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs }) => {
           )}
 
           {exerciseLogs.length > 0 ? (
-            <div style={{ width: '100%', height: 192 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={exerciseLogs}>
-                  <defs>
-                    <linearGradient id="color1RM" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="date" hide />
-                  <YAxis 
-                    yAxisId="left"
-                    domain={['auto', 'auto']} 
-                    orientation="left" 
-                    tick={{fontSize: 9, fill: '#10b981'}} 
-                    axisLine={false}
-                    width={30}
-                  />
-                  <YAxis 
-                    yAxisId="right"
-                    domain={['auto', 'auto']} 
-                    orientation="right" 
-                    tick={{fontSize: 9, fill: '#8b5cf6'}} 
-                    axisLine={false}
-                    width={40}
-                  />
-                  <Tooltip 
-                    contentStyle={{backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '12px'}}
-                    itemStyle={{padding: 0}}
-                    labelStyle={{color: '#94a3b8', marginBottom: '4px'}}
-                  />
-                  <Area yAxisId="left" type="monotone" dataKey="oneRM" name="1RM Est. (kg)" stroke="#10b981" fill="url(#color1RM)" strokeWidth={2} />
-                  <Line yAxisId="right" type="monotone" dataKey="volume" name="Tonelaje (kg)" stroke="#8b5cf6" dot={false} strokeWidth={2} />
-                </ComposedChart>
-              </ResponsiveContainer>
-            </div>
+            <>
+              <div style={{ width: '100%', height: 192 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={exerciseLogs}>
+                    <defs>
+                      <linearGradient id="color1RM" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                    <XAxis dataKey="date" hide />
+                    <YAxis 
+                      yAxisId="left"
+                      domain={['auto', 'auto']} 
+                      orientation="left" 
+                      tick={{fontSize: 9, fill: '#10b981'}} 
+                      axisLine={false}
+                      width={30}
+                    />
+                    <YAxis 
+                      yAxisId="right"
+                      domain={['auto', 'auto']} 
+                      orientation="right" 
+                      tick={{fontSize: 9, fill: '#8b5cf6'}} 
+                      axisLine={false}
+                      width={40}
+                    />
+                    <Tooltip 
+                      contentStyle={{backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '12px'}}
+                      itemStyle={{padding: 0}}
+                      labelStyle={{color: '#94a3b8', marginBottom: '4px'}}
+                    />
+                    <Area yAxisId="left" type="monotone" dataKey="oneRM" name="1RM Est. (kg)" stroke="#10b981" fill="url(#color1RM)" strokeWidth={2} />
+                    <Line yAxisId="right" type="monotone" dataKey="volume" name="Tonelaje (kg)" stroke="#8b5cf6" dot={false} strokeWidth={2} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="mt-8">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Evolución del RIR</h3>
+                <div style={{ width: '100%', height: 160 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={exerciseLogs}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                      <XAxis dataKey="date" hide />
+                      <YAxis 
+                        domain={[0, 10]} 
+                        orientation="right" 
+                        tick={{fontSize: 9, fill: '#64748b'}} 
+                        axisLine={false}
+                        width={30}
+                      />
+                      <Tooltip 
+                        contentStyle={{backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '12px'}}
+                        itemStyle={{padding: 0}}
+                        labelStyle={{color: '#94a3b8', marginBottom: '4px'}}
+                      />
+                      <Bar dataKey="rir" name="RIR Promedio" radius={[4, 4, 0, 0]}>
+                        {exerciseLogs.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.rir > 2 ? '#10b981' : entry.rir > 0 ? '#fb923c' : '#ef4444'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="text-[10px] text-slate-500 mt-2 text-center italic">
+                  Un RIR creciente con la misma carga indica una mejor recuperación y adaptación.
+                </p>
+              </div>
+            </>
           ) : (
             <div className="h-48 flex items-center justify-center text-slate-500 text-sm">
               No hay datos para este ejercicio.

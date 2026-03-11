@@ -1,7 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { DailyLog } from '../../types';
-import { Calendar, FileText, Sparkles, Download, ArrowRight, Trophy, Flame, Target, Share2, Loader2 } from 'lucide-react';
+import { Calendar, FileText, Sparkles, Download, ArrowRight, Trophy, Flame, Target, Share2, Loader2, FileSpreadsheet, File as FileIcon } from 'lucide-react';
 import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS, EXERCISES_UPPER, EXERCISES_LOWER } from '../../constants';
 
 interface ReportsTabProps {
@@ -90,6 +92,79 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ logs }) => {
   const animal = getAnimalEquivalent(yearlyVol);
   const animalCount = (yearlyVol / animal.weight).toFixed(1);
 
+  const exportToCSV = () => {
+    const headers = ['Fecha', 'Ejercicio', 'Serie', 'Peso (kg)', 'Reps', 'RIR'];
+    const rows: any[] = [];
+
+    Object.keys(logs).sort().forEach(date => {
+      const log = logs[date];
+      log.exercises?.forEach(ex => {
+        const exercise = allExercises.find(e => e.id === ex.exerciseId);
+        ex.sets.forEach((set, idx) => {
+          rows.push([
+            date,
+            exercise ? exercise.name : ex.exerciseId,
+            idx + 1,
+            set.weight,
+            set.reps,
+            set.rir ?? ''
+          ]);
+        });
+      });
+    });
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `workout_data_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text('Historial de Entrenamientos', 14, 22);
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    doc.text(`Generado el ${new Date().toLocaleDateString()}`, 14, 30);
+
+    const tableData: any[] = [];
+    Object.keys(logs).sort().reverse().forEach(date => {
+      const log = logs[date];
+      log.exercises?.forEach(ex => {
+        const exercise = allExercises.find(e => e.id === ex.exerciseId);
+        ex.sets.forEach((set, idx) => {
+          tableData.push([
+            date,
+            exercise ? exercise.name : ex.exerciseId,
+            idx + 1,
+            `${set.weight} kg`,
+            set.reps,
+            set.rir ?? '-'
+          ]);
+        });
+      });
+    });
+
+    autoTable(doc, {
+      startY: 40,
+      head: [['Fecha', 'Ejercicio', 'Set', 'Peso', 'Reps', 'RIR']],
+      body: tableData,
+      theme: 'striped',
+      headStyles: { fillColor: [16, 185, 129] } // emerald-500
+    });
+
+    doc.save(`workout_report_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
   const handleShare = async () => {
     if (!reportRef.current || isSharing) return;
     setIsSharing(true);
@@ -169,6 +244,37 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ logs }) => {
                 </div>
               </div>
               <ArrowRight className="text-slate-500 group-hover:text-gold-400 transition-colors" />
+            </div>
+          </div>
+
+          <div className="pt-4 space-y-3">
+            <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-2">Exportar Datos</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <button 
+                onClick={exportToCSV}
+                className="glass-panel p-4 rounded-xl flex items-center gap-3 hover:bg-slate-800/80 transition-all group"
+              >
+                <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                  <FileSpreadsheet size={20} />
+                </div>
+                <div className="text-left">
+                  <p className="text-xs font-bold text-white">CSV</p>
+                  <p className="text-[10px] text-slate-500">Excel / Sheets</p>
+                </div>
+              </button>
+
+              <button 
+                onClick={exportToPDF}
+                className="glass-panel p-4 rounded-xl flex items-center gap-3 hover:bg-slate-800/80 transition-all group"
+              >
+                <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center text-red-400">
+                  <FileIcon size={20} />
+                </div>
+                <div className="text-left">
+                  <p className="text-xs font-bold text-white">PDF</p>
+                  <p className="text-[10px] text-slate-500">Imprimible</p>
+                </div>
+              </button>
             </div>
           </div>
         </>

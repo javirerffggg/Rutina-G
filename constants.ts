@@ -112,6 +112,19 @@ export const EXERCISE_MUSCLE_MAP: Record<string, string[]> = {
   'low_crunch': ['abs'],
 };
 
+export const MUSCLE_VOLUME_RECOMMENDATIONS: Record<string, { min: number, max: number }> = {
+  'chest': { min: 12, max: 20 },
+  'back': { min: 12, max: 20 },
+  'quads': { min: 12, max: 20 },
+  'hamstrings': { min: 10, max: 16 },
+  'glutes': { min: 10, max: 16 },
+  'shoulders': { min: 10, max: 16 },
+  'triceps': { min: 8, max: 12 },
+  'biceps': { min: 8, max: 12 },
+  'calves': { min: 8, max: 12 },
+  'abs': { min: 8, max: 12 },
+};
+
 export const EXERCISE_ALTERNATIVES: Record<string, ExerciseAlternative> = {
   'push_bench_mach': { main: 'Press Banca Barra', secondary: 'Press Mancuernas', note: 'Prioriza estabilidad.' },
   'pull_pullups': { main: 'Jalón al Pecho', secondary: 'Dominadas Asistidas', note: 'Rango completo es clave.' },

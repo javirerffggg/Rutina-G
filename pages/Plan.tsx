@@ -9,23 +9,19 @@ const MONTH_NAMES = [
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
 ];
 
-// Safe date-string comparison (avoids timezone shift)
 const today = new Date().toISOString().slice(0, 10);
 
 const getReadableDate = (key: string) => {
-  // Accepts MM-DD or MM-DD-YYYY or YYYY-MM-DD
   const parts = key.split('-');
   if (parts.length === 2) {
     const [month, day] = parts;
     return `${parseInt(day)} ${MONTH_NAMES[parseInt(month) - 1]}`;
   }
   if (parts.length === 3) {
-    // YYYY-MM-DD
     if (parts[0].length === 4) {
       const [, month, day] = parts;
       return `${parseInt(day)} ${MONTH_NAMES[parseInt(month) - 1]}`;
     }
-    // MM-DD-YYYY
     const [month, day, year] = parts;
     return `${parseInt(day)} ${MONTH_NAMES[parseInt(month) - 1]} ${year}`;
   }
@@ -34,8 +30,8 @@ const getReadableDate = (key: string) => {
 
 const getPhaseBadge = (phase: any) => {
   const type = phase.type ?? '';
-  if (type === 'bulk' || type === 'volume') return { label: 'Volumen', icon: TrendingUp, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/30' };
-  if (type === 'cut' || type === 'deficit') return { label: 'D\u00e9ficit', icon: TrendingDown, color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/30' };
+  if (type === 'bulk' || type === 'volume')   return { label: 'Volumen',       icon: TrendingUp,   color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/30' };
+  if (type === 'cut'  || type === 'deficit')  return { label: 'D\u00e9ficit',  icon: TrendingDown, color: 'text-red-400',     bg: 'bg-red-500/10 border-red-500/30' };
   return { label: 'Mantenimiento', icon: Minus, color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/30' };
 };
 
@@ -46,30 +42,29 @@ const Plan: React.FC = () => {
 
   const phaseBadge = useMemo(() => getPhaseBadge(currentPhase), [currentPhase]);
 
-  // Phase progress: days elapsed / total days
   const phaseProgress = useMemo(() => {
-    const start = new Date(currentPhase.startDate).getTime();
-    const end = new Date(currentPhase.endDate).getTime();
-    const now = Date.now();
-    const total = end - start;
+    const start   = new Date(currentPhase.startDate).getTime();
+    const end     = new Date(currentPhase.endDate).getTime();
+    const now     = Date.now();
+    const total   = end - start;
     const elapsed = Math.min(Math.max(now - start, 0), total);
-    const pct = total > 0 ? Math.round((elapsed / total) * 100) : 0;
-    const totalDays = Math.round(total / 86400000);
+    const pct        = total > 0 ? Math.round((elapsed / total) * 100) : 0;
+    const totalDays   = Math.round(total / 86400000);
     const elapsedDays = Math.round(elapsed / 86400000);
     const currentWeek = Math.ceil((elapsedDays + 1) / 7);
-    const totalWeeks = Math.ceil(totalDays / 7);
+    const totalWeeks  = Math.ceil(totalDays / 7);
     return { pct, elapsedDays, totalDays, currentWeek, totalWeeks };
   }, [currentPhase]);
 
-  // Sort festivos by date ascending
-  const sortedSchedule = useMemo(() => {
-    return Object.entries(SPECIAL_GYM_HOURS).sort((a, b) => a[0].localeCompare(b[0]));
-  }, []);
+  const sortedSchedule = useMemo(
+    () => Object.entries(SPECIAL_GYM_HOURS).sort((a, b) => a[0].localeCompare(b[0])),
+    []
+  );
 
   return (
     <div className="p-5 space-y-6 pb-24">
 
-      {/* ── HEADER ── */}
+      {/* HEADER */}
       <header className="flex justify-between items-center">
         <div>
           <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Programa</p>
@@ -86,20 +81,14 @@ const Plan: React.FC = () => {
         </button>
       </header>
 
-      {/* ── HERO CARD ── */}
+      {/* HERO CARD */}
       <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-brand-900/20 border border-brand-500/30">
         <div className="absolute inset-0 bg-gradient-to-br from-brand-900/80 via-zinc-900 to-black z-0" />
-        <div className="absolute top-0 right-0 p-3 opacity-10">
-          <Target size={120} className="text-white" />
-        </div>
-
+        <div className="absolute top-0 right-0 p-3 opacity-10"><Target size={120} className="text-white" /></div>
         <div className="relative z-10 p-5 space-y-4">
-          {/* Top row */}
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full bg-brand-500/20 border border-brand-500/30 text-brand-300 text-[10px] font-bold uppercase tracking-wider">
-                Fase Actual
-              </span>
+              <span className="px-3 py-1 rounded-full bg-brand-500/20 border border-brand-500/30 text-brand-300 text-[10px] font-bold uppercase tracking-wider">Fase Actual</span>
               <span className={`flex items-center gap-1 px-2 py-1 rounded-full border text-[10px] font-bold ${phaseBadge.bg} ${phaseBadge.color}`}>
                 <phaseBadge.icon size={10} /> {phaseBadge.label}
               </span>
@@ -109,28 +98,22 @@ const Plan: React.FC = () => {
             </span>
           </div>
 
-          {/* Phase name + description */}
           <div>
             <h2 className="text-2xl font-display font-bold text-white leading-tight">{currentPhase.name}</h2>
             <p className="text-sm text-zinc-300 mt-1 leading-relaxed opacity-90">{currentPhase.description}</p>
           </div>
 
-          {/* Phase progress bar */}
           <div className="space-y-1.5">
             <div className="flex justify-between text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
               <span>Semana {phaseProgress.currentWeek} de {phaseProgress.totalWeeks}</span>
               <span>D\u00eda {phaseProgress.elapsedDays} / {phaseProgress.totalDays}</span>
             </div>
             <div className="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-brand-400 rounded-full transition-all duration-700"
-                style={{ width: `${phaseProgress.pct}%` }}
-              />
+              <div className="h-full bg-brand-400 rounded-full transition-all duration-700" style={{ width: `${phaseProgress.pct}%` }} />
             </div>
             <div className="text-right text-[10px] font-bold text-brand-400">{phaseProgress.pct}% completado</div>
           </div>
 
-          {/* Mini stats */}
           <div className="grid grid-cols-3 gap-2">
             <div className="glass-card p-2 rounded-lg text-center">
               <Flame size={14} className="text-orange-500 mx-auto mb-1" />
@@ -150,7 +133,7 @@ const Plan: React.FC = () => {
           </div>
 
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/today')}
             className="w-full py-2.5 bg-white text-zinc-900 font-bold text-sm rounded-xl hover:bg-zinc-100 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
           >
             Ver Resumen Diario <ChevronRight size={16} />
@@ -158,53 +141,32 @@ const Plan: React.FC = () => {
         </div>
       </div>
 
-      {/* ── TIMELINE ── */}
+      {/* TIMELINE */}
       <section>
         <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-4 px-1">L\u00ednea de Tiempo</h3>
-        <div className="relative border-l border-zinc-800 ml-2 pl-6 space-y-0">
+        <div className="relative border-l border-zinc-800 ml-2 pl-6">
           {PHASES.map((phase, idx) => {
             const isCurrent = phase.name === currentPhase.name;
-            const isPast = phase.endDate < today;
-            const startYear = new Date(phase.startDate).getFullYear();
-            const endYear = new Date(phase.endDate).getFullYear();
-            const showYear = startYear !== new Date().getFullYear() || endYear !== new Date().getFullYear();
-
-            const dateLabel = `${new Date(phase.startDate).toLocaleDateString('es-ES', { month: 'short', ...(showYear ? { year: '2-digit' } : {}) })} \u2014 ${new Date(phase.endDate).toLocaleDateString('es-ES', { month: 'short', ...(showYear ? { year: '2-digit' } : {}) })}`;
-            const totalDays = Math.round((new Date(phase.endDate).getTime() - new Date(phase.startDate).getTime()) / 86400000);
-            const totalWeeks = Math.ceil(totalDays / 7);
+            const isPast    = phase.endDate < today;
+            const showYear  = new Date(phase.startDate).getFullYear() !== new Date().getFullYear();
+            const dateOpts: Intl.DateTimeFormatOptions = { month: 'short', ...(showYear ? { year: '2-digit' } : {}) };
+            const dateLabel = `${new Date(phase.startDate).toLocaleDateString('es-ES', dateOpts)} \u2014 ${new Date(phase.endDate).toLocaleDateString('es-ES', dateOpts)}`;
+            const totalWeeks = Math.ceil((new Date(phase.endDate).getTime() - new Date(phase.startDate).getTime()) / (86400000 * 7));
             const badge = getPhaseBadge(phase);
-
             return (
-              <div
-                key={idx}
-                className={`relative py-3 transition-opacity ${
-                  isCurrent ? 'opacity-100' : isPast ? 'opacity-40' : 'opacity-60 hover:opacity-80'
-                }`}
-              >
-                {/* Dot */}
+              <div key={idx} className={`relative py-3 transition-opacity ${ isCurrent ? 'opacity-100' : isPast ? 'opacity-40' : 'opacity-60 hover:opacity-80' }`}>
                 <div className={`absolute -left-[29px] top-4 w-3 h-3 rounded-full border-2 z-10 transition-all ${
-                  isCurrent
-                    ? 'bg-brand-500 border-brand-500 shadow-[0_0_10px_rgba(14,165,233,0.5)] scale-125'
-                    : isPast
-                      ? 'bg-zinc-700 border-zinc-600'
-                      : 'bg-zinc-900 border-zinc-700'
+                  isCurrent ? 'bg-brand-500 border-brand-500 shadow-[0_0_10px_rgba(14,165,233,0.5)] scale-125'
+                  : isPast   ? 'bg-zinc-700 border-zinc-600'
+                  : 'bg-zinc-900 border-zinc-700'
                 }`} />
-
                 <div className={`rounded-xl p-3 border transition-all ${
-                  isCurrent
-                    ? 'bg-gradient-to-r from-zinc-900 to-transparent border-zinc-700 translate-x-1'
-                    : 'border-transparent hover:border-zinc-800'
+                  isCurrent ? 'bg-gradient-to-r from-zinc-900 to-transparent border-zinc-700 translate-x-1' : 'border-transparent hover:border-zinc-800'
                 }`}>
                   <div className="flex justify-between items-start mb-0.5">
                     <div className="flex items-center gap-2">
-                      <h4 className={`text-sm font-bold ${ isCurrent ? 'text-brand-400' : 'text-zinc-200' }`}>
-                        {phase.name}
-                      </h4>
-                      {isCurrent && (
-                        <span className="text-[9px] font-bold uppercase tracking-widest bg-brand-500/20 text-brand-400 px-2 py-0.5 rounded-full border border-brand-500/30">
-                          Ahora
-                        </span>
-                      )}
+                      <h4 className={`text-sm font-bold ${ isCurrent ? 'text-brand-400' : 'text-zinc-200' }`}>{phase.name}</h4>
+                      {isCurrent && <span className="text-[9px] font-bold uppercase tracking-widest bg-brand-500/20 text-brand-400 px-2 py-0.5 rounded-full border border-brand-500/30">Ahora</span>}
                     </div>
                     <span className="text-[10px] text-zinc-500 font-mono tracking-tighter shrink-0 ml-2">{dateLabel}</span>
                   </div>
@@ -222,18 +184,16 @@ const Plan: React.FC = () => {
         </div>
       </section>
 
-      {/* ── PHILOSOPHY ── */}
+      {/* PHILOSOPHY */}
       <div className="glass-panel p-4 rounded-xl flex items-start gap-3">
         <Info size={18} className="text-amber-500 mt-0.5 shrink-0" />
         <div>
           <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-1">Filosof\u00eda Elite</h3>
-          <p className="text-xs text-zinc-300 leading-relaxed">
-            La intensidad y el d\u00e9ficit calórico son las herramientas. La paciencia es el camino. Mantén la fuerza para preservar el m\u00fasculo.
-          </p>
+          <p className="text-xs text-zinc-300 leading-relaxed">La intensidad y el d\u00e9ficit cal\u00f3rico son las herramientas. La paciencia es el camino. Mant\u00e9n la fuerza para preservar el m\u00fasculo.</p>
         </div>
       </div>
 
-      {/* ── SPECIAL HOURS MODAL ── */}
+      {/* SPECIAL HOURS MODAL */}
       {showSchedule && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 animate-in fade-in duration-200">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowSchedule(false)} />
@@ -249,9 +209,7 @@ const Plan: React.FC = () => {
               {sortedSchedule.map(([key, value]) => (
                 <div key={key} className="flex justify-between items-center p-3 rounded-xl bg-white/5 border border-white/5">
                   <span className="text-zinc-300 font-medium text-sm">{getReadableDate(key)}</span>
-                  <span className={`text-xs font-bold px-2 py-1 rounded-lg ${
-                    value === 'Cerrado' ? 'bg-red-500/20 text-red-400' : 'bg-brand-500/20 text-brand-400'
-                  }`}>{value}</span>
+                  <span className={`text-xs font-bold px-2 py-1 rounded-lg ${ value === 'Cerrado' ? 'bg-red-500/20 text-red-400' : 'bg-brand-500/20 text-brand-400' }`}>{value}</span>
                 </div>
               ))}
               {sortedSchedule.length === 0 && (

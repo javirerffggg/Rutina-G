@@ -1,5 +1,5 @@
 // ─── Service Worker — Rutina-G ────────────────────────────────────────────────
-// Handles background rest timer so countdown continues even when app is hidden.
+// Handles background rest timer + rich push notification when done.
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
@@ -7,6 +7,7 @@ self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 // Active timer state
 let restTimerInterval = null;
 let restEndsAt = 0;
+let currentExerciseName = '';
 
 const clearRestTimer = () => {
   if (restTimerInterval) { clearInterval(restTimerInterval); restTimerInterval = null; }
@@ -24,8 +25,9 @@ self.addEventListener('message', (event) => {
   // ── Start / restart rest timer ──────────────────────────────────────────────
   if (data.type === 'START_REST_TIMER') {
     clearRestTimer();
-    const { seconds } = data;
+    const { seconds, exerciseName } = data;
     restEndsAt = Date.now() + seconds * 1000;
+    currentExerciseName = exerciseName || '';
 
     restTimerInterval = setInterval(async () => {
       const remaining = Math.max(0, Math.round((restEndsAt - Date.now()) / 1000));
@@ -33,8 +35,10 @@ self.addEventListener('message', (event) => {
 
       if (remaining <= 0) {
         clearRestTimer();
-        self.registration.showNotification('¡Descanso terminado!', {
-          body: 'Prepárate para la siguiente serie 💪',
+        const notifOptions = {
+          body: currentExerciseName
+            ? `Siguiente: ${currentExerciseName} 💪`
+            : 'Prepárate para la siguiente serie 💪',
           icon: '/icons/icon-192.png',
           badge: '/icons/icon-96.png',
           tag: 'rest-timer',
@@ -43,14 +47,16 @@ self.addEventListener('message', (event) => {
           vibrate: [200, 100, 200, 100, 400],
           data: { url: '/' },
           actions: [
-            { action: 'open', title: '💪 Volver al entreno' }
+            { action: 'open',   title: '💪 Volver al entreno' },
+            { action: 'skip',   title: '⏭ Saltar' }
           ]
-        });
+        };
+        self.registration.showNotification('¡Descanso terminado!', notifOptions);
       }
     }, 1000);
   }
 
-  // ── Add 30s ─────────────────────────────────────────────────────────────────
+  // ── Add seconds ─────────────────────────────────────────────────────────────
   if (data.type === 'ADD_REST_SECONDS') {
     restEndsAt += (data.seconds || 30) * 1000;
   }
@@ -61,7 +67,7 @@ self.addEventListener('message', (event) => {
     broadcastToClients({ type: 'REST_TIMER_TICK', remaining: null });
   }
 
-  // ── Legacy ───────────────────────────────────────────────────────────────────
+  // ── Legacy (keep for back-compat) ────────────────────────────────────────────
   if (data.type === 'SCHEDULE_NOTIFICATION') {
     const { title, options, delay } = data;
     setTimeout(() => self.registration.showNotification(title, options), delay);
@@ -71,7 +77,13 @@ self.addEventListener('message', (event) => {
 // ── Notification click ────────────────────────────────────────────────────────
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  const action    = event.action;
   const targetUrl = event.notification.data?.url || '/';
+
+  // 'skip' action: just close the notification, timer already done
+  if (action === 'skip') return;
+
+  // 'open' action or tap: bring app to foreground
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
       const existing = clients.find(c => c.url.includes(self.location.origin));

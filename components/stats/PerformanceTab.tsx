@@ -10,11 +10,11 @@ interface PerformanceTabProps {
   logs: Record<string, DailyLog>;
 }
 
-export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs }) => {
+export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => {
   const allExercises = [...EXERCISES_PUSH, ...EXERCISES_PULL, ...EXERCISES_LEGS, ...EXERCISES_UPPER, ...EXERCISES_LOWER];
   const [selectedExercise, setSelectedExercise] = useState<string>(allExercises[0].id);
 
-  const sortedDates = Object.keys(logs).sort();
+  const sortedDates = Object.keys(logs || {}).sort();
   const [muscleChartMode, setMuscleChartMode] = useState<'historical' | 'weekly'>('historical');
 
   const workoutLogs = sortedDates.map(date => logs[date]).filter(l => l.exercises && l.exercises.length > 0);
@@ -250,7 +250,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs }) => {
               <p className="text-[10px] text-slate-400 mt-1">Distribución de volumen total</p>
             </div>
           </div>
-          <BodyHeatmap muscleVolume={muscleVolume} />
+          <BodyHeatmap muscleVolume={muscleVolume} muscleSets={muscleSets} />
         </div>
 
         {/* Weekly Volume Ratio */}

@@ -10,12 +10,12 @@ interface ReportsTabProps {
   logs: Record<string, DailyLog>;
 }
 
-export const ReportsTab: React.FC<ReportsTabProps> = ({ logs }) => {
+export const ReportsTab: React.FC<ReportsTabProps> = ({ logs = {} }) => {
   const [activeReport, setActiveReport] = useState<'monthly' | 'yearly' | null>(null);
   const reportRef = useRef<HTMLDivElement>(null);
   const [isSharing, setIsSharing] = useState(false);
 
-  const sortedDates = Object.keys(logs).sort();
+  const sortedDates = Object.keys(logs || {}).sort();
   const workoutLogs = sortedDates.map(date => logs[date]).filter(l => l.exercises && l.exercises.length > 0);
 
   // --- Monthly Report Logic ---

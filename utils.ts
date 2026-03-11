@@ -44,7 +44,7 @@ export const getWeeklyMuscleVolume = (logs: Record<string, any>, muscleMap: Reco
       if (log.exercises) {
         log.exercises.forEach((ex: any) => {
           const muscles = muscleMap[ex.exerciseId] || [];
-          const completedSets = ex.sets.filter((s: any) => s.completed).length;
+          const completedSets = ex.sets.filter((s: any) => s.completed !== false).length;
           muscles.forEach(m => {
             volume[m] = (volume[m] || 0) + completedSets;
           });

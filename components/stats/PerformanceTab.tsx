@@ -15,6 +15,8 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs }) => {
   const [selectedExercise, setSelectedExercise] = useState<string>(allExercises[0].id);
 
   const sortedDates = Object.keys(logs).sort();
+  const [muscleChartMode, setMuscleChartMode] = useState<'historical' | 'weekly'>('historical');
+
   const workoutLogs = sortedDates.map(date => logs[date]).filter(l => l.exercises && l.exercises.length > 0);
 
   // --- General Stats ---
@@ -47,7 +49,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs }) => {
       const currentDate = new Date(dateStr);
       if (lastDate) {
         const diffTime = Math.abs(currentDate.getTime() - lastDate.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)); 
         if (diffDays === 1) {
           tempStreak++;
         } else if (diffDays > 1) {
@@ -66,7 +68,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs }) => {
   if (lastDate) {
     const today = new Date();
     const diffTime = Math.abs(today.getTime() - lastDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
     if (diffDays > 2) {
       currentStreak = 0;
     }
@@ -104,7 +106,11 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs }) => {
       const max1RM = Math.max(...exLog.sets.map(set => calculateOneRM(set.weight, set.reps)));
       const volume = exLog.sets.reduce((acc, set) => acc + (set.weight * set.reps), 0);
       const maxWeight = Math.max(...exLog.sets.map(set => set.weight));
-      const avgRIR = exLog.sets.filter(s => s.rir !== undefined).reduce((acc, s) => acc + s.rir!, 0) / (exLog.sets.filter(s => s.rir !== undefined).length || 1);
+      
+      const rirSets = exLog.sets.filter(s => s.rir != null);
+      const avgRIR = rirSets.length > 0
+        ? rirSets.reduce((acc, s) => acc + s.rir!, 0) / rirSets.length
+        : null;
       
       return {
         date: new Date(date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }),
@@ -114,7 +120,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs }) => {
         rir: avgRIR
       };
     })
-    .filter(Boolean) as { date: string, oneRM: number, volume: number, maxWeight: number, rir: number }[];
+    .filter(Boolean) as { date: string, oneRM: number, volume: number, maxWeight: number, rir: number | null }[];
 
   const maxExercise1RM = exerciseLogs.length > 0 ? Math.max(...exerciseLogs.map(l => l.oneRM)) : 0;
   const maxExercisePR = exerciseLogs.length > 0 ? Math.max(...exerciseLogs.map(l => l.maxWeight)) : 0;
@@ -278,27 +284,53 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs }) => {
         </div>
 
         {muscleChartData.length > 0 && (
-          <div className="glass-panel p-4 rounded-2xl">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Series por Grupo Muscular</h3>
-            <div style={{ width: '100%', height: 256 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={muscleChartData} layout="vertical" margin={{ top: 0, right: 0, left: 20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="rgba(255,255,255,0.05)" />
-                  <XAxis type="number" hide />
-                  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8'}} width={60} />
-                  <Tooltip 
-                    cursor={{fill: 'rgba(255,255,255,0.05)'}}
-                    contentStyle={{backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '12px'}}
-                  />
-                  <Bar dataKey="sets" name="Series" radius={[0, 4, 4, 0]}>
-                    {muscleChartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={index < 3 ? '#fb923c' : '#0ea5e9'} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+        <div className="glass-panel p-4 rounded-2xl">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Series por Grupo Muscular</h3>
+            <div className="flex bg-slate-900/50 p-0.5 rounded-lg border border-white/5">
+              <button 
+                onClick={() => setMuscleChartMode('historical')}
+                className={`px-2 py-1 text-[8px] font-bold uppercase rounded-md transition-all ${muscleChartMode === 'historical' ? 'bg-brand-500 text-white' : 'text-slate-500'}`}
+              >
+                Histórico
+              </button>
+              <button 
+                onClick={() => setMuscleChartMode('weekly')}
+                className={`px-2 py-1 text-[8px] font-bold uppercase rounded-md transition-all ${muscleChartMode === 'weekly' ? 'bg-brand-500 text-white' : 'text-slate-500'}`}
+              >
+                Semanal
+              </button>
             </div>
           </div>
+          <div style={{ width: '100%', height: 256 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart 
+                data={muscleChartMode === 'historical' 
+                  ? muscleChartData 
+                  : Object.entries(weeklyMuscleVolume).map(([name, sets]) => ({ name, sets })).sort((a, b) => b.sets - a.sets)
+                } 
+                layout="vertical" 
+                margin={{ top: 0, right: 0, left: 20, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="rgba(255,255,255,0.05)" />
+                <XAxis type="number" hide />
+                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8'}} width={60} />
+                <Tooltip 
+                  cursor={{fill: 'rgba(255,255,255,0.05)'}}
+                  contentStyle={{backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '12px'}}
+                />
+                <Bar dataKey="sets" name="Series" radius={[0, 4, 4, 0]}>
+                  {(muscleChartMode === 'historical' 
+                    ? muscleChartData 
+                    : Object.entries(weeklyMuscleVolume).map(([name, sets]) => ({ name, sets })).sort((a, b) => b.sets - a.sets)
+                  ).map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={index < 3 ? '#fb923c' : '#0ea5e9'} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
         )}
       </section>
 
@@ -372,7 +404,14 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs }) => {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="date" hide />
+                    <XAxis 
+                      dataKey="date" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{fontSize: 8, fill: '#64748b'}} 
+                      interval="preserveStartEnd"
+                      minTickGap={20}
+                    />
                     <YAxis 
                       yAxisId="left"
                       domain={['auto', 'auto']} 
@@ -386,6 +425,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs }) => {
                       domain={['auto', 'auto']} 
                       orientation="right" 
                       tick={{fontSize: 9, fill: '#8b5cf6'}} 
+                      tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(1)}t` : v}
                       axisLine={false}
                       width={40}
                     />
@@ -404,9 +444,16 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs }) => {
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Evolución del RIR</h3>
                 <div style={{ width: '100%', height: 160 }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={exerciseLogs}>
+                    <BarChart data={exerciseLogs.filter(l => l.rir !== null)}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                      <XAxis dataKey="date" hide />
+                      <XAxis 
+                        dataKey="date" 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{fontSize: 8, fill: '#64748b'}} 
+                        interval="preserveStartEnd"
+                        minTickGap={20}
+                      />
                       <YAxis 
                         domain={[0, 10]} 
                         orientation="right" 
@@ -420,8 +467,8 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs }) => {
                         labelStyle={{color: '#94a3b8', marginBottom: '4px'}}
                       />
                       <Bar dataKey="rir" name="RIR Promedio" radius={[4, 4, 0, 0]}>
-                        {exerciseLogs.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.rir > 2 ? '#10b981' : entry.rir > 0 ? '#fb923c' : '#ef4444'} />
+                        {exerciseLogs.filter(l => l.rir !== null).map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.rir! > 2 ? '#10b981' : entry.rir! > 0 ? '#fb923c' : '#ef4444'} />
                         ))}
                       </Bar>
                     </BarChart>

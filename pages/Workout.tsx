@@ -123,6 +123,7 @@ const Workout: React.FC = () => {
   const [isGymMode, setIsGymMode] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [analysisData, setAnalysisData] = useState<any>(null);
+  const [showNav, setShowNav] = useState(true);
 
   // Session State
   const [sessionState, setSessionState] = useState<'idle' | 'active' | 'finished'>(() => {
@@ -140,6 +141,12 @@ const Workout: React.FC = () => {
     const stored = localStorage.getItem(`workoutStartTime_${today}`);
     return stored ? parseInt(stored, 10) : null;
   });
+
+  useEffect(() => {
+    const handleNavChange = (e: any) => setShowNav(e.detail);
+    window.addEventListener('nav-visibility-change', handleNavChange);
+    return () => window.removeEventListener('nav-visibility-change', handleNavChange);
+  }, []);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -575,48 +582,32 @@ const Workout: React.FC = () => {
             </p>
           </div>
           
-          {/* Circular Progress & Timer */}
-          <div className="flex flex-col items-end gap-3">
+          {/* Circular Progress & Timer - Unified Row */}
+          <div className="flex items-center gap-3 bg-zinc-900/40 p-1.5 pr-4 rounded-2xl border border-white/5 backdrop-blur-md">
             {sessionState === 'active' && (
               <button
                 onClick={() => setIsGymMode(!isGymMode)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-premium ${isGymMode ? 'bg-brand-500 text-white shadow-xl shadow-brand-500/30' : 'bg-zinc-900 text-zinc-500 hover:text-white border border-zinc-800'}`}
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-premium ${isGymMode ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20' : 'bg-zinc-800 text-zinc-400 hover:text-white border border-white/5'}`}
               >
-                <Dumbbell size={16} />
+                <Dumbbell size={14} />
                 {isGymMode ? 'Modo Gym' : 'Modo Normal'}
               </button>
             )}
-            <div className="relative w-16 h-16 flex items-center justify-center">
+            
+            <div className="relative w-10 h-10 flex items-center justify-center shrink-0">
               <svg className="w-full h-full transform -rotate-90 overflow-visible" viewBox="0 0 36 36">
-                <path
-                  d="M18 2.0845
-                    a 15.9155 15.9155 0 0 1 0 31.831
-                    a 15.9155 15.9155 0 0 1 0 -31.831"
-                  fill="none"
-                  stroke="rgba(255,255,255,0.05)"
-                  strokeWidth="3.5"
-                />
-                <path
-                  d="M18 2.0845
-                    a 15.9155 15.9155 0 0 1 0 31.831
-                    a 15.9155 15.9155 0 0 1 0 -31.831"
-                  fill="none"
-                  stroke="#d97706"
-                  strokeWidth="3.5"
-                  strokeDasharray="100, 100"
-                  strokeDashoffset={100 - progressPercentage}
-                  strokeLinecap="round"
-                  className="transition-all duration-1000 ease-out"
-                />
+                <circle cx="18" cy="18" r="15.9155" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
+                <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#d97706" strokeWidth="3" strokeDasharray={`${progressPercentage}, 100`} strokeLinecap="round" className="transition-all duration-1000 ease-out" />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-xs font-display font-bold text-white">{progressPercentage}%</span>
+                <span className="text-[9px] font-display font-bold text-white">{progressPercentage}%</span>
               </div>
             </div>
+
             {sessionState === 'active' && (
-              <div className="bg-black/60 px-4 py-1.5 rounded-full border border-white/5 flex items-center gap-2 shadow-2xl">
-                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]"></div>
-                <span className="text-sm font-display font-bold text-white tracking-tight">{formatTime(elapsedSeconds)}</span>
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]"></div>
+                <span className="text-xs font-display font-bold text-white tracking-tight tabular-nums">{formatTime(elapsedSeconds)}</span>
               </div>
             )}
           </div>
@@ -1425,21 +1416,21 @@ const Workout: React.FC = () => {
       
       {/* Session Controls (Floating) */}
       {selectedRoutine !== RoutineType.REST && !isGymMode && (
-        <div className="fixed bottom-24 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none z-40">
+        <div className={`fixed left-0 right-0 flex justify-center z-40 transition-premium pointer-events-none ${showNav ? 'bottom-24' : 'bottom-4'}`}>
           {sessionState === 'idle' && (
             <button 
               onClick={startWorkout}
-              className="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold py-5 rounded-2xl shadow-2xl shadow-brand-900/50 flex items-center justify-center gap-3 pointer-events-auto transition-premium active:scale-[0.98] uppercase tracking-[0.2em]"
+              className="glass-panel rounded-[28px] shadow-[0_8px_40px_rgba(0,0,0,0.7)] border border-white/10 w-[312px] h-16 bg-brand-600/90 hover:bg-brand-500 text-white font-bold flex items-center justify-center gap-3 pointer-events-auto transition-premium active:scale-[0.98] uppercase tracking-[0.15em] text-xs"
             >
-              <Timer size={24} /> Comenzar Entrenamiento
+              <Timer size={20} /> Comenzar Entrenamiento
             </button>
           )}
           {sessionState === 'active' && (
             <button 
               onClick={() => setShowFinishConfirm(true)}
-              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-5 rounded-2xl shadow-2xl shadow-emerald-900/50 flex items-center justify-center gap-3 pointer-events-auto transition-premium active:scale-[0.98] uppercase tracking-[0.2em]"
+              className="glass-panel rounded-[28px] shadow-[0_8px_40px_rgba(0,0,0,0.7)] border border-white/10 w-[312px] h-16 bg-emerald-600/90 hover:bg-emerald-500 text-white font-bold flex items-center justify-center gap-3 pointer-events-auto transition-premium active:scale-[0.98] uppercase tracking-[0.15em] text-xs"
             >
-              <Check size={24} /> Finalizar Entrenamiento
+              <Check size={20} /> Finalizar Entrenamiento
             </button>
           )}
         </div>

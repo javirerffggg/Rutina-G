@@ -10,6 +10,10 @@ const Layout: React.FC = () => {
   const [toastAchievement, setToastAchievement] = useState<AchievementDef | null>(null);
 
   useEffect(() => {
+    window.dispatchEvent(new CustomEvent('nav-visibility-change', { detail: showNav }));
+  }, [showNav]);
+
+  useEffect(() => {
     const handleUnlock = (e: CustomEvent<string[]>) => {
       const ids = e.detail;
       if (ids && ids.length > 0) {
@@ -76,7 +80,7 @@ const Layout: React.FC = () => {
         </div>
       )}
 
-      <main className="flex-1 overflow-y-auto no-scrollbar pb-24 relative z-10" onScroll={(e) => {
+      <main className="flex-1 overflow-y-auto no-scrollbar pb-28 relative z-10" onScroll={(e) => {
         const target = e.target as HTMLElement;
         const currentScrollY = target.scrollTop;
         if (currentScrollY > lastScrollY && currentScrollY > 50) {
@@ -92,67 +96,69 @@ const Layout: React.FC = () => {
         </div>
       </main>
       
-      <nav className={`fixed bottom-0 left-0 right-0 glass-panel pb-safe pt-2 px-6 z-50 rounded-t-[32px] shadow-[0_-8px_40px_rgba(0,0,0,0.6)] transition-premium ${showNav ? 'translate-y-0' : 'translate-y-full'}`}>
-        <div className="flex justify-between items-center h-20 max-w-md mx-auto">
-          <NavLink 
-            to="/plan" 
-            className={({ isActive }) => `flex flex-col items-center gap-1.5 transition-premium ${isActive ? 'text-gold-500 scale-110' : 'text-zinc-500 hover:text-zinc-300'}`}
-          >
-            {({ isActive }) => (
-              <>
-                <CalendarRange size={24} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[10px] font-bold tracking-[0.15em] uppercase">Plan</span>
-              </>
-            )}
-          </NavLink>
+      <nav className={`fixed bottom-4 left-0 right-0 flex justify-center z-50 transition-premium ${showNav ? 'translate-y-0 opacity-100' : 'translate-y-[120%] opacity-0'}`}>
+        <div className="glass-panel rounded-[28px] shadow-[0_8px_40px_rgba(0,0,0,0.7)] border border-white/10 px-8 pt-2 pb-safe w-fit">
+          <div className="flex items-center h-16 gap-8">
+            <NavLink 
+              to="/plan" 
+              className={({ isActive }) => `flex flex-col items-center gap-1.5 transition-premium ${isActive ? 'text-gold-500 scale-110' : 'text-zinc-500 hover:text-zinc-300'}`}
+            >
+              {({ isActive }) => (
+                <>
+                  <CalendarRange size={24} strokeWidth={isActive ? 2.5 : 2} />
+                  <span className="text-[10px] font-bold tracking-[0.15em] uppercase">Plan</span>
+                </>
+              )}
+            </NavLink>
 
-          <NavLink 
-            to="/today" 
-            className={({ isActive }) => `flex flex-col items-center gap-1.5 transition-premium ${isActive ? 'text-brand-500 scale-110' : 'text-zinc-500 hover:text-zinc-300'}`}
-          >
-            {({ isActive }) => (
-              <>
-                <LayoutDashboard size={24} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[10px] font-bold tracking-[0.15em] uppercase">Hoy</span>
-              </>
-            )}
-          </NavLink>
-          
-          <NavLink 
-            to="/" 
-            className={({ isActive }) => `flex flex-col items-center gap-1.5 transition-premium ${isActive ? 'text-emerald-400 scale-110' : 'text-zinc-500 hover:text-zinc-300'}`}
-          >
-            {({ isActive }) => (
-              <>
-                <Dumbbell size={24} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[10px] font-bold tracking-[0.15em] uppercase">Entreno</span>
-              </>
-            )}
-          </NavLink>
-          
-          <NavLink 
-            to="/stats" 
-            className={({ isActive }) => `flex flex-col items-center gap-1.5 transition-premium ${isActive ? 'text-purple-400 scale-110' : 'text-zinc-500 hover:text-zinc-300'}`}
-          >
-            {({ isActive }) => (
-              <>
-                <Scale size={24} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[10px] font-bold tracking-[0.15em] uppercase">Peso</span>
-              </>
-            )}
-          </NavLink>
+            <NavLink 
+              to="/today" 
+              className={({ isActive }) => `flex flex-col items-center gap-1.5 transition-premium ${isActive ? 'text-brand-500 scale-110' : 'text-zinc-500 hover:text-zinc-300'}`}
+            >
+              {({ isActive }) => (
+                <>
+                  <LayoutDashboard size={24} strokeWidth={isActive ? 2.5 : 2} />
+                  <span className="text-[10px] font-bold tracking-[0.15em] uppercase">Hoy</span>
+                </>
+              )}
+            </NavLink>
+            
+            <NavLink 
+              to="/" 
+              className={({ isActive }) => `flex flex-col items-center gap-1.5 transition-premium ${isActive ? 'text-emerald-400 scale-110' : 'text-zinc-500 hover:text-zinc-300'}`}
+            >
+              {({ isActive }) => (
+                <>
+                  <Dumbbell size={24} strokeWidth={isActive ? 2.5 : 2} />
+                  <span className="text-[10px] font-bold tracking-[0.15em] uppercase">Entreno</span>
+                </>
+              )}
+            </NavLink>
+            
+            <NavLink 
+              to="/stats" 
+              className={({ isActive }) => `flex flex-col items-center gap-1.5 transition-premium ${isActive ? 'text-purple-400 scale-110' : 'text-zinc-500 hover:text-zinc-300'}`}
+            >
+              {({ isActive }) => (
+                <>
+                  <Scale size={24} strokeWidth={isActive ? 2.5 : 2} />
+                  <span className="text-[10px] font-bold tracking-[0.15em] uppercase">Peso</span>
+                </>
+              )}
+            </NavLink>
 
-          <NavLink 
-            to="/trophies" 
-            className={({ isActive }) => `flex flex-col items-center gap-1.5 transition-premium ${isActive ? 'text-amber-500 scale-110' : 'text-zinc-500 hover:text-zinc-300'}`}
-          >
-            {({ isActive }) => (
-              <>
-                <Trophy size={24} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[10px] font-bold tracking-[0.15em] uppercase">Logros</span>
-              </>
-            )}
-          </NavLink>
+            <NavLink 
+              to="/trophies" 
+              className={({ isActive }) => `flex flex-col items-center gap-1.5 transition-premium ${isActive ? 'text-amber-500 scale-110' : 'text-zinc-500 hover:text-zinc-300'}`}
+            >
+              {({ isActive }) => (
+                <>
+                  <Trophy size={24} strokeWidth={isActive ? 2.5 : 2} />
+                  <span className="text-[10px] font-bold tracking-[0.15em] uppercase">Logros</span>
+                </>
+              )}
+            </NavLink>
+          </div>
         </div>
       </nav>
     </div>

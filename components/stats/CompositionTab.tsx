@@ -21,6 +21,7 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
   const { slope, intercept } = calculateLinearRegression(xValues, rawWeights);
 
   const chartData = weightLogs.map((log, i) => ({
+    index: i,
     date: new Date(log.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }),
     weight: log.weight,
     average: movingAvgs[i]?.toFixed(2),
@@ -150,7 +151,7 @@ Estrés: ${todayLog.stress || '-'}/5
                     </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="date" hide />
+                <XAxis dataKey="index" hide />
                 <YAxis 
                     domain={['dataMin - 1', 'dataMax + 1']} 
                     orientation="right" 
@@ -159,6 +160,7 @@ Estrés: ${todayLog.stress || '-'}/5
                     width={30}
                 />
                 <Tooltip 
+                    labelFormatter={(value, payload) => payload[0]?.payload?.date || ''}
                     contentStyle={{backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '12px'}}
                     itemStyle={{padding: 0}}
                     labelStyle={{color: '#94a3b8', marginBottom: '4px'}}
@@ -167,8 +169,8 @@ Estrés: ${todayLog.stress || '-'}/5
                 <Line type="monotone" dataKey="average" stroke="#fb923c" dot={false} strokeWidth={2} />
                 <Line type="linear" dataKey="trend" stroke="#ef4444" strokeDasharray="3 3" dot={false} strokeWidth={1} opacity={0.7} />
                 
-                {chartData.map((entry, index) => (
-                    entry.isRefeed ? <ReferenceDot key={index} x={entry.date} y={entry.weight} r={4} fill="#f97316" stroke="none" /> : null
+                {chartData.map((entry) => (
+                    entry.isRefeed ? <ReferenceDot key={entry.index} x={entry.index} y={entry.weight} r={4} fill="#f97316" stroke="none" /> : null
                 ))}
                 </ComposedChart>
             </ResponsiveContainer>

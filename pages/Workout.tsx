@@ -121,14 +121,12 @@ const Workout: React.FC = () => {
     localStorage.getItem('gymMode') === 'true'
   );
 
-  // Persist gym mode
   const toggleGymMode = () => {
     const next = !isGymMode;
     setIsGymMode(next);
     localStorage.setItem('gymMode', next.toString());
   };
 
-  // Session state
   const [sessionState, setSessionState] = useState<'idle' | 'active' | 'finished'>(() => {
     const stored = localStorage.getItem(`workoutSessionState_${today}`);
     if (stored === 'active' || stored === 'finished') return stored as 'active' | 'finished';
@@ -138,9 +136,7 @@ const Workout: React.FC = () => {
   });
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [restTimer, setRestTimer] = useState<number | null>(null);
-  // Store the initial rest duration for the circle animation
   const restDurationRef = useRef<number>(90);
-  // Safe long-press ref
   const skipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [startTime, setStartTime] = useState<number | null>(() => {
@@ -148,7 +144,6 @@ const Workout: React.FC = () => {
     return stored ? parseInt(stored, 10) : null;
   });
 
-  // Phase checks — use type field, not name string
   const isDeficitPhase = phase.type === 'cut' || phase.type === 'deficit';
   const isVolumePhase = phase.type === 'bulk' || phase.type === 'volume' || phase.type === 'maintenance';
   const showSupplementAlert = isVolumePhase && (
@@ -163,7 +158,6 @@ const Workout: React.FC = () => {
     return () => window.removeEventListener('nav-visibility-change', handleNavChange);
   }, []);
 
-  // Workout elapsed timer
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     if (sessionState === 'active' && startTime) {
@@ -175,7 +169,6 @@ const Workout: React.FC = () => {
     return () => clearInterval(interval);
   }, [sessionState, startTime]);
 
-  // Rest countdown
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     if (restTimer !== null && restTimer > 0) {
@@ -242,7 +235,6 @@ const Workout: React.FC = () => {
     { id: RoutineType.REST,  label: 'Rest' },
   ];
 
-  // Load exercises & logs when routine changes
   useEffect(() => {
     let list: Exercise[] = [];
     if (selectedRoutine === RoutineType.PUSH)  list = EXERCISES_PUSH;
@@ -311,7 +303,6 @@ const Workout: React.FC = () => {
       const wasCompleted = newSets[setIndex].completed;
       newSets[setIndex] = { ...newSets[setIndex], completed: !wasCompleted };
 
-      // Pre-fill next set weight
       if (!wasCompleted && setIndex < newSets.length - 1 && !newSets[setIndex + 1].weight) {
         newSets[setIndex + 1] = { ...newSets[setIndex + 1], weight: newSets[setIndex].weight };
       }
@@ -349,7 +340,6 @@ const Workout: React.FC = () => {
     saveWorkoutWithLogs(newLogs);
   };
 
-  // Avoid double getLogs() — use allLogs state
   const calculateSessionAnalysis = (currentLogs: WorkoutLogEntry[], routine: RoutineType) => {
     const tonnage = currentLogs.reduce((acc, ex) =>
       acc + ex.sets.reduce((sAcc, s) => sAcc + (s.weight * s.reps), 0), 0
@@ -429,7 +419,6 @@ const Workout: React.FC = () => {
   const completedExercises = logs.filter(l => l.completed).length;
   const progressPercentage = totalExercises > 0 ? Math.round((completedExercises / totalExercises) * 100) : 0;
 
-  // Gym mode current focus
   const currentGymExercise = activeExercise
     ? exercises.find(e => e.id === activeExercise)
     : exercises.find(e => !logs.find(l => l.exerciseId === e.id)?.completed);
@@ -439,16 +428,14 @@ const Workout: React.FC = () => {
   const prevGymLog = currentGymExercise ? getPreviousWorkoutLog(currentGymExercise.id, today) : null;
   const prevGymSet = prevGymLog && currentSetIndex !== -1 ? prevGymLog.sets[currentSetIndex] : null;
 
-  // Inline 1RM for gym mode
   const current1RM = currentSet?.weight && currentSet?.reps
     ? calculateOneRM(currentSet.weight, currentSet.reps)
     : null;
 
-  // Circle animation: fraction of remaining time vs initial duration
   const circleProgress = restTimer !== null
     ? (restTimer / restDurationRef.current)
     : 1;
-  const CIRCUMFERENCE = 2 * Math.PI * 45; // r=45
+  const CIRCUMFERENCE = 2 * Math.PI * 45;
 
   return (
     <div className="pb-10 min-h-screen">
@@ -541,27 +528,37 @@ const Workout: React.FC = () => {
 
       {/* ── HEADER ── */}
       <div className="relative pt-12 px-6 pb-8 bg-gradient-to-b from-brand-900/10 to-transparent">
-        <div className="flex justify-between items-start mb-8">
-          <div>
+        {/*
+          FIX: El contenedor flex justify-between ahora tiene min-w-0 en el título
+          y el bloque derecho es shrink-0 con max-w contenido para no desbordarse.
+          Dentro del bloque derecho, gap-2 (antes gap-3) y el timer usa max-w-[72px]
+          para que 00:00:00 no fuerce el div fuera del viewport.
+        */}
+        <div className="flex justify-between items-start mb-8 gap-3">
+          <div className="min-w-0 flex-1">
             <h1 className="text-4xl font-display font-bold text-white mb-1 tracking-tight">Entrenamiento</h1>
             <p className="text-brand-400 text-[10px] font-bold tracking-[0.2em] uppercase flex items-center gap-2">
               <Trophy size={14} />
-              {phase.trainingFocus}
+              <span className="truncate">{phase.trainingFocus}</span>
             </p>
           </div>
-          <div className="flex items-center gap-3 bg-zinc-900/40 p-1.5 pr-4 rounded-2xl border border-white/5 backdrop-blur-md">
+
+          {/* Status bar: Normal/GymMode + progress circle + timer */}
+          <div className="shrink-0 flex items-center gap-2 bg-zinc-900/40 p-1.5 rounded-2xl border border-white/5 backdrop-blur-md">
             {sessionState === 'active' && (
               <button
                 onClick={toggleGymMode}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all ${
+                className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all ${
                   isGymMode ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20' : 'bg-zinc-800 text-zinc-400 hover:text-white border border-white/5'
                 }`}
               >
-                <Dumbbell size={14} />
-                {isGymMode ? 'Modo Gym' : 'Normal'}
+                <Dumbbell size={13} />
+                <span>{isGymMode ? 'Gym' : 'Normal'}</span>
               </button>
             )}
-            <div className="relative w-10 h-10 flex items-center justify-center shrink-0">
+
+            {/* Progress donut */}
+            <div className="relative w-9 h-9 shrink-0 flex items-center justify-center">
               <svg className="w-full h-full transform -rotate-90 overflow-visible" viewBox="0 0 36 36">
                 <circle cx="18" cy="18" r="15.9155" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
                 <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#d97706" strokeWidth="3"
@@ -569,13 +566,17 @@ const Workout: React.FC = () => {
                   className="transition-all duration-1000 ease-out" />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-[9px] font-display font-bold text-white">{progressPercentage}%</span>
+                <span className="text-[8px] font-display font-bold text-white leading-none">{progressPercentage}%</span>
               </div>
             </div>
+
+            {/* Elapsed timer — fixed width so it never pushes the container wider */}
             {sessionState === 'active' && (
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
-                <span className="text-xs font-display font-bold text-white tracking-tight tabular-nums">{formatTime(elapsedSeconds)}</span>
+              <div className="flex items-center gap-1.5 pr-1">
+                <div className="w-1.5 h-1.5 shrink-0 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
+                <span className="text-xs font-display font-bold text-white tracking-tight tabular-nums w-[52px] text-right">
+                  {formatTime(elapsedSeconds)}
+                </span>
               </div>
             )}
           </div>
@@ -681,7 +682,6 @@ const Workout: React.FC = () => {
         ) : isGymMode ? (
           <div className="animate-in fade-in zoom-in-95 duration-300">
             {restTimer !== null ? (
-              /* GIANT REST TIMER (gym mode) */
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -840,12 +840,12 @@ const Workout: React.FC = () => {
                 >
                   <div className="p-5 flex flex-col gap-3 relative z-10">
                     <div className="flex justify-between items-start gap-4">
-                      <div className="flex-1">
-                        <h3 className={`font-display font-bold text-lg leading-tight transition-all ${
+                      <div className="flex-1 min-w-0">
+                        <h3 className={`font-display font-bold text-lg leading-tight transition-all truncate ${
                           isCompleted ? 'text-emerald-400 line-through' : isExpanded ? 'text-white' : 'text-zinc-400'
                         }`}>{exercise.name}</h3>
                       </div>
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-4 shrink-0">
                         {hasTechGuide && !isCompleted && (
                           <button onClick={e => { e.stopPropagation(); setShowTechFor(exercise.id); }} className="text-zinc-600 hover:text-brand-400 transition-all p-1.5">
                             <BookOpen size={18} />

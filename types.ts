@@ -35,6 +35,7 @@ export interface WorkoutSet {
   weight: number;
   reps: number;
   rir?: number;
+  completed?: boolean;
 }
 
 export interface WorkoutLogEntry {
@@ -59,12 +60,11 @@ export interface DailyLog {
   energy?: number; // 1-5
   stress?: number; // 1-5
   
-  duration?: number; // Duration in minutes
-  
   notes?: string;
   workoutCompleted?: boolean;
   workoutType?: RoutineType;
   exercises?: WorkoutLogEntry[];
+  duration?: number; // Duration in minutes
 }
 
 export interface PlanPhase {

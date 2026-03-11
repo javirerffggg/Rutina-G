@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { DailyLog } from '../../types';
-import { Calendar, FileText, Sparkles, Download, ArrowRight, Trophy, Flame, Target } from 'lucide-react';
+import { Calendar, FileText, Sparkles, Download, ArrowRight, Trophy, Flame, Target, Share2, Loader2 } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import { EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS, EXERCISES_UPPER, EXERCISES_LOWER } from '../../constants';
 
 interface ReportsTabProps {
   logs: Record<string, DailyLog>;
@@ -8,6 +10,8 @@ interface ReportsTabProps {
 
 export const ReportsTab: React.FC<ReportsTabProps> = ({ logs }) => {
   const [activeReport, setActiveReport] = useState<'monthly' | 'yearly' | null>(null);
+  const reportRef = useRef<HTMLDivElement>(null);
+  const [isSharing, setIsSharing] = useState(false);
 
   const sortedDates = Object.keys(logs).sort();
   const workoutLogs = sortedDates.map(date => logs[date]).filter(l => l.exercises && l.exercises.length > 0);
@@ -55,6 +59,24 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ logs }) => {
   const yearlyVol = getVolume(currentYearLogs);
   const yearlyWorkouts = currentYearLogs.length;
   
+  // Top Exercises
+  const exerciseCounts: Record<string, number> = {};
+  currentYearLogs.forEach(log => {
+    log.exercises?.forEach(ex => {
+      exerciseCounts[ex.exerciseId] = (exerciseCounts[ex.exerciseId] || 0) + ex.sets.length;
+    });
+  });
+
+  const allExercises = [...EXERCISES_PUSH, ...EXERCISES_PULL, ...EXERCISES_LEGS, ...EXERCISES_UPPER, ...EXERCISES_LOWER];
+  
+  const topExercises = Object.entries(exerciseCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([id, sets]) => {
+      const ex = allExercises.find(e => e.id === id);
+      return { name: ex ? ex.name : id, sets };
+    });
+
   // Animal equivalents
   const getAnimalEquivalent = (kg: number) => {
     if (kg > 100000) return { name: 'Ballena Azul', weight: 100000, icon: '🐋' };
@@ -67,6 +89,46 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ logs }) => {
 
   const animal = getAnimalEquivalent(yearlyVol);
   const animalCount = (yearlyVol / animal.weight).toFixed(1);
+
+  const handleShare = async () => {
+    if (!reportRef.current || isSharing) return;
+    setIsSharing(true);
+    try {
+      const canvas = await html2canvas(reportRef.current, {
+        backgroundColor: '#0f172a', // slate-900
+        scale: 2, 
+        useCORS: true,
+      });
+      
+      const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) throw new Error('Failed to create image blob');
+
+      const file = new File([blob], 'fitness-wrapped.png', { type: 'image/png' });
+
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: 'Mi Año en Hierro',
+          text: '¡Mira mi resumen anual de entrenamiento!',
+          files: [file],
+        });
+      } else {
+        // Fallback to download
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'fitness-wrapped.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Error sharing report:', error);
+      alert('Hubo un error al generar la imagen.');
+    } finally {
+      setIsSharing(false);
+    }
+  };
 
   return (
     <div className="space-y-6 pb-8">
@@ -162,7 +224,10 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ logs }) => {
             <ArrowRight size={14} className="rotate-180" /> Volver
           </button>
 
-          <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-3xl border border-gold-500/20 relative overflow-hidden shadow-2xl shadow-gold-900/20">
+          <div 
+            ref={reportRef}
+            className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-3xl border border-gold-500/20 relative overflow-hidden shadow-2xl shadow-gold-900/20"
+          >
             <div className="absolute top-0 right-0 w-64 h-64 bg-gold-500/20 rounded-full blur-3xl -mr-20 -mt-20"></div>
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-brand-500/20 rounded-full blur-3xl -ml-20 -mb-20"></div>
             
@@ -195,13 +260,35 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ logs }) => {
                     <p className="text-3xl font-black text-white">{((yearlyWorkouts / 365) * 100).toFixed(0)}%</p>
                   </div>
                 </div>
-              </div>
 
-              <button className="w-full bg-gradient-to-r from-gold-500 to-amber-500 text-black font-black uppercase tracking-widest py-4 rounded-xl hover:scale-[1.02] transition-transform flex items-center justify-center gap-2">
-                <Download size={18} /> Compartir Resumen
-              </button>
+                {topExercises.length > 0 && (
+                  <div className="bg-black/40 backdrop-blur-md p-6 rounded-2xl border border-white/10 text-left">
+                    <p className="text-xs text-brand-400 uppercase font-bold tracking-wider mb-4 text-center">Tus Ejercicios Favoritos</p>
+                    <div className="space-y-3">
+                      {topExercises.map((ex, idx) => (
+                        <div key={idx} className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <span className="text-gold-500 font-black text-lg">#{idx + 1}</span>
+                            <span className="text-sm font-bold text-white truncate max-w-[180px]">{ex.name}</span>
+                          </div>
+                          <span className="text-xs text-slate-400 font-mono">{ex.sets} series</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
+
+          <button 
+            onClick={handleShare}
+            disabled={isSharing}
+            className="w-full bg-gradient-to-r from-gold-500 to-amber-500 text-black font-black uppercase tracking-widest py-4 rounded-xl hover:scale-[1.02] transition-transform flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100"
+          >
+            {isSharing ? <Loader2 size={18} className="animate-spin" /> : <Share2 size={18} />}
+            {isSharing ? 'Generando...' : 'Compartir Resumen'}
+          </button>
         </div>
       )}
     </div>

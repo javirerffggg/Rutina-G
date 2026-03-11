@@ -30,8 +30,9 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs }) => {
     return acc + (log.exercises?.reduce((exAcc, ex) => exAcc + ex.sets.length, 0) || 0);
   }, 0);
 
-  const avgDuration = workoutLogs.length > 0 
-    ? Math.round(workoutLogs.reduce((acc, log) => acc + (log.duration || 60), 0) / workoutLogs.length)
+  const logsWithDuration = workoutLogs.filter(l => l.duration && l.duration > 0);
+  const avgDuration = logsWithDuration.length > 0 
+    ? Math.round(logsWithDuration.reduce((acc, log) => acc + log.duration!, 0) / logsWithDuration.length)
     : 0;
 
   // Calculate Streak (consecutive days)
@@ -195,7 +196,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs }) => {
         {volumeChartData.length > 0 && (
           <div className="glass-panel p-4 rounded-2xl">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Evolución del Volumen</h3>
-            <div className="h-48 w-full">
+            <div style={{ width: '100%', height: 192 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={volumeChartData}>
                   <defs>
@@ -245,7 +246,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs }) => {
         {muscleChartData.length > 0 && (
           <div className="glass-panel p-4 rounded-2xl">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Series por Grupo Muscular</h3>
-            <div className="h-64 w-full">
+            <div style={{ width: '100%', height: 256 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={muscleChartData} layout="vertical" margin={{ top: 0, right: 0, left: 20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="rgba(255,255,255,0.05)" />
@@ -326,7 +327,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs }) => {
           )}
 
           {exerciseLogs.length > 0 ? (
-            <div className="h-48 w-full">
+            <div style={{ width: '100%', height: 192 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={exerciseLogs}>
                   <defs>

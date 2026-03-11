@@ -27,6 +27,70 @@ const Workout: React.FC = () => {
   // controls the history modal
   const [showHistoryFor, setShowHistoryFor] = useState<string | null>(null);
 
+  // Session State
+  const [sessionState, setSessionState] = useState<'idle' | 'active' | 'finished'>(() => {
+    const stored = localStorage.getItem(`workoutSessionState_${today}`);
+    if (stored === 'active' || stored === 'finished') return stored as 'active' | 'finished';
+    const existingDayLog = getLogs()[today];
+    if (existingDayLog?.workoutCompleted) return 'finished';
+    return 'idle';
+  });
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [restTimer, setRestTimer] = useState<number | null>(null);
+
+  // Workout timer
+  const [startTime, setStartTime] = useState<number | null>(() => {
+    const stored = localStorage.getItem(`workoutStartTime_${today}`);
+    return stored ? parseInt(stored, 10) : null;
+  });
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (sessionState === 'active' && startTime) {
+      setElapsedSeconds(Math.floor((Date.now() - startTime) / 1000));
+      interval = setInterval(() => {
+        setElapsedSeconds(Math.floor((Date.now() - startTime) / 1000));
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [sessionState, startTime]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (restTimer !== null && restTimer > 0) {
+      interval = setInterval(() => {
+        setRestTimer(prev => (prev !== null && prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    } else if (restTimer === 0) {
+      setRestTimer(null);
+      if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+    }
+    return () => clearInterval(interval);
+  }, [restTimer]);
+
+  const formatTime = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const startWorkout = () => {
+    if (sessionState !== 'idle') return;
+    const now = Date.now();
+    setStartTime(now);
+    setSessionState('active');
+    localStorage.setItem(`workoutStartTime_${today}`, now.toString());
+    localStorage.setItem(`workoutSessionState_${today}`, 'active');
+  };
+
+  const handleInteraction = () => {
+    if (sessionState === 'idle') {
+      startWorkout();
+    }
+  };
+
   const TABS = [
     { id: RoutineType.PUSH, label: 'Push' },
     { id: RoutineType.PULL, label: 'Pull' },
@@ -58,6 +122,7 @@ const Workout: React.FC = () => {
   }, [selectedRoutine, today]);
 
   const updateSet = (exerciseId: string, setIndex: number, field: keyof WorkoutSet, value: number) => {
+    handleInteraction();
     const newLogs = logs.map(log => {
       if (log.exerciseId !== exerciseId) return log;
       const newSets = [...log.sets];
@@ -69,16 +134,17 @@ const Workout: React.FC = () => {
   };
 
   const addSet = (exerciseId: string) => {
+    handleInteraction();
     const newLogs = logs.map(log => {
       if (log.exerciseId !== exerciseId) return log;
       
       let newSet = { weight: 0, reps: 0 };
       if (log.sets.length > 0) {
-        newSet = { ...log.sets[log.sets.length - 1] };
+        newSet = { ...log.sets[log.sets.length - 1], completed: false };
       } else {
         const prevLog = getPreviousWorkoutLog(exerciseId, today);
         if (prevLog && prevLog.sets.length > 0) {
-          newSet = { weight: prevLog.sets[0].weight, reps: prevLog.sets[0].reps };
+          newSet = { weight: prevLog.sets[0].weight, reps: prevLog.sets[0].reps, completed: false };
         }
       }
       
@@ -90,6 +156,7 @@ const Workout: React.FC = () => {
   };
 
   const removeSet = (exerciseId: string, index: number) => {
+    handleInteraction();
     const newLogs = logs.map(log => {
       if (log.exerciseId !== exerciseId) return log;
       return { ...log, sets: log.sets.filter((_, i) => i !== index) };
@@ -97,8 +164,36 @@ const Workout: React.FC = () => {
     setLogs(newLogs);
   };
 
+  const toggleSetComplete = (exerciseId: string, setIndex: number) => {
+    handleInteraction();
+    const newLogs = logs.map(log => {
+      if (log.exerciseId !== exerciseId) return log;
+      const newSets = [...log.sets];
+      newSets[setIndex] = { ...newSets[setIndex], completed: !newSets[setIndex].completed };
+      
+      // Auto-complete exercise if all sets are completed and there is at least one set
+      const allCompleted = newSets.length > 0 && newSets.every(s => s.completed);
+      
+      return { ...log, sets: newSets, completed: allCompleted };
+    });
+    setLogs(newLogs);
+    saveWorkout(newLogs, false);
+    
+    const isCompleted = newLogs.find(l => l.exerciseId === exerciseId)?.sets[setIndex].completed;
+    if (isCompleted) {
+      setRestTimer(90);
+    }
+    
+    // Auto-collapse if exercise became completed
+    const targetLog = newLogs.find(l => l.exerciseId === exerciseId);
+    if (targetLog?.completed) {
+      setTimeout(() => setActiveExercise(null), 500);
+    }
+  };
+
   const toggleExerciseComplete = (exerciseId: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent accordion toggle
+    handleInteraction();
     const newLogs = logs.map(log => {
       if (log.exerciseId !== exerciseId) return log;
       return { ...log, completed: !log.completed };
@@ -115,15 +210,33 @@ const Workout: React.FC = () => {
     saveWorkout(newLogs);
   };
 
-  const saveWorkout = (currentLogs = logs) => {
+  const saveWorkout = (currentLogs = logs, finish = false) => {
     const currentLog = getLogs()[today] || { date: today };
+    
+    let duration = currentLog.duration;
+    if (startTime && finish) {
+      const elapsedMinutes = Math.round((Date.now() - startTime) / 60000);
+      if (elapsedMinutes > 0 && elapsedMinutes <= 180) {
+        duration = elapsedMinutes;
+      } else if (elapsedMinutes > 180 && !duration) {
+        duration = 180; // Cap at 3 hours if they forgot to close it
+      }
+    }
+
     const updated = {
       ...currentLog,
-      workoutCompleted: true,
+      workoutCompleted: finish ? true : currentLog.workoutCompleted,
       workoutType: selectedRoutine,
-      exercises: currentLogs
+      exercises: currentLogs,
+      ...(duration ? { duration } : {})
     };
     saveLog(updated);
+
+    if (finish) {
+      setSessionState('finished');
+      localStorage.setItem(`workoutSessionState_${today}`, 'finished');
+      setRestTimer(null);
+    }
   };
 
   // Calculate Progress based on 'completed' flag
@@ -133,6 +246,23 @@ const Workout: React.FC = () => {
 
   return (
     <div className="pb-10 min-h-screen">
+      {/* Rest Timer Banner */}
+      {restTimer !== null && (
+        <div className="fixed top-0 left-0 right-0 bg-brand-600 text-white px-4 py-3 flex items-center justify-between z-50 shadow-lg shadow-brand-900/50 animate-in slide-in-from-top-full">
+          <div className="flex items-center gap-3">
+            <Timer size={20} className="animate-pulse" />
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider opacity-80">Descanso</p>
+              <p className="text-xl font-mono font-bold leading-none">{formatTime(restTimer)}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setRestTimer(prev => prev !== null ? prev + 30 : 30)} className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-bold transition-colors">+30s</button>
+            <button onClick={() => setRestTimer(null)} className="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"><X size={16} /></button>
+          </div>
+        </div>
+      )}
+
       {/* Premium Header */}
       <div className="relative pt-8 px-5 pb-6 bg-gradient-to-b from-brand-900/20 to-transparent">
         <div className="flex justify-between items-start mb-6">
@@ -144,33 +274,41 @@ const Workout: React.FC = () => {
             </p>
           </div>
           
-          {/* Circular Progress */}
-          <div className="relative w-14 h-14 flex items-center justify-center">
-            <svg className="w-full h-full transform -rotate-90 overflow-visible" viewBox="0 0 36 36">
-              <path
-                d="M18 2.0845
-                  a 15.9155 15.9155 0 0 1 0 31.831
-                  a 15.9155 15.9155 0 0 1 0 -31.831"
-                fill="none"
-                stroke="rgba(255,255,255,0.1)"
-                strokeWidth="3"
-              />
-              <path
-                d="M18 2.0845
-                  a 15.9155 15.9155 0 0 1 0 31.831
-                  a 15.9155 15.9155 0 0 1 0 -31.831"
-                fill="none"
-                stroke="#d97706"
-                strokeWidth="3"
-                strokeDasharray="100, 100"
-                strokeDashoffset={100 - progressPercentage}
-                strokeLinecap="round"
-                className="transition-all duration-1000 ease-out"
-              />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-[11px] font-bold text-white">{progressPercentage}%</span>
+          {/* Circular Progress & Timer */}
+          <div className="flex flex-col items-end gap-2">
+            <div className="relative w-14 h-14 flex items-center justify-center">
+              <svg className="w-full h-full transform -rotate-90 overflow-visible" viewBox="0 0 36 36">
+                <path
+                  d="M18 2.0845
+                    a 15.9155 15.9155 0 0 1 0 31.831
+                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.1)"
+                  strokeWidth="3"
+                />
+                <path
+                  d="M18 2.0845
+                    a 15.9155 15.9155 0 0 1 0 31.831
+                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                  fill="none"
+                  stroke="#d97706"
+                  strokeWidth="3"
+                  strokeDasharray="100, 100"
+                  strokeDashoffset={100 - progressPercentage}
+                  strokeLinecap="round"
+                  className="transition-all duration-1000 ease-out"
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-[11px] font-bold text-white">{progressPercentage}%</span>
+              </div>
             </div>
+            {sessionState === 'active' && (
+              <div className="bg-black/40 px-3 py-1 rounded-full border border-white/10 flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                <span className="text-xs font-mono font-bold text-white">{formatTime(elapsedSeconds)}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -264,7 +402,19 @@ const Workout: React.FC = () => {
              <p className="text-slate-600 text-xs mt-1">Recupera y crece. Prohibido cardio intenso.</p>
            </div>
         ) : (
-          exercises.map((exercise, i) => {
+          <>
+            {sessionState === 'finished' && (
+              <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-xl p-4 mb-4 flex items-center gap-3 animate-in fade-in">
+                <div className="bg-emerald-500/20 p-2 rounded-full text-emerald-400 shrink-0">
+                  <Trophy size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-emerald-400">Entrenamiento Finalizado</p>
+                  <p className="text-[10px] text-slate-400">Buen trabajo hoy. Tus datos han sido guardados.</p>
+                </div>
+              </div>
+            )}
+            {exercises.map((exercise, i) => {
             const log = logs.find(l => l.exerciseId === exercise.id) || { exerciseId: exercise.id, sets: [], completed: false };
             const prevLog = getPreviousWorkoutLog(exercise.id, today);
             const isCompleted = log.completed;
@@ -392,55 +542,86 @@ const Workout: React.FC = () => {
                     className="px-4 pb-4 animate-in slide-in-from-top-2 duration-300 relative z-10"
                   >
                     <div className="space-y-2">
-                      <div className="grid grid-cols-12 gap-2 text-[9px] text-slate-500 font-bold uppercase tracking-wider text-center mb-1 pl-6">
-                        <span className="col-span-4">Peso (kg)</span>
-                        <span className="col-span-4">Reps</span>
-                        <span className="col-span-4">RIR</span>
+                      <div className="flex items-center gap-2 text-[9px] text-slate-500 font-bold uppercase tracking-wider text-center mb-2">
+                        <div className="w-6"></div>
+                        <div className="grid grid-cols-12 gap-2 flex-1">
+                          <span className="col-span-4">Peso (kg)</span>
+                          <span className="col-span-4">Reps</span>
+                          <span className="col-span-4">RIR</span>
+                        </div>
+                        <div className="w-8"></div>
                       </div>
 
-                      {logs.find(l => l.exerciseId === exercise.id)?.sets.map((set, idx) => (
-                        <div key={idx} className="relative group">
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); removeSet(exercise.id, idx); }}
-                            className="absolute -left-2 top-1/2 -translate-y-1/2 p-2 text-slate-600 hover:text-red-500 transition-colors"
-                          >
-                            <Minus size={14} />
-                          </button>
+                      {logs.find(l => l.exerciseId === exercise.id)?.sets.map((set, idx) => {
+                        const prevSet = prevLog?.sets[idx] ?? null;
 
-                          <div className="grid grid-cols-12 gap-2 pl-6">
-                            <div className="col-span-4 bg-black/20 rounded-lg p-0.5 border border-white/5 focus-within:border-brand-500/50 transition-colors">
-                              <input 
-                                type="number" 
-                                placeholder="0"
-                                value={set.weight || ''}
-                                onChange={(e) => updateSet(exercise.id, idx, 'weight', parseFloat(e.target.value))}
-                                onBlur={() => saveWorkout()}
-                                className="w-full bg-transparent text-center text-white font-mono font-bold text-sm py-2 focus:outline-none"
-                              />
+                        return (
+                          <div key={idx} className="relative group mb-2">
+                            <div className="flex items-center gap-2">
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); removeSet(exercise.id, idx); }}
+                                className="w-6 flex justify-center text-slate-600 hover:text-red-500 transition-colors"
+                              >
+                                <Minus size={14} />
+                              </button>
+
+                              <div className={`grid grid-cols-12 gap-2 flex-1 rounded-lg p-0.5 border transition-colors ${set.completed ? 'bg-emerald-900/20 border-emerald-500/30' : 'bg-black/20 border-white/5 focus-within:border-brand-500/50'}`}>
+                                <div className="col-span-4">
+                                  <input 
+                                    type="number" 
+                                    placeholder={prevSet ? `${prevSet.weight}` : "0"}
+                                    value={set.weight || ''}
+                                    onChange={(e) => updateSet(exercise.id, idx, 'weight', parseFloat(e.target.value))}
+                                    onBlur={() => saveWorkout()}
+                                    disabled={set.completed}
+                                    className={`w-full bg-transparent text-center font-mono font-bold text-sm py-2 focus:outline-none ${set.completed ? 'text-emerald-400' : 'text-white'}`}
+                                  />
+                                </div>
+                                <div className="col-span-4 border-l border-white/5">
+                                  <input 
+                                    type="number" 
+                                    placeholder={prevSet ? `${prevSet.reps}` : "0"}
+                                    value={set.reps || ''}
+                                    onChange={(e) => updateSet(exercise.id, idx, 'reps', parseFloat(e.target.value))}
+                                    onBlur={() => saveWorkout()}
+                                    disabled={set.completed}
+                                    className={`w-full bg-transparent text-center font-mono font-bold text-sm py-2 focus:outline-none ${set.completed ? 'text-emerald-400' : 'text-white'}`}
+                                  />
+                                </div>
+                                <div className="col-span-4 border-l border-white/5">
+                                  <input 
+                                    type="number" 
+                                    placeholder={prevSet?.rir != null ? `${prevSet.rir}` : "-"}
+                                    value={set.rir || ''}
+                                    onChange={(e) => updateSet(exercise.id, idx, 'rir', parseFloat(e.target.value))}
+                                    onBlur={() => saveWorkout()}
+                                    disabled={set.completed}
+                                    className={`w-full bg-transparent text-center font-mono font-bold text-sm py-2 focus:outline-none placeholder-slate-700 ${set.completed ? 'text-emerald-400/70' : 'text-brand-300'}`}
+                                  />
+                                </div>
+                              </div>
+
+                              <button
+                                onClick={(e) => { e.stopPropagation(); toggleSetComplete(exercise.id, idx); }}
+                                className={`shrink-0 w-8 h-8 rounded-lg border flex items-center justify-center transition-all ${
+                                  set.completed 
+                                    ? 'bg-emerald-500 border-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.3)]' 
+                                    : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-brand-500 hover:text-brand-400'
+                                }`}
+                              >
+                                <Check size={16} strokeWidth={set.completed ? 4 : 2} />
+                              </button>
                             </div>
-                            <div className="col-span-4 bg-black/20 rounded-lg p-0.5 border border-white/5 focus-within:border-brand-500/50 transition-colors">
-                              <input 
-                                type="number" 
-                                placeholder="0"
-                                value={set.reps || ''}
-                                onChange={(e) => updateSet(exercise.id, idx, 'reps', parseFloat(e.target.value))}
-                                onBlur={() => saveWorkout()}
-                                className="w-full bg-transparent text-center text-white font-mono font-bold text-sm py-2 focus:outline-none"
-                              />
-                            </div>
-                            <div className="col-span-4 bg-black/20 rounded-lg p-0.5 border border-white/5 focus-within:border-brand-500/50 transition-colors">
-                              <input 
-                                type="number" 
-                                placeholder="-"
-                                value={set.rir || ''}
-                                onChange={(e) => updateSet(exercise.id, idx, 'rir', parseFloat(e.target.value))}
-                                onBlur={() => saveWorkout()}
-                                className="w-full bg-transparent text-center text-brand-300 font-mono font-bold text-sm py-2 focus:outline-none placeholder-slate-700"
-                              />
-                            </div>
+
+                            {/* Referencia sesión anterior */}
+                            {prevSet && (
+                              <p className="text-[9px] text-slate-600 font-mono text-right pr-10 mt-0.5">
+                                ant: {prevSet.weight}kg × {prevSet.reps}{prevSet.rir != null ? ` · RIR ${prevSet.rir}` : ''}
+                              </p>
+                            )}
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     <button 
@@ -453,7 +634,8 @@ const Workout: React.FC = () => {
                 )}
               </div>
             );
-          })
+          })}
+          </>
         )}
       </div>
 
@@ -684,15 +866,27 @@ const Workout: React.FC = () => {
         </div>
       )}
       
-      {/* Floating Save FAB */}
-      <div className="fixed bottom-24 right-5 z-40 animate-in zoom-in duration-300 pointer-events-none">
-         <button 
-             onClick={() => saveWorkout()}
-             className="bg-brand-500 hover:bg-brand-400 text-white w-14 h-14 rounded-full shadow-[0_0_20px_rgba(14,165,233,0.5)] flex items-center justify-center transition-transform hover:scale-105 pointer-events-auto"
-           >
-             <Save size={24} />
-           </button>
-      </div>
+      {/* Session Controls (Floating) */}
+      {selectedRoutine !== RoutineType.REST && (
+        <div className="fixed bottom-20 left-0 right-0 p-5 bg-gradient-to-t from-dark-bg via-dark-bg to-transparent pointer-events-none z-40">
+          {sessionState === 'idle' && (
+            <button 
+              onClick={startWorkout}
+              className="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-brand-900/50 flex items-center justify-center gap-2 pointer-events-auto transition-all active:scale-95"
+            >
+              <Timer size={20} /> Comenzar Entrenamiento
+            </button>
+          )}
+          {sessionState === 'active' && (
+            <button 
+              onClick={() => saveWorkout(logs, true)}
+              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-emerald-900/50 flex items-center justify-center gap-2 pointer-events-auto transition-all active:scale-95"
+            >
+              <Check size={20} /> Finalizar Entrenamiento
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

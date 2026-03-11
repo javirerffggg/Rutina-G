@@ -131,7 +131,7 @@ Estrés: ${todayLog.stress || '-'}/5
         </div>
       </div>
 
-      <div className="w-full">
+      <div className="w-full min-w-0">
          <div className="flex justify-between items-end mb-2 px-1">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Tendencia Real</h3>
             <div className="flex gap-3 text-[9px] font-bold uppercase">
@@ -140,7 +140,7 @@ Estrés: ${todayLog.stress || '-'}/5
                <span className="flex items-center gap-1 text-red-500"><div className="w-2 h-0.5 border-t border-dashed border-red-500"></div>Tendencia</span>
             </div>
          </div>
-         <div className="h-64 w-full">
+         <div style={{ width: '100%', height: 256 }}>
             <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={chartData}>
                 <defs>

@@ -28,6 +28,8 @@ const Workout: React.FC = () => {
   const [showHistoryFor, setShowHistoryFor] = useState<string | null>(null);
   // controls the finish confirmation modal
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
+  // controls the gym mode
+  const [isGymMode, setIsGymMode] = useState(false);
 
   // Session State
   const [sessionState, setSessionState] = useState<'idle' | 'active' | 'finished'>(() => {
@@ -57,6 +59,22 @@ const Workout: React.FC = () => {
     return () => clearInterval(interval);
   }, [sessionState, startTime]);
 
+  const startRestTimer = (seconds: number) => {
+    setRestTimer(seconds);
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'SCHEDULE_NOTIFICATION',
+        title: '¡Tiempo de descanso terminado!',
+        options: {
+          body: 'Prepárate para la siguiente serie.',
+          icon: '/vite.svg',
+          vibrate: [200, 100, 200]
+        },
+        delay: seconds * 1000
+      });
+    }
+  };
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (restTimer !== null && restTimer > 0) {
@@ -66,6 +84,14 @@ const Workout: React.FC = () => {
     } else if (restTimer === 0) {
       setRestTimer(null);
       if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+      // Fallback for when app is in foreground and SW didn't fire or we want immediate feedback
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('¡Tiempo de descanso terminado!', {
+          body: 'Prepárate para la siguiente serie.',
+          icon: '/vite.svg',
+          vibrate: [200, 100, 200]
+        });
+      }
     }
     return () => clearInterval(interval);
   }, [restTimer]);
@@ -78,13 +104,17 @@ const Workout: React.FC = () => {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const startWorkout = () => {
+  const startWorkout = async () => {
     if (sessionState !== 'idle') return;
     const now = Date.now();
     setStartTime(now);
     setSessionState('active');
     localStorage.setItem(`workoutStartTime_${today}`, now.toString());
     localStorage.setItem(`workoutSessionState_${today}`, 'active');
+
+    if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+      await Notification.requestPermission();
+    }
   };
 
   const handleInteraction = () => {
@@ -119,7 +149,13 @@ const Workout: React.FC = () => {
     if (existingDayLog?.exercises && existingDayLog.workoutType === selectedRoutine) {
       setLogs(existingDayLog.exercises);
     } else {
-      setLogs(list.map(ex => ({ exerciseId: ex.id, sets: [], completed: false })));
+      setLogs(list.map(ex => {
+        const prevLog = getPreviousWorkoutLog(ex.id, today);
+        const preloadedSets = prevLog && prevLog.sets.length > 0
+          ? prevLog.sets.map(s => ({ weight: s.weight, reps: s.reps, rir: s.rir, completed: false }))
+          : [];
+        return { exerciseId: ex.id, sets: preloadedSets, completed: false };
+      }));
     }
   }, [selectedRoutine, today]);
 
@@ -183,7 +219,7 @@ const Workout: React.FC = () => {
     
     const isCompleted = newLogs.find(l => l.exerciseId === exerciseId)?.sets[setIndex].completed;
     if (isCompleted) {
-      setRestTimer(90);
+      startRestTimer(90);
     }
     
     // Auto-collapse if exercise became completed
@@ -259,6 +295,20 @@ const Workout: React.FC = () => {
   const completedExercises = logs.filter(l => l.completed).length;
   const progressPercentage = totalExercises > 0 ? Math.round((completedExercises / totalExercises) * 100) : 0;
 
+  // Gym Mode Logic
+  const currentGymExercise = activeExercise 
+    ? exercises.find(e => e.id === activeExercise) 
+    : exercises.find(e => {
+        const log = logs.find(l => l.exerciseId === e.id);
+        return !log?.completed;
+      });
+
+  const currentGymLog = currentGymExercise ? logs.find(l => l.exerciseId === currentGymExercise.id) : null;
+  const currentSetIndex = currentGymLog ? currentGymLog.sets.findIndex(s => !s.completed) : -1;
+  const currentSet = currentSetIndex !== -1 && currentGymLog ? currentGymLog.sets[currentSetIndex] : null;
+  const prevGymLog = currentGymExercise ? getPreviousWorkoutLog(currentGymExercise.id, today) : null;
+  const prevGymSet = prevGymLog && currentSetIndex !== -1 ? prevGymLog.sets[currentSetIndex] : null;
+
   return (
     <div className="pb-10 min-h-screen">
       {/* Rest Timer Banner */}
@@ -291,6 +341,15 @@ const Workout: React.FC = () => {
           
           {/* Circular Progress & Timer */}
           <div className="flex flex-col items-end gap-2">
+            {sessionState === 'active' && (
+              <button
+                onClick={() => setIsGymMode(!isGymMode)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${isGymMode ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/30' : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700'}`}
+              >
+                <Dumbbell size={14} />
+                {isGymMode ? 'Modo Gym' : 'Modo Normal'}
+              </button>
+            )}
             <div className="relative w-14 h-14 flex items-center justify-center">
               <svg className="w-full h-full transform -rotate-90 overflow-visible" viewBox="0 0 36 36">
                 <path
@@ -352,85 +411,87 @@ const Workout: React.FC = () => {
       </div>
 
       {/* Top Banners Row */}
-      <div className="px-5 mb-6 flex gap-3 overflow-x-auto no-scrollbar snap-x pb-2">
-        {/* Special Hours Alert */}
-        {specialSchedule && (
-          <div className={`shrink-0 w-[85vw] max-w-[320px] snap-center p-4 rounded-xl border flex items-center gap-3 animate-in slide-in-from-top-4 
-            ${specialSchedule === 'Cerrado' 
-              ? 'bg-red-900/20 border-red-500/30' 
-              : 'bg-gold-500/10 border-gold-500/30'}`}
-          >
-            <div className={`p-2 rounded-full shrink-0 ${specialSchedule === 'Cerrado' ? 'bg-red-500/10 text-red-500' : 'bg-gold-500/10 text-gold-500'}`}>
-               {specialSchedule === 'Cerrado' ? <AlertTriangle size={20} /> : <Clock size={20} />}
-            </div>
-            <div>
-              <p className={`text-xs font-bold uppercase tracking-wide ${specialSchedule === 'Cerrado' ? 'text-red-400' : 'text-gold-500'}`}>
-                Horario Especial Hoy
-              </p>
-              <p className="text-white font-bold text-lg leading-none mt-1">
-                {specialSchedule}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Entrenamiento Finalizado */}
-        {sessionState === 'finished' && selectedRoutine !== RoutineType.REST && (
-          <div className="shrink-0 w-[85vw] max-w-[320px] snap-center bg-emerald-900/20 border border-emerald-500/30 rounded-xl p-4 flex flex-col justify-center gap-3 animate-in fade-in">
-            <div className="flex items-center gap-3">
-              <div className="bg-emerald-500/20 p-2 rounded-full text-emerald-400 shrink-0">
-                <Trophy size={20} />
+      {!isGymMode && (
+        <div className="px-5 mb-6 flex gap-3 overflow-x-auto no-scrollbar snap-x pb-2">
+          {/* Special Hours Alert */}
+          {specialSchedule && (
+            <div className={`shrink-0 w-[85vw] max-w-[320px] snap-center p-4 rounded-xl border flex items-center gap-3 animate-in slide-in-from-top-4 
+              ${specialSchedule === 'Cerrado' 
+                ? 'bg-red-900/20 border-red-500/30' 
+                : 'bg-gold-500/10 border-gold-500/30'}`}
+            >
+              <div className={`p-2 rounded-full shrink-0 ${specialSchedule === 'Cerrado' ? 'bg-red-500/10 text-red-500' : 'bg-gold-500/10 text-gold-500'}`}>
+                 {specialSchedule === 'Cerrado' ? <AlertTriangle size={20} /> : <Clock size={20} />}
               </div>
               <div>
-                <p className="text-sm font-bold text-emerald-400">Entrenamiento Finalizado</p>
-                <p className="text-[10px] text-slate-400">Buen trabajo hoy. Tus datos han sido guardados.</p>
+                <p className={`text-xs font-bold uppercase tracking-wide ${specialSchedule === 'Cerrado' ? 'text-red-400' : 'text-gold-500'}`}>
+                  Horario Especial Hoy
+                </p>
+                <p className="text-white font-bold text-lg leading-none mt-1">
+                  {specialSchedule}
+                </p>
               </div>
             </div>
-            <button 
-              onClick={undoFinishWorkout}
-              className="w-full text-xs font-bold text-emerald-500 hover:text-emerald-400 bg-emerald-900/30 px-3 py-2 rounded-lg transition-colors"
-            >
-              Deshacer Finalización
-            </button>
-          </div>
-        )}
+          )}
 
-        {/* Peri-Workout Supplement Alert */}
-        {selectedRoutine !== RoutineType.REST && showSupplementAlert && (
-           <div className="shrink-0 w-[85vw] max-w-[320px] snap-center p-3 rounded-xl bg-blue-900/20 border border-blue-500/30 flex items-center gap-3">
-               <div className="bg-blue-500/20 p-2 rounded-lg text-blue-400 shrink-0">
-                 <Milk size={18} />
-               </div>
-               <div>
-                 <p className="text-[10px] text-blue-400 font-bold uppercase">Intra-Entreno Obligatorio</p>
-                 <p className="text-xs text-slate-300">
-                   Ciclodextrina (25-50g) + Sal Marina requeridos hoy.
-                 </p>
-               </div>
-           </div>
-        )}
-
-        {/* Warmup Button */}
-        {selectedRoutine !== RoutineType.REST && (
-          <button 
-            onClick={() => setShowWarmup(true)}
-            className="shrink-0 w-[85vw] max-w-[320px] snap-center p-3 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-between group active:scale-95 transition-all text-left"
-          >
-            <div className="flex items-center gap-3">
-               <div className="bg-orange-500 text-white p-2 rounded-lg shadow-lg shadow-orange-500/20 animate-pulse shrink-0">
-                  <Flame size={20} fill="currentColor" />
-               </div>
-               <div>
-                  <p className="text-xs text-orange-400 font-bold uppercase tracking-wider">Antes de empezar</p>
-                  <p className="text-white font-bold text-sm">Calentamiento y Activación</p>
-               </div>
+          {/* Entrenamiento Finalizado */}
+          {sessionState === 'finished' && selectedRoutine !== RoutineType.REST && (
+            <div className="shrink-0 w-[85vw] max-w-[320px] snap-center bg-emerald-900/20 border border-emerald-500/30 rounded-xl p-4 flex flex-col justify-center gap-3 animate-in fade-in">
+              <div className="flex items-center gap-3">
+                <div className="bg-emerald-500/20 p-2 rounded-full text-emerald-400 shrink-0">
+                  <Trophy size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-emerald-400">Entrenamiento Finalizado</p>
+                  <p className="text-[10px] text-slate-400">Buen trabajo hoy. Tus datos han sido guardados.</p>
+                </div>
+              </div>
+              <button 
+                onClick={undoFinishWorkout}
+                className="w-full text-xs font-bold text-emerald-500 hover:text-emerald-400 bg-emerald-900/30 px-3 py-2 rounded-lg transition-colors"
+              >
+                Deshacer Finalización
+              </button>
             </div>
-            <ChevronRight size={20} className="text-slate-500 group-hover:text-white transition-colors shrink-0" />
-          </button>
-        )}
-      </div>
+          )}
 
-      {/* Exercises List */}
+          {/* Peri-Workout Supplement Alert */}
+          {selectedRoutine !== RoutineType.REST && showSupplementAlert && (
+             <div className="shrink-0 w-[85vw] max-w-[320px] snap-center p-3 rounded-xl bg-blue-900/20 border border-blue-500/30 flex items-center gap-3">
+                 <div className="bg-blue-500/20 p-2 rounded-lg text-blue-400 shrink-0">
+                   <Milk size={18} />
+                 </div>
+                 <div>
+                   <p className="text-[10px] text-blue-400 font-bold uppercase">Intra-Entreno Obligatorio</p>
+                   <p className="text-xs text-slate-300">
+                     Ciclodextrina (25-50g) + Sal Marina requeridos hoy.
+                   </p>
+                 </div>
+             </div>
+          )}
+
+          {/* Warmup Button */}
+          {selectedRoutine !== RoutineType.REST && (
+            <button 
+              onClick={() => setShowWarmup(true)}
+              className="shrink-0 w-[85vw] max-w-[320px] snap-center p-3 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-between group active:scale-95 transition-all text-left"
+            >
+              <div className="flex items-center gap-3">
+                 <div className="bg-orange-500 text-white p-2 rounded-lg shadow-lg shadow-orange-500/20 animate-pulse shrink-0">
+                    <Flame size={20} fill="currentColor" />
+                 </div>
+                 <div>
+                    <p className="text-xs text-orange-400 font-bold uppercase tracking-wider">Antes de empezar</p>
+                    <p className="text-white font-bold text-sm">Calentamiento y Activación</p>
+                 </div>
+              </div>
+              <ChevronRight size={20} className="text-slate-500 group-hover:text-white transition-colors shrink-0" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Exercises List or Gym Mode */}
       <div className="px-5 space-y-4">
         {selectedRoutine === RoutineType.REST ? (
            <div className="flex flex-col items-center justify-center py-20 opacity-50">
@@ -440,6 +501,90 @@ const Workout: React.FC = () => {
              <p className="text-slate-400 text-sm font-bold">Día de Descanso</p>
              <p className="text-slate-600 text-xs mt-1">Recupera y crece. Prohibido cardio intenso.</p>
            </div>
+        ) : isGymMode ? (
+          <div className="animate-in fade-in zoom-in-95 duration-200">
+            {currentGymExercise && currentSet ? (
+              <div className="bg-slate-900/80 backdrop-blur-md border border-brand-500/30 rounded-3xl p-6 shadow-2xl">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <p className="text-brand-400 font-bold text-xs uppercase tracking-widest mb-1">
+                      Ejercicio Activo
+                    </p>
+                    <h2 className="text-2xl font-bold text-white leading-tight">
+                      {currentGymExercise.name}
+                    </h2>
+                  </div>
+                  <div className="bg-brand-500/20 text-brand-400 px-3 py-1 rounded-lg font-mono font-bold text-sm">
+                    Set {currentSetIndex + 1} / {currentGymLog?.sets.length || currentGymExercise.targetSets}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4 mb-8">
+                  <div className="bg-black/40 rounded-2xl p-4 border border-white/5 focus-within:border-brand-500/50 transition-colors">
+                    <p className="text-slate-400 text-xs font-bold uppercase text-center mb-2">Peso (kg)</p>
+                    <input 
+                      type="number" 
+                      placeholder={prevGymSet ? `${prevGymSet.weight}` : "0"}
+                      value={currentSet.weight || ''}
+                      onChange={(e) => updateSet(currentGymExercise.id, currentSetIndex, 'weight', parseFloat(e.target.value))}
+                      onBlur={() => saveWorkout()}
+                      className="w-full bg-transparent text-center font-mono font-bold text-3xl text-white focus:outline-none"
+                    />
+                  </div>
+                  <div className="bg-black/40 rounded-2xl p-4 border border-white/5 focus-within:border-brand-500/50 transition-colors">
+                    <p className="text-slate-400 text-xs font-bold uppercase text-center mb-2">Reps</p>
+                    <input 
+                      type="number" 
+                      placeholder={prevGymSet ? `${prevGymSet.reps}` : "0"}
+                      value={currentSet.reps || ''}
+                      onChange={(e) => updateSet(currentGymExercise.id, currentSetIndex, 'reps', parseFloat(e.target.value))}
+                      onBlur={() => saveWorkout()}
+                      className="w-full bg-transparent text-center font-mono font-bold text-3xl text-white focus:outline-none"
+                    />
+                  </div>
+                  <div className="bg-black/40 rounded-2xl p-4 border border-white/5 focus-within:border-brand-500/50 transition-colors">
+                    <p className="text-slate-400 text-xs font-bold uppercase text-center mb-2">RIR</p>
+                    <input 
+                      type="number" 
+                      placeholder={prevGymSet?.rir != null ? `${prevGymSet.rir}` : "-"}
+                      value={currentSet.rir || ''}
+                      onChange={(e) => updateSet(currentGymExercise.id, currentSetIndex, 'rir', parseFloat(e.target.value))}
+                      onBlur={() => saveWorkout()}
+                      className="w-full bg-transparent text-center font-mono font-bold text-3xl text-brand-300 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {prevGymSet && (
+                  <p className="text-center text-slate-500 font-mono text-sm mb-8">
+                    Anterior: {prevGymSet.weight}kg × {prevGymSet.reps} {prevGymSet.rir != null ? `(RIR ${prevGymSet.rir})` : ''}
+                  </p>
+                )}
+
+                <button
+                  onClick={() => toggleSetComplete(currentGymExercise.id, currentSetIndex)}
+                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-6 rounded-2xl shadow-lg shadow-emerald-900/50 flex items-center justify-center gap-3 transition-all active:scale-95 text-xl"
+                >
+                  <Check size={28} strokeWidth={3} />
+                  Set Completado
+                </button>
+              </div>
+            ) : (
+              <div className="bg-slate-900/80 backdrop-blur-md border border-brand-500/30 rounded-3xl p-8 text-center shadow-2xl">
+                <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6 text-emerald-400">
+                  <Trophy size={40} />
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-2">¡Todo completado!</h2>
+                <p className="text-slate-400 mb-8">Has terminado todos los ejercicios de hoy.</p>
+                <button
+                  onClick={() => setIsGymMode(false)}
+                  className="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold py-4 rounded-xl transition-colors"
+                >
+                  Volver a vista normal
+                </button>
+              </div>
+            )}
+          </div>
         ) : (
           <>
             {exercises.map((exercise, i) => {
@@ -935,7 +1080,7 @@ const Workout: React.FC = () => {
       )}
       
       {/* Session Controls (Floating) */}
-      {selectedRoutine !== RoutineType.REST && (
+      {selectedRoutine !== RoutineType.REST && !isGymMode && (
         <div className="fixed bottom-20 left-0 right-0 p-5 bg-gradient-to-t from-dark-bg via-dark-bg to-transparent pointer-events-none z-40">
           {sessionState === 'idle' && (
             <button 

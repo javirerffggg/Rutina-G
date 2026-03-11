@@ -121,7 +121,7 @@ const Workout: React.FC = () => {
           body: 'Prepárate para la siguiente serie.',
           icon: '/vite.svg',
           vibrate: [200, 100, 200]
-        });
+        } as any);
       }
     }
     return () => clearInterval(interval);
@@ -207,7 +207,7 @@ const Workout: React.FC = () => {
     const newLogs = logs.map(log => {
       if (log.exerciseId !== exerciseId) return log;
       
-      let newSet = { weight: 0, reps: 0 };
+      let newSet: WorkoutSet = { weight: 0, reps: 0 };
       if (log.sets.length > 0) {
         newSet = { ...log.sets[log.sets.length - 1], completed: false };
       } else {

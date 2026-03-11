@@ -70,6 +70,48 @@ export const EXERCISES_LOWER: Exercise[] = [
   { id: 'low_crunch', name: 'Crunch Abdominal Máq.', targetSets: '4-6', targetReps: '15', notes: 'Flexión tronco.' },
 ];
 
+export const EXERCISE_MUSCLE_MAP: Record<string, string[]> = {
+  // PUSH
+  'push_bench_mach': ['chest', 'triceps'],
+  'push_incline_mach': ['chest', 'triceps'],
+  'push_dips': ['chest', 'triceps'],
+  'push_shoulder_mach': ['shoulders', 'triceps'],
+  'push_lat_raise': ['shoulders'],
+  'push_tri_seat': ['triceps'],
+  'push_tri_rope': ['triceps'],
+  // PULL
+  'pull_pullups': ['back', 'biceps'],
+  'pull_row_div': ['back', 'biceps'],
+  'pull_row_low': ['back', 'biceps'],
+  'pull_rear_fly': ['shoulders', 'back'],
+  'pull_shrugs': ['back'],
+  'pull_curl_preach': ['biceps'],
+  'pull_hammer': ['biceps'],
+  // LEGS
+  'legs_hack': ['quads', 'glutes'],
+  'legs_press': ['quads', 'glutes'],
+  'legs_ext': ['quads'],
+  'legs_calves': ['calves'],
+  'legs_abs_vkr': ['abs'],
+  // UPPER
+  'upp_inc_db': ['chest', 'triceps'],
+  'upp_lat_pull': ['back', 'biceps'],
+  'upp_dips': ['chest', 'triceps'],
+  'upp_low_row': ['back', 'biceps'],
+  'upp_peck': ['chest'],
+  'upp_pullover': ['back'],
+  'upp_tri_mach': ['triceps'],
+  'upp_curl_pre': ['biceps'],
+  // LOWER
+  'low_hip': ['glutes', 'hamstrings'],
+  'low_rdl': ['hamstrings', 'glutes'],
+  'low_curl': ['hamstrings'],
+  'low_press_high': ['glutes', 'hamstrings'],
+  'low_goblet': ['quads'],
+  'low_calves': ['calves'],
+  'low_crunch': ['abs'],
+};
+
 export const EXERCISE_ALTERNATIVES: Record<string, ExerciseAlternative> = {
   'push_bench_mach': { main: 'Press Banca Barra', secondary: 'Press Mancuernas', note: 'Prioriza estabilidad.' },
   'pull_pullups': { main: 'Jalón al Pecho', secondary: 'Dominadas Asistidas', note: 'Rango completo es clave.' },

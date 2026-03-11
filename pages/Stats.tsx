@@ -1,21 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { ResponsiveContainer, ComposedChart, Line, Area, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceDot } from 'recharts';
 import { getLogs, saveLog } from '../services/storage';
-import { getTodayDateString, calculateMovingAverage, calculateLinearRegression, calculateOneRM } from '../utils';
+import { getTodayDateString } from '../utils';
 import { DailyLog } from '../types';
-import { Scale, Info, Ruler, Camera, Copy, Check, TrendingDown, Pizza, AlertCircle, Dumbbell, Trophy, TrendingUp } from 'lucide-react';
-import { EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS, EXERCISES_UPPER, EXERCISES_LOWER } from '../constants';
+import { CompositionTab } from '../components/stats/CompositionTab';
+import { PerformanceTab } from '../components/stats/PerformanceTab';
+import { ReportsTab } from '../components/stats/ReportsTab';
+import { Activity, Dumbbell, FileText } from 'lucide-react';
 
 const Stats: React.FC = () => {
   const today = getTodayDateString();
   const [logs, setLogs] = useState<Record<string, DailyLog>>({});
   const [todayLog, setTodayLog] = useState<DailyLog>({ date: today });
-  const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState<'composition' | 'performance' | 'reports'>('performance');
 
-  const allExercises = [...EXERCISES_PUSH, ...EXERCISES_PULL, ...EXERCISES_LEGS, ...EXERCISES_UPPER, ...EXERCISES_LOWER];
-  const [selectedExercise, setSelectedExercise] = useState<string>(allExercises[0].id);
-
-  // Load data
   useEffect(() => {
     const data = getLogs();
     setLogs(data);
@@ -31,379 +28,48 @@ const Stats: React.FC = () => {
     setLogs(prev => ({ ...prev, [today]: updated }));
   };
 
-  // Prepare Chart Data
   const sortedDates = Object.keys(logs).sort();
-  // Filter only logs with weight for the chart calculation
   const weightLogs = sortedDates
     .map(date => logs[date])
     .filter(l => l.weight !== undefined && l.weight > 0);
 
-  const rawWeights = weightLogs.map(l => l.weight as number);
-  const movingAvgs = calculateMovingAverage(rawWeights, 7);
-  
-  // Linear Regression (Trend)
-  const xValues = weightLogs.map((_, i) => i);
-  const { slope, intercept } = calculateLinearRegression(xValues, rawWeights);
-
-  const chartData = weightLogs.map((log, i) => ({
-    date: new Date(log.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }),
-    weight: log.weight,
-    average: movingAvgs[i]?.toFixed(2),
-    trend: (slope * i + intercept).toFixed(2),
-    isRefeed: log.isRefeed
-  })).slice(-30); // Show last 30 entries
-
-  // Exercise Progression Chart Data
-  const exerciseLogs = sortedDates
-    .map(date => {
-      const entry = logs[date];
-      if (!entry.exercises) return null;
-      const exLog = entry.exercises.find(e => e.exerciseId === selectedExercise);
-      if (!exLog || exLog.sets.length === 0) return null;
-      
-      // Calculate 1RM (max of all sets)
-      const max1RM = Math.max(...exLog.sets.map(set => calculateOneRM(set.weight, set.reps)));
-      
-      // Calculate Volume
-      const volume = exLog.sets.reduce((acc, set) => acc + (set.weight * set.reps), 0);
-      
-      return {
-        date: new Date(date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }),
-        oneRM: max1RM,
-        volume: volume
-      };
-    })
-    .filter(Boolean) as { date: string, oneRM: number, volume: number }[];
-
-  // --- NUEVO: Cálculos para las tarjetas de resumen del ejercicio ---
-  const maxExercise1RM = exerciseLogs.length > 0 ? Math.max(...exerciseLogs.map(l => l.oneRM)) : 0;
-  const progress1RM = exerciseLogs.length > 1 ? exerciseLogs[exerciseLogs.length - 1].oneRM - exerciseLogs[0].oneRM : 0;
-
-  // Statistics
-  const currentWeight = todayLog.weight || (weightLogs.length > 0 ? weightLogs[weightLogs.length - 1].weight : 0);
-  const currentAvg = movingAvgs.length > 0 ? movingAvgs[movingAvgs.length - 1] : 0;
-  const prevAvg = movingAvgs.length > 1 ? movingAvgs[movingAvgs.length - 2] : currentAvg;
-  const weeklyChange = currentAvg && prevAvg ? currentAvg - prevAvg : 0;
-
-  // V-Taper Ratio
-  const vTaper = (todayLog.waist && todayLog.chest) 
-    ? (todayLog.waist / todayLog.chest).toFixed(2) 
-    : '--';
-
-  const exportForCoach = () => {
-    const text = `
-REPORTE SEMANAL - COACH AI
---------------------------
-Fecha: ${today}
-Peso Actual: ${currentWeight} kg
-Promedio 7d: ${currentAvg?.toFixed(2)} kg
-Tendencia: ${slope < 0 ? 'Descendente' : 'Estancada/Sube'} (${(slope*7).toFixed(2)} kg/sem)
-Glucógeno: ${todayLog.isRefeed ? 'Día de Refeed' : 'Normal'}
-
-ANTROPOMETRÍA
-Cintura: ${todayLog.waist || '-'} cm
-Hombros: ${todayLog.chest || '-'} cm
-Ratio V-Taper: ${vTaper}
-
-BIOFEEDBACK (Hoy)
-Sueño: ${todayLog.sleep || '-'}/5
-Energía: ${todayLog.energy || '-'}/5
-Estrés: ${todayLog.stress || '-'}/5
-    `.trim();
-    
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   return (
     <div className="p-5 space-y-6">
-      <header className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-white">Composición</h1>
+      <div className="flex bg-slate-800/50 p-1 rounded-xl border border-white/5 mb-6">
         <button 
-          onClick={exportForCoach}
-          className="bg-brand-600 hover:bg-brand-500 text-white p-2 rounded-xl transition-colors flex items-center gap-2 text-xs font-bold"
+          onClick={() => setActiveTab('performance')}
+          className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'performance' ? 'bg-brand-500 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
         >
-          {copied ? <Check size={16} /> : <Copy size={16} />}
-          {copied ? 'Copiado' : 'Exportar Coach'}
+          <Dumbbell size={14} /> Rendimiento
         </button>
-      </header>
-
-      {/* Protocol Alert */}
-      <div className="glass-card p-3 rounded-xl border-l-4 border-l-gold-500 flex items-start gap-3">
-        <AlertCircle size={18} className="text-gold-500 mt-0.5 shrink-0" />
-        <div>
-          <h3 className="text-xs font-bold text-gold-500 uppercase">Protocolo de Pesaje</h3>
-          <p className="text-[10px] text-slate-400">
-            Al despertar, después de ir al baño, sin ropa y antes de ingerir líquidos.
-          </p>
-        </div>
+        <button 
+          onClick={() => setActiveTab('composition')}
+          className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'composition' ? 'bg-brand-500 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+        >
+          <Activity size={14} /> Cuerpo
+        </button>
+        <button 
+          onClick={() => setActiveTab('reports')}
+          className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'reports' ? 'bg-brand-500 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+        >
+          <FileText size={14} /> Reportes
+        </button>
       </div>
 
-      {/* Weight Input Section */}
-      <div className="glass-panel p-5 rounded-2xl relative overflow-hidden">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest block mb-1">Peso Hoy</span>
-            <div className="flex items-baseline gap-2">
-              <input 
-                type="number" 
-                value={todayLog.weight || ''}
-                onChange={(e) => updateLog({ weight: parseFloat(e.target.value) })}
-                placeholder="00.0"
-                className="bg-transparent text-4xl font-bold text-white w-32 focus:outline-none placeholder-slate-700"
-              />
-              <span className="text-sm text-slate-500">kg</span>
-            </div>
-          </div>
-          <div className="text-right">
-             <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest block mb-1">Media 7d</span>
-             <div className="text-2xl font-bold text-brand-400">
-               {currentAvg ? currentAvg.toFixed(1) : '--'}
-             </div>
-             <div className={`text-xs font-mono flex items-center justify-end gap-1 ${weeklyChange <= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-               {weeklyChange <= 0 ? <TrendingDown size={12} /> : '+'}
-               {Math.abs(weeklyChange).toFixed(2)}
-             </div>
-          </div>
-        </div>
-
-        {/* Refeed Toggle */}
-        <div className="flex items-center gap-3 mt-4 pt-4 border-t border-white/5">
-          <button 
-            onClick={() => updateLog({ isRefeed: !todayLog.isRefeed })}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              todayLog.isRefeed 
-                ? 'bg-orange-500 text-white shadow-lg shadow-orange-900/20' 
-                : 'bg-slate-800 text-slate-500 hover:text-slate-300'
-            }`}
-          >
-            <Pizza size={14} />
-            {todayLog.isRefeed ? 'Día de Refeed (Carga)' : 'Marcar como Refeed'}
-          </button>
-          <p className="text-[10px] text-slate-500 leading-tight flex-1">
-            Actívalo si hoy consumes carbohidratos altos. Explicará subidas de peso por agua.
-          </p>
-        </div>
-      </div>
-
-      {/* Advanced Chart */}
-      <div className="w-full">
-         <div className="flex justify-between items-end mb-2 px-1">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Tendencia Real</h3>
-            <div className="flex gap-3 text-[9px] font-bold uppercase">
-               <span className="flex items-center gap-1 text-slate-500"><div className="w-2 h-2 rounded-full bg-brand-500/50"></div>Peso</span>
-               <span className="flex items-center gap-1 text-orange-400"><div className="w-2 h-0.5 bg-orange-400"></div>Media</span>
-               <span className="flex items-center gap-1 text-red-500"><div className="w-2 h-0.5 border-t border-dashed border-red-500"></div>Tendencia</span>
-            </div>
-         </div>
-         <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={chartData}>
-                <defs>
-                    <linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0}/>
-                    </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="date" hide />
-                <YAxis 
-                    domain={['dataMin - 1', 'dataMax + 1']} 
-                    orientation="right" 
-                    tick={{fontSize: 9, fill: '#64748b'}} 
-                    axisLine={false}
-                    width={30}
-                />
-                <Tooltip 
-                    contentStyle={{backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '12px'}}
-                    itemStyle={{padding: 0}}
-                    labelStyle={{color: '#94a3b8', marginBottom: '4px'}}
-                />
-                <Area type="monotone" dataKey="weight" stroke="#0ea5e9" fill="url(#colorWeight)" strokeWidth={2} />
-                <Line type="monotone" dataKey="average" stroke="#fb923c" dot={false} strokeWidth={2} />
-                <Line type="linear" dataKey="trend" stroke="#ef4444" strokeDasharray="3 3" dot={false} strokeWidth={1} opacity={0.7} />
-                
-                {/* Refeed Dots */}
-                {chartData.map((entry, index) => (
-                    entry.isRefeed ? <ReferenceDot key={index} x={entry.date} y={entry.weight} r={4} fill="#f97316" stroke="none" /> : null
-                ))}
-                </ComposedChart>
-            </ResponsiveContainer>
-         </div>
-      </div>
-
-      {/* Exercise Progression Section */}
-      <div className="space-y-3">
-        <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider px-1 flex items-center gap-2">
-          <Dumbbell size={16} /> Progresión de Ejercicios
-        </h2>
-        
-        <div className="glass-panel p-4 rounded-2xl">
-          <select 
-            value={selectedExercise}
-            onChange={(e) => setSelectedExercise(e.target.value)}
-            className="w-full bg-slate-800 text-white text-sm font-bold p-3 rounded-xl border border-white/10 mb-4 focus:outline-none focus:border-brand-500"
-          >
-            {allExercises.map(ex => (
-              <option key={ex.id} value={ex.id}>{ex.name}</option>
-            ))}
-          </select>
-
-          {/* NUEVO: Tarjetas de resumen añadidas */}
-          {exerciseLogs.length > 0 && (
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <div className="bg-slate-900/40 p-3 rounded-xl border border-white/5">
-                <div className="flex items-center gap-1.5 text-amber-500 mb-1">
-                  <Trophy size={14} />
-                  <span className="text-[9px] font-bold uppercase tracking-wider">Récord 1RM</span>
-                </div>
-                <p className="text-xl font-bold text-white">
-                  {maxExercise1RM} <span className="text-xs text-slate-500 font-normal">kg</span>
-                </p>
-              </div>
-              <div className="bg-slate-900/40 p-3 rounded-xl border border-white/5">
-                <div className="flex items-center gap-1.5 text-emerald-400 mb-1">
-                  <TrendingUp size={14} />
-                  <span className="text-[9px] font-bold uppercase tracking-wider">Evolución</span>
-                </div>
-                <p className="text-xl font-bold text-white">
-                  {progress1RM > 0 ? '+' : ''}{progress1RM.toFixed(1)} <span className="text-xs text-slate-500 font-normal">kg</span>
-                </p>
-              </div>
-            </div>
-          )}
-
-          {exerciseLogs.length > 0 ? (
-            <div className="h-48 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={exerciseLogs}>
-                  <defs>
-                    <linearGradient id="color1RM" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="date" hide />
-                  <YAxis 
-                    yAxisId="left"
-                    domain={['auto', 'auto']} 
-                    orientation="left" 
-                    tick={{fontSize: 9, fill: '#10b981'}} 
-                    axisLine={false}
-                    width={30}
-                  />
-                  <YAxis 
-                    yAxisId="right"
-                    domain={['auto', 'auto']} 
-                    orientation="right" 
-                    tick={{fontSize: 9, fill: '#8b5cf6'}} 
-                    axisLine={false}
-                    width={40}
-                  />
-                  <Tooltip 
-                    contentStyle={{backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '12px'}}
-                    itemStyle={{padding: 0}}
-                    labelStyle={{color: '#94a3b8', marginBottom: '4px'}}
-                  />
-                  <Area yAxisId="left" type="monotone" dataKey="oneRM" name="1RM Est. (kg)" stroke="#10b981" fill="url(#color1RM)" strokeWidth={2} />
-                  <Line yAxisId="right" type="monotone" dataKey="volume" name="Tonelaje (kg)" stroke="#8b5cf6" dot={false} strokeWidth={2} />
-                </ComposedChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <div className="h-48 flex items-center justify-center text-slate-500 text-sm">
-              No hay datos para este ejercicio.
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Anthropometry Section */}
-      <div className="space-y-3">
-        <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider px-1 flex items-center gap-2">
-          <Ruler size={16} /> Antropometría
-        </h2>
-        
-        <div className="grid grid-cols-2 gap-3">
-          <div className="glass-card p-3 rounded-xl">
-             <label className="text-[10px] text-brand-400 uppercase font-bold block mb-1">Cintura (Ombligo)</label>
-             <input 
-               type="number" 
-               placeholder="0" 
-               className="w-full bg-transparent text-xl font-bold text-white focus:outline-none"
-               value={todayLog.waist || ''}
-               onChange={(e) => updateLog({ waist: parseFloat(e.target.value) })}
-             />
-             <span className="text-[9px] text-slate-500">Predictor de grasa visceral</span>
-          </div>
-          
-          <div className="glass-card p-3 rounded-xl">
-             <label className="text-[10px] text-brand-400 uppercase font-bold block mb-1">Hombros/Pecho</label>
-             <input 
-               type="number" 
-               placeholder="0" 
-               className="w-full bg-transparent text-xl font-bold text-white focus:outline-none"
-               value={todayLog.chest || ''}
-               onChange={(e) => updateLog({ chest: parseFloat(e.target.value) })}
-             />
-             <span className="text-[9px] text-slate-500">Monitor de masa magra</span>
-          </div>
-
-          <div className="glass-card p-3 rounded-xl">
-             <label className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Brazo</label>
-             <input 
-               type="number" 
-               placeholder="0" 
-               className="w-full bg-transparent text-lg font-bold text-slate-300 focus:outline-none"
-               value={todayLog.arm || ''}
-               onChange={(e) => updateLog({ arm: parseFloat(e.target.value) })}
-             />
-          </div>
-
-          <div className="glass-card p-3 rounded-xl">
-             <label className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Muslo</label>
-             <input 
-               type="number" 
-               placeholder="0" 
-               className="w-full bg-transparent text-lg font-bold text-slate-300 focus:outline-none"
-               value={todayLog.thigh || ''}
-               onChange={(e) => updateLog({ thigh: parseFloat(e.target.value) })}
-             />
-          </div>
-        </div>
-
-        {/* V-Taper Calculation */}
-        {todayLog.waist && todayLog.chest && (
-          <div className="glass-panel p-3 rounded-xl border border-brand-500/30 flex justify-between items-center">
-             <div>
-               <p className="text-xs font-bold text-white uppercase">Ratio V-Taper</p>
-               <p className="text-[10px] text-slate-400">Objetivo: menor es mejor (Cintura ÷ Hombro)</p>
-             </div>
-             <div className="text-xl font-bold text-brand-400">{vTaper}</div>
-          </div>
-        )}
-      </div>
-
-      {/* Progress Photos Placeholder */}
-      <div className="space-y-3 pb-8">
-        <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider px-1 flex items-center gap-2">
-          <Camera size={16} /> Fotos de Progreso
-        </h2>
-        <div className="grid grid-cols-3 gap-2">
-           {['Frente', 'Perfil', 'Espalda'].map((view) => (
-             <div key={view} className="aspect-[3/4] bg-slate-800/50 rounded-lg border border-dashed border-slate-600 flex flex-col items-center justify-center gap-2 hover:bg-slate-700/50 transition-colors cursor-pointer relative group overflow-hidden">
-                <Camera size={20} className="text-slate-500" />
-                <span className="text-[10px] text-slate-400 font-bold uppercase">{view}</span>
-                <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" />
-             </div>
-           ))}
-        </div>
-        <p className="text-[10px] text-slate-500 text-center italic">
-          Usa la misma iluminación y hora del día.
-        </p>
-      </div>
+      {activeTab === 'composition' && (
+        <CompositionTab 
+          todayLog={todayLog} 
+          weightLogs={weightLogs} 
+          updateLog={updateLog} 
+          today={today} 
+        />
+      )}
+      {activeTab === 'performance' && (
+        <PerformanceTab logs={logs} />
+      )}
+      {activeTab === 'reports' && (
+        <ReportsTab logs={logs} />
+      )}
     </div>
   );
 };

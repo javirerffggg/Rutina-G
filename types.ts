@@ -59,6 +59,8 @@ export interface DailyLog {
   energy?: number; // 1-5
   stress?: number; // 1-5
   
+  duration?: number; // Duration in minutes
+  
   notes?: string;
   workoutCompleted?: boolean;
   workoutType?: RoutineType;

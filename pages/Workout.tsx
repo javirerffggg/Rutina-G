@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { EXERCISE_MUSCLE_MAP } from '../constants';
+import { dispatchLiveActivity } from '../hooks/useLiveActivity';
 
 // --- Compound exercises that need longer rest ---
 const COMPOUND_EXERCISES = new Set([
@@ -158,46 +159,72 @@ const Workout: React.FC = () => {
     return () => window.removeEventListener('nav-visibility-change', handleNavChange);
   }, []);
 
+  // ── Workout elapsed timer ──────────────────────────────────────────────────
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     if (sessionState === 'active' && startTime) {
       setElapsedSeconds(Math.floor((Date.now() - startTime) / 1000));
       interval = setInterval(() => {
-        setElapsedSeconds(Math.floor((Date.now() - startTime) / 1000));
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        setElapsedSeconds(elapsed);
+        // keep LiveActivity pill in sync with elapsed time every second
+        dispatchLiveActivity({ elapsedSeconds: elapsed });
       }, 1000);
     }
     return () => clearInterval(interval);
   }, [sessionState, startTime]);
 
+  // ── Local rest countdown (fallback when SW tick not received) ─────────────
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     if (restTimer !== null && restTimer > 0) {
       interval = setInterval(() => {
-        setRestTimer(prev => (prev !== null && prev > 0 ? prev - 1 : 0));
+        setRestTimer(prev => {
+          const next = prev !== null && prev > 0 ? prev - 1 : 0;
+          dispatchLiveActivity({ restTimer: next === 0 ? null : next });
+          return next === 0 ? null : next;
+        });
       }, 1000);
     } else if (restTimer === 0) {
       setRestTimer(null);
+      dispatchLiveActivity({ restTimer: null });
       if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
       if ('Notification' in window && Notification.permission === 'granted') {
         new Notification('¡Descanso terminado!', {
           body: 'Prepárate para la siguiente serie.',
-          icon: '/vite.svg',
+          icon: '/icons/icon-192.png',
         } as any);
       }
     }
     return () => clearInterval(interval);
   }, [restTimer]);
 
-  const startRestTimer = (exerciseId: string) => {
+  // ── Listen to SW ticks so local restTimer stays in sync ──────────────────
+  useEffect(() => {
+    const onSW = (e: MessageEvent) => {
+      if (e.data?.type === 'REST_TIMER_TICK') {
+        const remaining: number | null = e.data.remaining;
+        setRestTimer(remaining);
+        dispatchLiveActivity({ restTimer: remaining });
+      }
+    };
+    navigator.serviceWorker?.addEventListener('message', onSW);
+    return () => navigator.serviceWorker?.removeEventListener('message', onSW);
+  }, []);
+
+  // ── Helper: send rest timer to SW + update live activity ─────────────────
+  const startRestTimer = (exerciseId: string, exerciseName: string) => {
     const secs = getRestSeconds(exerciseId);
     restDurationRef.current = secs;
     setRestTimer(secs);
+    dispatchLiveActivity({ restTimer: secs, restTotal: secs });
+
+    // Send to SW for background countdown
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage({
-        type: 'SCHEDULE_NOTIFICATION',
-        title: '¡Descanso terminado!',
-        options: { body: 'Prepárate para la siguiente serie.', icon: '/vite.svg', vibrate: [200, 100, 200] },
-        delay: secs * 1000
+        type: 'START_REST_TIMER',
+        seconds: secs,
+        exerciseName,
       });
     }
   };
@@ -217,6 +244,13 @@ const Workout: React.FC = () => {
     setSessionState('active');
     localStorage.setItem(`workoutStartTime_${today}`, now.toString());
     localStorage.setItem(`workoutSessionState_${today}`, 'active');
+    dispatchLiveActivity({
+      active: true,
+      sessionState: 'active',
+      elapsedSeconds: 0,
+      setsCompleted: 0,
+      setsTotal: 0,
+    });
     if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
       await Notification.requestPermission();
     }
@@ -260,6 +294,19 @@ const Workout: React.FC = () => {
     }
   }, [selectedRoutine, today]);
 
+  // ── Sync sets stats to live activity whenever logs change ─────────────────
+  useEffect(() => {
+    if (sessionState !== 'active') return;
+    const setsCompleted = logs.reduce((a, l) => a + l.sets.filter(s => s.completed).length, 0);
+    const setsTotal     = logs.reduce((a, l) => a + l.sets.length, 0);
+    const currentEx = exercises.find(e => !logs.find(l => l.exerciseId === e.id)?.completed);
+    dispatchLiveActivity({
+      setsCompleted,
+      setsTotal,
+      exerciseName: currentEx?.name ?? '',
+    });
+  }, [logs, sessionState, exercises]);
+
   const updateSet = (exerciseId: string, setIndex: number, field: keyof WorkoutSet, value: number) => {
     handleInteraction();
     setLogs(prev => prev.map(log => {
@@ -302,11 +349,9 @@ const Workout: React.FC = () => {
       const newSets = [...log.sets];
       const wasCompleted = newSets[setIndex].completed;
       newSets[setIndex] = { ...newSets[setIndex], completed: !wasCompleted };
-
       if (!wasCompleted && setIndex < newSets.length - 1 && !newSets[setIndex + 1].weight) {
         newSets[setIndex + 1] = { ...newSets[setIndex + 1], weight: newSets[setIndex].weight };
       }
-
       const allCompleted = newSets.length > 0 && newSets.every(s => s.completed);
       return { ...log, sets: newSets, completed: allCompleted };
     });
@@ -314,7 +359,10 @@ const Workout: React.FC = () => {
     saveWorkoutWithLogs(newLogs, false);
 
     const wasJustCompleted = newLogs.find(l => l.exerciseId === exerciseId)?.sets[setIndex].completed;
-    if (wasJustCompleted) startRestTimer(exerciseId);
+    if (wasJustCompleted) {
+      const ex = exercises.find(e => e.id === exerciseId);
+      startRestTimer(exerciseId, ex?.name ?? exerciseId);
+    }
 
     const targetLog = newLogs.find(l => l.exerciseId === exerciseId);
     if (targetLog?.completed) {
@@ -344,11 +392,9 @@ const Workout: React.FC = () => {
     const tonnage = currentLogs.reduce((acc, ex) =>
       acc + ex.sets.reduce((sAcc, s) => sAcc + (s.weight * s.reps), 0), 0
     );
-
     const sameTypeLogs = Object.values(allLogs)
       .filter((l: any) => l.workoutType === routine && l.date !== today)
       .sort((a: any, b: any) => b.date.localeCompare(a.date));
-
     const lastSession = sameTypeLogs[0] as any;
     let tonnageDiff = 0;
     if (lastSession?.exercises) {
@@ -357,7 +403,6 @@ const Workout: React.FC = () => {
       );
       tonnageDiff = lastTonnage > 0 ? ((tonnage - lastTonnage) / lastTonnage) * 100 : 0;
     }
-
     const allExercises = [...EXERCISES_PUSH, ...EXERCISES_PULL, ...EXERCISES_LEGS, ...EXERCISES_UPPER, ...EXERCISES_LOWER];
     const prs: string[] = [];
     currentLogs.forEach(ex => {
@@ -372,7 +417,6 @@ const Workout: React.FC = () => {
         : 0;
       if (current1RM > past1RM && past1RM > 0) prs.push(`${exercise.name}: ${current1RM}kg est. 1RM`);
     });
-
     return { tonnage, tonnageDiff, prs };
   };
 
@@ -399,6 +443,11 @@ const Workout: React.FC = () => {
       setSessionState('finished');
       localStorage.setItem(`workoutSessionState_${today}`, 'finished');
       setRestTimer(null);
+      dispatchLiveActivity({ sessionState: 'finished', restTimer: null, elapsedSeconds });
+      // Cancel SW timer
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'CANCEL_REST_TIMER' });
+      }
     }
   };
 
@@ -413,6 +462,7 @@ const Workout: React.FC = () => {
     }
     setSessionState('active');
     localStorage.setItem(`workoutSessionState_${today}`, 'active');
+    dispatchLiveActivity({ sessionState: 'active' });
   };
 
   const totalExercises = exercises.length;
@@ -507,33 +557,8 @@ const Workout: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* ── REST TIMER BANNER (normal mode) ── */}
-      {restTimer !== null && !isGymMode && (
-        <div className="fixed top-0 left-0 right-0 glass-panel border-b border-brand-500/30 text-white px-6 py-4 flex items-center justify-between z-[110] shadow-2xl animate-in slide-in-from-top-full">
-          <div className="flex items-center gap-4">
-            <div className="p-2 rounded-full bg-brand-500/20 text-brand-400 animate-pulse">
-              <Timer size={24} />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Descanso</p>
-              <p className="text-3xl font-display font-bold leading-none tracking-tighter">{formatTime(restTimer)}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <button onClick={() => setRestTimer(prev => (prev ?? 0) + 30)} className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-[10px] font-bold uppercase tracking-widest">+30s</button>
-            <button onClick={() => setRestTimer(null)} className="p-2.5 bg-red-500/10 text-red-500 hover:bg-red-500/20 rounded-xl"><X size={20} /></button>
-          </div>
-        </div>
-      )}
-
       {/* ── HEADER ── */}
       <div className="relative pt-12 px-6 pb-8 bg-gradient-to-b from-brand-900/10 to-transparent">
-        {/*
-          FIX: El contenedor flex justify-between ahora tiene min-w-0 en el título
-          y el bloque derecho es shrink-0 con max-w contenido para no desbordarse.
-          Dentro del bloque derecho, gap-2 (antes gap-3) y el timer usa max-w-[72px]
-          para que 00:00:00 no fuerce el div fuera del viewport.
-        */}
         <div className="flex justify-between items-start mb-8 gap-3">
           <div className="min-w-0 flex-1">
             <h1 className="text-4xl font-display font-bold text-white mb-1 tracking-tight">Entrenamiento</h1>
@@ -543,7 +568,7 @@ const Workout: React.FC = () => {
             </p>
           </div>
 
-          {/* Status bar: Normal/GymMode + progress circle + timer */}
+          {/* Status bar */}
           <div className="shrink-0 flex items-center gap-2 bg-zinc-900/40 p-1.5 rounded-2xl border border-white/5 backdrop-blur-md">
             {sessionState === 'active' && (
               <button
@@ -556,7 +581,6 @@ const Workout: React.FC = () => {
                 <span>{isGymMode ? 'Gym' : 'Normal'}</span>
               </button>
             )}
-
             {/* Progress donut */}
             <div className="relative w-9 h-9 shrink-0 flex items-center justify-center">
               <svg className="w-full h-full transform -rotate-90 overflow-visible" viewBox="0 0 36 36">
@@ -569,8 +593,6 @@ const Workout: React.FC = () => {
                 <span className="text-[8px] font-display font-bold text-white leading-none">{progressPercentage}%</span>
               </div>
             </div>
-
-            {/* Elapsed timer — fixed width so it never pushes the container wider */}
             {sessionState === 'active' && (
               <div className="flex items-center gap-1.5 pr-1">
                 <div className="w-1.5 h-1.5 shrink-0 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
@@ -623,7 +645,6 @@ const Workout: React.FC = () => {
               </div>
             </div>
           )}
-
           {sessionState === 'finished' && selectedRoutine !== RoutineType.REST && (
             <div className="shrink-0 w-[85vw] max-w-[320px] snap-center bg-emerald-900/20 border border-emerald-500/30 rounded-xl p-4 flex flex-col justify-center gap-3 animate-in fade-in">
               <div className="flex items-center gap-3">
@@ -638,7 +659,6 @@ const Workout: React.FC = () => {
               </button>
             </div>
           )}
-
           {selectedRoutine !== RoutineType.REST && showSupplementAlert && (
             <div className="shrink-0 w-[85vw] max-w-[320px] snap-center p-3 rounded-xl bg-blue-900/20 border border-blue-500/30 flex items-center gap-3">
               <div className="bg-blue-500/20 p-2 rounded-lg text-blue-400 shrink-0"><Milk size={18} /></div>
@@ -648,7 +668,6 @@ const Workout: React.FC = () => {
               </div>
             </div>
           )}
-
           {selectedRoutine !== RoutineType.REST && (
             <button
               onClick={() => setShowWarmup(true)}
@@ -707,11 +726,18 @@ const Workout: React.FC = () => {
                 </div>
                 <div className="flex gap-4 mt-12">
                   <button
-                    onClick={() => setRestTimer(prev => (prev ?? 0) + 30)}
+                    onClick={() => {
+                      setRestTimer(prev => (prev ?? 0) + 30);
+                      navigator.serviceWorker?.controller?.postMessage({ type: 'ADD_REST_SECONDS', seconds: 30 });
+                    }}
                     className="px-8 py-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs uppercase tracking-widest active:scale-95 transition-all"
                   >+30s</button>
                   <button
-                    onPointerDown={() => { skipTimerRef.current = setTimeout(() => setRestTimer(null), 800); }}
+                    onPointerDown={() => { skipTimerRef.current = setTimeout(() => {
+                      setRestTimer(null);
+                      dispatchLiveActivity({ restTimer: null });
+                      navigator.serviceWorker?.controller?.postMessage({ type: 'CANCEL_REST_TIMER' });
+                    }, 800); }}
                     onPointerUp={() => { if (skipTimerRef.current) clearTimeout(skipTimerRef.current); }}
                     onPointerLeave={() => { if (skipTimerRef.current) clearTimeout(skipTimerRef.current); }}
                     className="px-8 py-4 rounded-2xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs uppercase tracking-widest active:scale-95 transition-all shadow-xl shadow-brand-900/40"
@@ -745,7 +771,6 @@ const Workout: React.FC = () => {
                     Set {currentSetIndex + 1} / {currentGymLog?.sets.length || currentGymExercise.targetSets}
                   </div>
                 </div>
-
                 <div className="grid grid-cols-3 gap-5 mb-8">
                   {(['weight', 'reps', 'rir'] as const).map((field) => (
                     <motion.div
@@ -780,16 +805,13 @@ const Workout: React.FC = () => {
                     </motion.div>
                   ))}
                 </div>
-
                 {prevGymSet && (
                   <p className="text-center text-zinc-500 font-display font-bold text-sm mb-6 tracking-tight">
                     Anterior: <span className="text-zinc-300">{prevGymSet.weight}kg × {prevGymSet.reps}</span>
                     {prevGymSet.rir != null && <span className="text-brand-500/60 ml-1">(RIR {prevGymSet.rir})</span>}
                   </p>
                 )}
-
                 {currentSet.weight > 20 && <PlateCalculator weight={currentSet.weight} />}
-
                 <button
                   onClick={() => toggleSetComplete(currentGymExercise.id, currentSetIndex)}
                   className="w-full mt-10 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-6 rounded-2xl shadow-2xl shadow-emerald-900/40 flex items-center justify-center gap-4 transition-all active:scale-[0.98] text-xl uppercase tracking-[0.2em]"
@@ -866,7 +888,6 @@ const Workout: React.FC = () => {
                         </button>
                       </div>
                     </div>
-
                     {!isCompleted && (
                       <div className="flex flex-wrap gap-2 text-[10px] font-bold tracking-widest mt-1">
                         <span className={`px-2 py-1 rounded-lg border uppercase ${
@@ -881,7 +902,6 @@ const Workout: React.FC = () => {
                         )}
                       </div>
                     )}
-
                     {prevLog && isExpanded && !isCompleted && (
                       <div className="mt-4 bg-black/40 rounded-2xl border border-white/5 p-4 premium-bisel">
                         <div className="flex justify-between items-center mb-3">
@@ -906,7 +926,6 @@ const Workout: React.FC = () => {
                       </div>
                     )}
                   </div>
-
                   {isExpanded && !isCompleted && (
                     <div onClick={e => e.stopPropagation()} className="px-5 pb-5 animate-in slide-in-from-top-2 duration-300 relative z-10">
                       <div className="space-y-3">
@@ -919,7 +938,6 @@ const Workout: React.FC = () => {
                           </div>
                           <div className="w-10" />
                         </div>
-
                         {logs.find(l => l.exerciseId === exercise.id)?.sets.map((set, idx) => {
                           const prevSet = prevLog?.sets[idx] ?? null;
                           return (

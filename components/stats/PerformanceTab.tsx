@@ -11,149 +11,128 @@ interface PerformanceTabProps {
 }
 
 export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => {
-  const allExercises = [...EXERCISES_PUSH, ...EXERCISES_PULL, ...EXERCISES_LEGS, ...EXERCISES_UPPER, ...EXERCISES_LOWER];
+  const allExercises = useMemo(
+    () => [...EXERCISES_PUSH, ...EXERCISES_PULL, ...EXERCISES_LEGS, ...EXERCISES_UPPER, ...EXERCISES_LOWER],
+    []
+  );
   const [selectedExercise, setSelectedExercise] = useState<string>(allExercises[0].id);
-
-  const sortedDates = Object.keys(logs || {}).sort();
   const [muscleChartMode, setMuscleChartMode] = useState<'historical' | 'weekly'>('historical');
 
-  const workoutLogs = sortedDates.map(date => logs[date]).filter(l => l.exercises && l.exercises.length > 0);
+  const sortedDates = useMemo(() => Object.keys(logs).sort(), [logs]);
+  const workoutLogs = useMemo(
+    () => sortedDates.map(d => logs[d]).filter(l => l.exercises && l.exercises.length > 0),
+    [sortedDates, logs]
+  );
 
-  // --- General Stats ---
-  const totalWorkouts = workoutLogs.length;
-  
-  const totalVolume = workoutLogs.reduce((acc, log) => {
-    return acc + (log.exercises?.reduce((exAcc, ex) => {
-      return exAcc + ex.sets.reduce((setAcc, set) => setAcc + (set.weight * set.reps), 0);
-    }, 0) || 0);
-  }, 0);
+  const totalVolume = useMemo(() => workoutLogs.reduce((acc, log) =>
+    acc + (log.exercises?.reduce((ea, ex) =>
+      ea + ex.sets.reduce((sa, s) => sa + s.weight * s.reps, 0), 0) || 0), 0), [workoutLogs]);
 
-  const totalSets = workoutLogs.reduce((acc, log) => {
-    return acc + (log.exercises?.reduce((exAcc, ex) => exAcc + ex.sets.length, 0) || 0);
-  }, 0);
+  const totalSets = useMemo(() => workoutLogs.reduce((acc, log) =>
+    acc + (log.exercises?.reduce((ea, ex) => ea + ex.sets.length, 0) || 0), 0), [workoutLogs]);
 
-  const logsWithDuration = workoutLogs.filter(l => l.duration && l.duration > 0);
-  const avgDuration = logsWithDuration.length > 0 
-    ? Math.round(logsWithDuration.reduce((acc, log) => acc + log.duration!, 0) / logsWithDuration.length)
-    : 0;
+  const avgDuration = useMemo(() => {
+    const withDur = workoutLogs.filter(l => l.duration && l.duration > 0);
+    return withDur.length > 0
+      ? Math.round(withDur.reduce((acc, l) => acc + l.duration!, 0) / withDur.length)
+      : 0;
+  }, [workoutLogs]);
 
-  // Calculate Streak (consecutive days)
-  let currentStreak = 0;
-  let maxStreak = 0;
-  let tempStreak = 0;
-  let lastDate: Date | null = null;
+  // Streak using ISO string date comparison to avoid timezone issues
+  const { currentStreak } = useMemo(() => {
+    let temp = 0, max = 0, lastDateStr = '';
+    const todayStr = new Date().toISOString().split('T')[0];
+    const yesterdayStr = new Date(Date.now() - 86400000).toISOString().split('T')[0];
 
-  sortedDates.forEach(dateStr => {
-    const log = logs[dateStr];
-    if (log.exercises && log.exercises.length > 0) {
-      const currentDate = new Date(dateStr);
-      if (lastDate) {
-        const diffTime = Math.abs(currentDate.getTime() - lastDate.getTime());
-        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)); 
-        if (diffDays === 1) {
-          tempStreak++;
-        } else if (diffDays > 1) {
-          tempStreak = 1;
-        }
+    sortedDates.forEach(dateStr => {
+      if (!logs[dateStr]?.exercises?.length) return;
+      if (!lastDateStr) {
+        temp = 1;
       } else {
-        tempStreak = 1;
+        const diff = Math.round(
+          (new Date(dateStr).getTime() - new Date(lastDateStr).getTime()) / 86400000
+        );
+        temp = diff === 1 ? temp + 1 : 1;
       }
-      if (tempStreak > maxStreak) maxStreak = tempStreak;
-      currentStreak = tempStreak;
-      lastDate = currentDate;
-    }
-  });
+      if (temp > max) max = temp;
+      lastDateStr = dateStr;
+    });
 
-  // Check if streak is still active (trained today or yesterday)
-  if (lastDate) {
-    const today = new Date();
-    const diffTime = Math.abs(today.getTime() - lastDate.getTime());
-    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-    if (diffDays > 2) {
-      currentStreak = 0;
-    }
-  }
+    const cur = (lastDateStr === todayStr || lastDateStr === yesterdayStr) ? temp : 0;
+    return { currentStreak: cur, maxStreak: max };
+  }, [sortedDates, logs]);
 
-  // --- Muscle Analysis ---
-  const muscleSets: Record<string, number> = {};
-  const muscleVolume: Record<string, number> = {};
-
-  workoutLogs.forEach(log => {
-    log.exercises?.forEach(ex => {
-      const muscles = EXERCISE_MUSCLE_MAP[ex.exerciseId] || [];
-      const exVolume = ex.sets.reduce((acc, set) => acc + (set.weight * set.reps), 0);
-      muscles.forEach(m => {
-        muscleSets[m] = (muscleSets[m] || 0) + ex.sets.length;
-        muscleVolume[m] = (muscleVolume[m] || 0) + exVolume;
+  const { muscleSets, muscleVolume } = useMemo(() => {
+    const sets: Record<string, number> = {};
+    const vol: Record<string, number>  = {};
+    workoutLogs.forEach(log => {
+      log.exercises?.forEach(ex => {
+        const muscles = EXERCISE_MUSCLE_MAP[ex.exerciseId] || [];
+        const exVol = ex.sets.reduce((acc, s) => acc + s.weight * s.reps, 0);
+        muscles.forEach(m => {
+          sets[m] = (sets[m] || 0) + ex.sets.length;
+          vol[m]  = (vol[m]  || 0) + exVol;
+        });
       });
     });
-  });
+    return { muscleSets: sets, muscleVolume: vol };
+  }, [workoutLogs]);
 
-  const muscleChartData = Object.entries(muscleSets)
-    .map(([muscle, sets]) => ({ name: muscle, sets }))
-    .sort((a, b) => b.sets - a.sets);
+  const muscleChartData = useMemo(
+    () => Object.entries(muscleSets).map(([name, sets]) => ({ name, sets })).sort((a, b) => b.sets - a.sets),
+    [muscleSets]
+  );
 
-  const weeklyMuscleVolume = getWeeklyMuscleVolume(logs, EXERCISE_MUSCLE_MAP);
+  const weeklyMuscleVolume = useMemo(() => getWeeklyMuscleVolume(logs, EXERCISE_MUSCLE_MAP), [logs]);
+  const weeklyChartData = useMemo(
+    () => Object.entries(weeklyMuscleVolume).map(([name, sets]) => ({ name, sets })).sort((a, b) => b.sets - a.sets),
+    [weeklyMuscleVolume]
+  );
 
-  // --- Exercise Stats ---
-  const exerciseLogs = sortedDates
-    .map(date => {
-      const entry = logs[date];
-      if (!entry.exercises) return null;
-      const exLog = entry.exercises.find(e => e.exerciseId === selectedExercise);
-      if (!exLog || exLog.sets.length === 0) return null;
-      
-      const max1RM = Math.max(...exLog.sets.map(set => calculateOneRM(set.weight, set.reps)));
-      const volume = exLog.sets.reduce((acc, set) => acc + (set.weight * set.reps), 0);
-      const maxWeight = Math.max(...exLog.sets.map(set => set.weight));
-      
-      const rirSets = exLog.sets.filter(s => s.rir != null);
-      const avgRIR = rirSets.length > 0
-        ? rirSets.reduce((acc, s) => acc + s.rir!, 0) / rirSets.length
-        : null;
-      
-      return {
-        date: new Date(date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }),
-        oneRM: max1RM,
-        volume: volume,
-        maxWeight: maxWeight,
-        rir: avgRIR
-      };
-    })
-    .filter(Boolean) as { date: string, oneRM: number, volume: number, maxWeight: number, rir: number | null }[];
-
-  const maxExercise1RM = exerciseLogs.length > 0 ? Math.max(...exerciseLogs.map(l => l.oneRM)) : 0;
-  const maxExercisePR = exerciseLogs.length > 0 ? Math.max(...exerciseLogs.map(l => l.maxWeight)) : 0;
-  const maxSessionVolume = exerciseLogs.length > 0 ? Math.max(...exerciseLogs.map(l => l.volume)) : 0;
-  const progress1RM = exerciseLogs.length > 1 ? exerciseLogs[exerciseLogs.length - 1].oneRM - exerciseLogs[0].oneRM : 0;
-
-  // Total Volume Chart Data
-  const volumeChartData = workoutLogs.map(log => {
-    const vol = log.exercises?.reduce((acc, ex) => acc + ex.sets.reduce((sAcc, set) => sAcc + (set.weight * set.reps), 0), 0) || 0;
+  const exerciseLogs = useMemo(() => sortedDates.map(date => {
+    const entry = logs[date];
+    if (!entry?.exercises) return null;
+    const exLog = entry.exercises.find(e => e.exerciseId === selectedExercise);
+    if (!exLog || exLog.sets.length === 0) return null;
+    const max1RM    = Math.max(...exLog.sets.map(s => calculateOneRM(s.weight, s.reps)));
+    const volume    = exLog.sets.reduce((acc, s) => acc + s.weight * s.reps, 0);
+    const maxWeight = Math.max(...exLog.sets.map(s => s.weight));
+    const rirSets   = exLog.sets.filter(s => s.rir != null);
+    const avgRIR    = rirSets.length > 0 ? rirSets.reduce((acc, s) => acc + s.rir!, 0) / rirSets.length : null;
     return {
-      date: new Date(log.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }),
-      volume: vol
+      date: new Date(date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }),
+      oneRM: max1RM, volume, maxWeight, rir: avgRIR,
     };
-  }).slice(-30);
+  }).filter(Boolean) as { date: string; oneRM: number; volume: number; maxWeight: number; rir: number | null }[],
+  [sortedDates, logs, selectedExercise]);
 
-  // Calendar Data (last 28 days)
-  const today = new Date();
-  const calendarDays = Array.from({ length: 28 }).map((_, i) => {
-    const d = new Date(today);
+  const maxExercise1RM   = exerciseLogs.length > 0 ? Math.max(...exerciseLogs.map(l => l.oneRM))     : 0;
+  const maxExercisePR    = exerciseLogs.length > 0 ? Math.max(...exerciseLogs.map(l => l.maxWeight)) : 0;
+  const maxSessionVolume = exerciseLogs.length > 0 ? Math.max(...exerciseLogs.map(l => l.volume))    : 0;
+  const progress1RM      = exerciseLogs.length > 1 ? exerciseLogs[exerciseLogs.length - 1].oneRM - exerciseLogs[0].oneRM : 0;
+
+  const volumeChartData = useMemo(() => workoutLogs.map(log => ({
+    date: new Date(log.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }),
+    volume: log.exercises?.reduce((acc, ex) => acc + ex.sets.reduce((sa, s) => sa + s.weight * s.reps, 0), 0) || 0,
+  })).slice(-30), [workoutLogs]);
+
+  // Calendar using ISO string comparison
+  const calendarDays = useMemo(() => Array.from({ length: 28 }).map((_, i) => {
+    const d = new Date();
     d.setDate(d.getDate() - (27 - i));
     const dateStr = d.toISOString().split('T')[0];
-    const hasWorkout = logs[dateStr] && logs[dateStr].exercises && logs[dateStr].exercises!.length > 0;
-    return { date: dateStr, hasWorkout };
-  });
+    return { dateStr, hasWorkout: !!(logs[dateStr]?.exercises?.length) };
+  }), [logs]);
+
+  const activeChartData = muscleChartMode === 'historical' ? muscleChartData : weeklyChartData;
 
   return (
     <div className="space-y-8 pb-8">
       {/* General Stats */}
       <section className="space-y-4">
         <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider px-1 flex items-center gap-2">
-          <Activity size={16} /> Visión Global
+          <Activity size={16} /> Vision Global
         </h2>
-        
         <div className="grid grid-cols-2 gap-3">
           <div className="glass-card p-4 rounded-xl flex flex-col items-center justify-center text-center">
             <span className="text-[10px] text-brand-400 uppercase font-bold tracking-wider mb-1">Volumen Total</span>
@@ -165,11 +144,11 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
           </div>
           <div className="glass-card p-4 rounded-xl flex flex-col items-center justify-center text-center">
             <span className="text-[10px] text-purple-400 uppercase font-bold tracking-wider mb-1">Entrenamientos</span>
-            <span className="text-2xl font-bold text-white">{totalWorkouts}</span>
+            <span className="text-2xl font-bold text-white">{workoutLogs.length}</span>
           </div>
           <div className="glass-card p-4 rounded-xl flex flex-col items-center justify-center text-center">
             <span className="text-[10px] text-amber-400 uppercase font-bold tracking-wider mb-1">Racha Actual</span>
-            <span className="text-2xl font-bold text-white">{currentStreak} <span className="text-xs text-slate-500 ml-1">días</span></span>
+            <span className="text-2xl font-bold text-white">{currentStreak} <span className="text-xs text-slate-500 ml-1">dias</span></span>
           </div>
         </div>
 
@@ -179,33 +158,31 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
               <Clock size={20} />
             </div>
             <div>
-              <p className="text-xs font-bold text-white uppercase">Duración Promedio</p>
-              <p className="text-[10px] text-slate-400">Tiempo por sesión</p>
+              <p className="text-xs font-bold text-white uppercase">Duracion Promedio</p>
+              <p className="text-[10px] text-slate-400">Tiempo por sesion</p>
             </div>
           </div>
           <div className="text-xl font-bold text-white">{avgDuration} <span className="text-xs text-slate-500">min</span></div>
         </div>
 
-        {/* Calendar Heatmap */}
         <div className="glass-panel p-4 rounded-xl">
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-            <CalendarIcon size={14} /> Consistencia (Últimos 28 días)
+            <CalendarIcon size={14} /> Consistencia (Ultimos 28 dias)
           </h3>
           <div className="flex flex-wrap gap-1.5 justify-center">
             {calendarDays.map((day, i) => (
-              <div 
-                key={i} 
+              <div
+                key={i}
                 className={`w-6 h-6 rounded-md ${day.hasWorkout ? 'bg-brand-500 shadow-[0_0_8px_rgba(14,165,233,0.5)]' : 'bg-slate-800/50 border border-white/5'}`}
-                title={day.date}
+                title={day.dateStr}
               />
             ))}
           </div>
         </div>
 
-        {/* Total Volume Chart */}
         {volumeChartData.length > 0 && (
           <div className="glass-panel p-4 rounded-2xl">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Evolución del Volumen</h3>
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Evolucion del Volumen</h3>
             <div style={{ width: '100%', height: 192 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={volumeChartData}>
@@ -217,18 +194,8 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
                   <XAxis dataKey="date" hide />
-                  <YAxis 
-                    domain={['auto', 'auto']} 
-                    orientation="right" 
-                    tick={{fontSize: 9, fill: '#64748b'}} 
-                    axisLine={false}
-                    width={40}
-                  />
-                  <Tooltip 
-                    contentStyle={{backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '12px'}}
-                    itemStyle={{padding: 0}}
-                    labelStyle={{color: '#94a3b8', marginBottom: '4px'}}
-                  />
+                  <YAxis domain={['auto', 'auto']} orientation="right" tick={{fontSize: 9, fill: '#64748b'}} axisLine={false} width={40} />
+                  <Tooltip contentStyle={{backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '12px'}} itemStyle={{padding: 0}} labelStyle={{color: '#94a3b8', marginBottom: '4px'}} />
                   <Area type="monotone" dataKey="volume" name="Volumen (kg)" stroke="#0ea5e9" fill="url(#colorTotalVol)" strokeWidth={2} />
                 </ComposedChart>
               </ResponsiveContainer>
@@ -240,31 +207,26 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
       {/* Muscle Analysis */}
       <section className="space-y-4">
         <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider px-1 flex items-center gap-2">
-          <Flame size={16} /> Análisis Muscular
+          <Flame size={16} /> Analisis Muscular
         </h2>
-        
         <div className="glass-panel p-5 rounded-2xl space-y-4">
-          <div className="flex justify-between items-end">
-            <div>
-              <h3 className="text-xs font-bold text-white">Heatmap Histórico</h3>
-              <p className="text-[10px] text-slate-400 mt-1">Distribución de volumen total</p>
-            </div>
+          <div>
+            <h3 className="text-xs font-bold text-white">Heatmap Historico</h3>
+            <p className="text-[10px] text-slate-400 mt-1">Distribucion de volumen total</p>
           </div>
           <BodyHeatmap muscleVolume={muscleVolume} muscleSets={muscleSets} />
         </div>
 
-        {/* Weekly Volume Ratio */}
         <div className="glass-panel p-4 rounded-2xl">
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Fatiga Semanal (Series)</h3>
           <div className="space-y-3">
             {Object.entries(MUSCLE_VOLUME_RECOMMENDATIONS).map(([muscle, range]) => {
               const sets = weeklyMuscleVolume[muscle] || 0;
-              const isLow = sets < range.min;
+              const isLow  = sets < range.min;
               const isHigh = sets > range.max;
               const colorClass = isLow ? 'text-amber-400' : isHigh ? 'text-red-400' : 'text-emerald-400';
-              const bgClass = isLow ? 'bg-amber-400/10' : isHigh ? 'bg-red-400/10' : 'bg-emerald-400/10';
+              const bgClass    = isLow ? 'bg-amber-400'   : isHigh ? 'bg-red-400'   : 'bg-emerald-400';
               const progress = Math.min(100, (sets / range.max) * 100);
-
               return (
                 <div key={muscle} className="space-y-1.5">
                   <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
@@ -272,10 +234,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
                     <span className={colorClass}>{sets} / {range.min}-{range.max}</span>
                   </div>
                   <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full rounded-full transition-all duration-500 ${isLow ? 'bg-amber-400' : isHigh ? 'bg-red-400' : 'bg-emerald-400'}`}
-                      style={{ width: `${progress}%` }}
-                    />
+                    <div className={`h-full rounded-full transition-all duration-500 ${bgClass}`} style={{ width: `${progress}%` }} />
                   </div>
                 </div>
               );
@@ -284,53 +243,37 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
         </div>
 
         {muscleChartData.length > 0 && (
-        <div className="glass-panel p-4 rounded-2xl">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Series por Grupo Muscular</h3>
-            <div className="flex bg-slate-900/50 p-0.5 rounded-lg border border-white/5">
-              <button 
-                onClick={() => setMuscleChartMode('historical')}
-                className={`px-2 py-1 text-[8px] font-bold uppercase rounded-md transition-all ${muscleChartMode === 'historical' ? 'bg-brand-500 text-white' : 'text-slate-500'}`}
-              >
-                Histórico
-              </button>
-              <button 
-                onClick={() => setMuscleChartMode('weekly')}
-                className={`px-2 py-1 text-[8px] font-bold uppercase rounded-md transition-all ${muscleChartMode === 'weekly' ? 'bg-brand-500 text-white' : 'text-slate-500'}`}
-              >
-                Semanal
-              </button>
+          <div className="glass-panel p-4 rounded-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Series por Grupo Muscular</h3>
+              <div className="flex bg-slate-900/50 p-0.5 rounded-lg border border-white/5">
+                {(['historical', 'weekly'] as const).map(mode => (
+                  <button key={mode} onClick={() => setMuscleChartMode(mode)}
+                    className={`px-2 py-1 text-[8px] font-bold uppercase rounded-md transition-all ${
+                      muscleChartMode === mode ? 'bg-brand-500 text-white' : 'text-slate-500'
+                    }`}
+                  >
+                    {mode === 'historical' ? 'Historico' : 'Semanal'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div style={{ width: '100%', height: 256 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={activeChartData} layout="vertical" margin={{ top: 0, right: 0, left: 20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="rgba(255,255,255,0.05)" />
+                  <XAxis type="number" hide />
+                  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8'}} width={60} />
+                  <Tooltip cursor={{fill: 'rgba(255,255,255,0.05)'}} contentStyle={{backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '12px'}} />
+                  <Bar dataKey="sets" name="Series" radius={[0, 4, 4, 0]}>
+                    {activeChartData.map((_, idx) => (
+                      <Cell key={`cell-${idx}`} fill={idx < 3 ? '#fb923c' : '#0ea5e9'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
-          <div style={{ width: '100%', height: 256 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart 
-                data={muscleChartMode === 'historical' 
-                  ? muscleChartData 
-                  : Object.entries(weeklyMuscleVolume).map(([name, sets]) => ({ name, sets })).sort((a, b) => b.sets - a.sets)
-                } 
-                layout="vertical" 
-                margin={{ top: 0, right: 0, left: 20, bottom: 0 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="rgba(255,255,255,0.05)" />
-                <XAxis type="number" hide />
-                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8'}} width={60} />
-                <Tooltip 
-                  cursor={{fill: 'rgba(255,255,255,0.05)'}}
-                  contentStyle={{backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '12px'}}
-                />
-                <Bar dataKey="sets" name="Series" radius={[0, 4, 4, 0]}>
-                  {(muscleChartMode === 'historical' 
-                    ? muscleChartData 
-                    : Object.entries(weeklyMuscleVolume).map(([name, sets]) => ({ name, sets })).sort((a, b) => b.sets - a.sets)
-                  ).map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={index < 3 ? '#fb923c' : '#0ea5e9'} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
         )}
       </section>
 
@@ -339,16 +282,13 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
         <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider px-1 flex items-center gap-2">
           <Dumbbell size={16} /> Ejercicios Individuales
         </h2>
-        
         <div className="glass-panel p-4 rounded-2xl">
-          <select 
+          <select
             value={selectedExercise}
-            onChange={(e) => setSelectedExercise(e.target.value)}
+            onChange={e => setSelectedExercise(e.target.value)}
             className="w-full bg-slate-800 text-white text-sm font-bold p-3 rounded-xl border border-white/10 mb-4 focus:outline-none focus:border-brand-500"
           >
-            {allExercises.map(ex => (
-              <option key={ex.id} value={ex.id}>{ex.name}</option>
-            ))}
+            {allExercises.map(ex => <option key={ex.id} value={ex.id}>{ex.name}</option>)}
           </select>
 
           {exerciseLogs.length > 0 && (
@@ -356,38 +296,30 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
               <div className="bg-slate-900/40 p-3 rounded-xl border border-white/5">
                 <div className="flex items-center gap-1.5 text-amber-500 mb-1">
                   <Trophy size={14} />
-                  <span className="text-[9px] font-bold uppercase tracking-wider">Récord (PR)</span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider">Record (PR)</span>
                 </div>
-                <p className="text-xl font-bold text-white">
-                  {maxExercisePR} <span className="text-xs text-slate-500 font-normal">kg</span>
-                </p>
+                <p className="text-xl font-bold text-white">{maxExercisePR} <span className="text-xs text-slate-500 font-normal">kg</span></p>
               </div>
               <div className="bg-slate-900/40 p-3 rounded-xl border border-white/5">
                 <div className="flex items-center gap-1.5 text-emerald-400 mb-1">
                   <Target size={14} />
                   <span className="text-[9px] font-bold uppercase tracking-wider">1RM Est.</span>
                 </div>
-                <p className="text-xl font-bold text-white">
-                  {maxExercise1RM} <span className="text-xs text-slate-500 font-normal">kg</span>
-                </p>
+                <p className="text-xl font-bold text-white">{maxExercise1RM} <span className="text-xs text-slate-500 font-normal">kg</span></p>
               </div>
               <div className="bg-slate-900/40 p-3 rounded-xl border border-white/5">
                 <div className="flex items-center gap-1.5 text-purple-400 mb-1">
                   <Activity size={14} />
-                  <span className="text-[9px] font-bold uppercase tracking-wider">Vol. Máx Sesión</span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider">Vol. Max Sesion</span>
                 </div>
-                <p className="text-xl font-bold text-white">
-                  {maxSessionVolume} <span className="text-xs text-slate-500 font-normal">kg</span>
-                </p>
+                <p className="text-xl font-bold text-white">{maxSessionVolume} <span className="text-xs text-slate-500 font-normal">kg</span></p>
               </div>
               <div className="bg-slate-900/40 p-3 rounded-xl border border-white/5">
                 <div className="flex items-center gap-1.5 text-brand-400 mb-1">
                   <TrendingUp size={14} />
-                  <span className="text-[9px] font-bold uppercase tracking-wider">Evolución 1RM</span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider">Evolucion 1RM</span>
                 </div>
-                <p className="text-xl font-bold text-white">
-                  {progress1RM > 0 ? '+' : ''}{progress1RM.toFixed(1)} <span className="text-xs text-slate-500 font-normal">kg</span>
-                </p>
+                <p className="text-xl font-bold text-white">{progress1RM > 0 ? '+' : ''}{progress1RM.toFixed(1)} <span className="text-xs text-slate-500 font-normal">kg</span></p>
               </div>
             </div>
           )}
@@ -404,85 +336,40 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                    <XAxis 
-                      dataKey="date" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{fontSize: 8, fill: '#64748b'}} 
-                      interval="preserveStartEnd"
-                      minTickGap={20}
-                    />
-                    <YAxis 
-                      yAxisId="left"
-                      domain={['auto', 'auto']} 
-                      orientation="left" 
-                      tick={{fontSize: 9, fill: '#10b981'}} 
-                      axisLine={false}
-                      width={30}
-                    />
-                    <YAxis 
-                      yAxisId="right"
-                      domain={['auto', 'auto']} 
-                      orientation="right" 
-                      tick={{fontSize: 9, fill: '#8b5cf6'}} 
-                      tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(1)}t` : v}
-                      axisLine={false}
-                      width={40}
-                    />
-                    <Tooltip 
-                      contentStyle={{backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '12px'}}
-                      itemStyle={{padding: 0}}
-                      labelStyle={{color: '#94a3b8', marginBottom: '4px'}}
-                    />
-                    <Area yAxisId="left" type="monotone" dataKey="oneRM" name="1RM Est. (kg)" stroke="#10b981" fill="url(#color1RM)" strokeWidth={2} />
+                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 8, fill: '#64748b'}} interval="preserveStartEnd" minTickGap={20} />
+                    <YAxis yAxisId="left"  domain={['auto', 'auto']} orientation="left"  tick={{fontSize: 9, fill: '#10b981'}} axisLine={false} width={30} />
+                    <YAxis yAxisId="right" domain={['auto', 'auto']} orientation="right" tick={{fontSize: 9, fill: '#8b5cf6'}} tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(1)}t` : v} axisLine={false} width={40} />
+                    <Tooltip contentStyle={{backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '12px'}} itemStyle={{padding: 0}} labelStyle={{color: '#94a3b8', marginBottom: '4px'}} />
+                    <Area yAxisId="left"  type="monotone" dataKey="oneRM"  name="1RM Est. (kg)"  stroke="#10b981" fill="url(#color1RM)" strokeWidth={2} />
                     <Line yAxisId="right" type="monotone" dataKey="volume" name="Tonelaje (kg)" stroke="#8b5cf6" dot={false} strokeWidth={2} />
                   </ComposedChart>
                 </ResponsiveContainer>
               </div>
 
               <div className="mt-8">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Evolución del RIR</h3>
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Evolucion del RIR</h3>
                 <div style={{ width: '100%', height: 160 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={exerciseLogs.filter(l => l.rir !== null)}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                      <XAxis 
-                        dataKey="date" 
-                        axisLine={false} 
-                        tickLine={false} 
-                        tick={{fontSize: 8, fill: '#64748b'}} 
-                        interval="preserveStartEnd"
-                        minTickGap={20}
-                      />
-                      <YAxis 
-                        domain={[0, 10]} 
-                        orientation="right" 
-                        tick={{fontSize: 9, fill: '#64748b'}} 
-                        axisLine={false}
-                        width={30}
-                      />
-                      <Tooltip 
-                        contentStyle={{backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '12px'}}
-                        itemStyle={{padding: 0}}
-                        labelStyle={{color: '#94a3b8', marginBottom: '4px'}}
-                      />
+                      <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 8, fill: '#64748b'}} interval="preserveStartEnd" minTickGap={20} />
+                      <YAxis domain={[0, 10]} orientation="right" tick={{fontSize: 9, fill: '#64748b'}} axisLine={false} width={30} />
+                      <Tooltip contentStyle={{backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '12px'}} itemStyle={{padding: 0}} labelStyle={{color: '#94a3b8', marginBottom: '4px'}} />
                       <Bar dataKey="rir" name="RIR Promedio" radius={[4, 4, 0, 0]}>
-                        {exerciseLogs.filter(l => l.rir !== null).map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.rir! > 2 ? '#10b981' : entry.rir! > 0 ? '#fb923c' : '#ef4444'} />
+                        {exerciseLogs.filter(l => l.rir !== null).map((entry, idx) => (
+                          <Cell key={`cell-${idx}`} fill={entry.rir! > 2 ? '#10b981' : entry.rir! > 0 ? '#fb923c' : '#ef4444'} />
                         ))}
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
                 <p className="text-[10px] text-slate-500 mt-2 text-center italic">
-                  Un RIR creciente con la misma carga indica una mejor recuperación y adaptación.
+                  Un RIR creciente con la misma carga indica una mejor recuperacion y adaptacion.
                 </p>
               </div>
             </>
           ) : (
-            <div className="h-48 flex items-center justify-center text-slate-500 text-sm">
-              No hay datos para este ejercicio.
-            </div>
+            <div className="h-48 flex items-center justify-center text-slate-500 text-sm">No hay datos para este ejercicio.</div>
           )}
         </div>
       </section>

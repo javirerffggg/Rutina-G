@@ -1,19 +1,19 @@
 export enum PhaseType {
   CUT_JAN       = 'Fase 1: Recorte Final',
-  RESET_FEB     = 'Fase 2: Transici\u00f3n/Reset',
+  RESET_FEB     = 'Fase 2: Transición/Reset',
   HYPERTROPHY_1 = 'Fase 3: Hipertrofia I',
   SUMMER_SHRED  = 'Fase 4: Summer Shred',
   HYPERTROPHY_2 = 'Fase 5: Hipertrofia II',
-  CONSOLIDATION = 'Fase 6: Consolidaci\u00f3n',
+  CONSOLIDATION = 'Fase 6: Consolidación',
   UNKNOWN       = 'Fuera de Plan'
 }
 
 export enum RoutineType {
-  PUSH  = 'Push (Pecho/Hombro/Tr\u00edceps)',
-  PULL  = 'Pull (Espalda/B\u00edceps)',
-  LEGS  = 'Legs (Cu\u00e1driceps)',
-  UPPER = 'Upper (Torso H\u00edbrido)',
-  LOWER = 'Lower (Gl\u00fateo/Femoral)',
+  PUSH  = 'Push (Pecho/Hombro/Tríceps)',
+  PULL  = 'Pull (Espalda/Bíceps)',
+  LEGS  = 'Legs (Cuádriceps)',
+  UPPER = 'Upper (Torso Híbrido)',
+  LOWER = 'Lower (Glúteo/Femoral)',
   REST  = 'Descanso'
 }
 
@@ -26,6 +26,8 @@ export interface Exercise {
   notes?: string;
   /** Optional override for rest timer in seconds */
   restSeconds?: number;
+  /** Weight of the equipment/machine tare (e.g. hack squat sled). Used by PlateCalculator. */
+  equipmentWeight?: number;
 }
 
 export interface ExerciseAlternative {
@@ -39,12 +41,16 @@ export interface WorkoutSet {
   reps: number;
   rir?: number;
   completed?: boolean;
+  /** Set type: W=Warmup, N=Normal, D=Drop-set, F=Fallo */
+  setType?: 'W' | 'N' | 'D' | 'F';
 }
 
 export interface WorkoutLogEntry {
   exerciseId: string;
   sets: WorkoutSet[];
   completed?: boolean;
+  /** Machine/equipment setup notes, e.g. "Asiento al 4, pies altos" */
+  setupNotes?: string;
 }
 
 export interface DailyLog {

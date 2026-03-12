@@ -6,6 +6,9 @@ import { DailyLog } from '../types';
 import { Activity, Battery, Moon, Scale, Utensils, CheckCircle2, AlertTriangle, Clock, Flame, ChevronRight } from 'lucide-react';
 import { EXERCISE_MUSCLE_MAP } from '../constants';
 import { BodyHeatmap } from '../components/BodyHeatmap';
+import { useRPGStats } from '../hooks/useRPGStats';
+import { RPGProgressBar } from '../components/dashboard/RPGProgressBar';
+import { LevelUpCelebration } from '../components/dashboard/LevelUpCelebration';
 
 const getGreeting = () => {
   const h = new Date().getHours();
@@ -24,8 +27,13 @@ const Dashboard: React.FC = () => {
   const [muscleVolume, setMuscleVolume] = useState<Record<string, number>>({});
   const [muscleSets, setMuscleSets] = useState<Record<string, number>>({});
   const [isOledMode, setIsOledMode] = useState(() => localStorage.getItem('oledMode') === 'true');
+  const [showLevelUpModal, setShowLevelUpModal] = useState(false);
+  const [previousLevel, setPreviousLevel] = useState(1);
 
   const specialSchedule = getGymSchedule(today);
+
+  // Calcular estadísticas RPG usando el hook optimizado
+  const rpgStats = useRPGStats(allLogs);
 
   useEffect(() => {
     if (isOledMode) document.body.classList.add('oled-mode');
@@ -72,6 +80,18 @@ const Dashboard: React.FC = () => {
     setMuscleVolume(volumeData);
     setMuscleSets(setsData);
   }, [today]);
+
+  // Detectar level-up y mostrar celebración
+  useEffect(() => {
+    const lastSeenLevel = parseInt(localStorage.getItem('rpg_last_seen_level') ?? '1', 10);
+    
+    if (rpgStats.level > lastSeenLevel) {
+      // Nuevo nivel alcanzado
+      setPreviousLevel(lastSeenLevel);
+      setShowLevelUpModal(true);
+      localStorage.setItem('rpg_last_seen_level', rpgStats.level.toString());
+    }
+  }, [rpgStats.level]);
 
   const handleWeightSave = () => {
     if (!weightInput) return;
@@ -130,6 +150,15 @@ const Dashboard: React.FC = () => {
   return (
     <div className="p-6 space-y-6 pb-24">
 
+      {/* ── MODAL DE LEVEL UP ── */}
+      {showLevelUpModal && (
+        <LevelUpCelebration
+          stats={rpgStats}
+          previousLevel={previousLevel}
+          onClose={() => setShowLevelUpModal(false)}
+        />
+      )}
+
       {/* ── HEADER ── */}
       <header className="flex justify-between items-start">
         <div>
@@ -158,6 +187,9 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </header>
+
+      {/* ── RPG PROGRESS BAR ── */}
+      <RPGProgressBar stats={rpgStats} />
 
       {/* ── ALERTA HORARIO ESPECIAL ── */}
       {specialSchedule && (

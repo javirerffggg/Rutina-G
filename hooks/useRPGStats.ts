@@ -61,7 +61,9 @@ export function useRPGStats(logs: Record<string, DailyLog>): RPGStats {
   
   // Memoizar la obtención de logros desbloqueados
   const unlockedAchievementTiers = useMemo(() => {
-    const unlockedIds = getUnlockedAchievements();
+    // getUnlockedAchievements retorna Record<string, string> (achievementId -> date)
+    const unlockedMap = getUnlockedAchievements();
+    const unlockedIds = Object.keys(unlockedMap);
     const tiers: AchievementTier[] = [];
     
     for (const achievementId of unlockedIds) {

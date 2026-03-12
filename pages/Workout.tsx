@@ -14,7 +14,7 @@ import {
   Dumbbell, Settings, Info, Bot, AlertTriangle, Clock, Flame,
   ChevronRight, Timer, Flag, Milk, BookOpen, GraduationCap,
   CalendarDays, Award, Zap, TrendingUp, ArrowUpRight, ArrowLeft,
-  ChevronDown
+  ChevronDown, ArrowUp, ArrowDown, Maximize2, Replace
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { dispatchLiveActivity } from '../hooks/useLiveActivity';
@@ -115,10 +115,11 @@ const ROUTINE_EXERCISES: Partial<Record<RoutineType, Exercise[]>> = {
 };
 
 // ---------------------------------------------------------------------------
-// Plate calculator
+// Plate calculator with equipmentWeight support
 // ---------------------------------------------------------------------------
-const PlateCalculator = ({ weight }: { weight: number }) => {
-  const plates = calculatePlates(weight);
+const PlateCalculator = ({ weight, barWeight = 20 }: { weight: number; barWeight?: number }) => {
+  const totalWeight = weight - barWeight;
+  const plates = calculatePlates(totalWeight);
   if (plates.length === 0) return null;
   return (
     <div className="mt-6 pt-6 border-t border-white/5 flex flex-col items-center gap-3">
@@ -316,7 +317,7 @@ const Workout: React.FC = () => {
       initialLogs = list.map(ex => {
         const prev = getPreviousWorkoutLog(ex.id, today);
         const preloaded = prev?.sets.length > 0
-          ? prev.sets.map((s: any) => ({ weight: s.weight, reps: s.reps, rir: s.rir, completed: false }))
+          ? prev.sets.map((s: any) => ({ weight: s.weight, reps: s.reps, rir: s.rir, completed: false, setType: s.setType || 'N' }))
           : [];
         return { exerciseId: ex.id, sets: preloaded, completed: false };
       });
@@ -347,7 +348,7 @@ const Workout: React.FC = () => {
     setLogs(prev => prev.map(log => {
       if (log.exerciseId !== exerciseId) return log;
       const sets = [...log.sets];
-      if (!sets[idx]) sets[idx] = { weight: 0, reps: 0 };
+      if (!sets[idx]) sets[idx] = { weight: 0, reps: 0, setType: 'N' };
 
       const oldValue = sets[idx][field] as number | undefined;
       sets[idx] = { ...sets[idx], [field]: value };
@@ -373,9 +374,9 @@ const Workout: React.FC = () => {
   const addSet = (exerciseId: string) => {
     setLogs(prev => prev.map(log => {
       if (log.exerciseId !== exerciseId) return log;
-      let ns: WorkoutSet = { weight: 0, reps: 0 };
+      let ns: WorkoutSet = { weight: 0, reps: 0, setType: 'N' };
       if (log.sets.length > 0) ns = { ...log.sets[log.sets.length-1], completed: false };
-      else { const p = getPreviousWorkoutLog(exerciseId, today); if (p?.sets.length>0) ns = { weight: p.sets[0].weight, reps: p.sets[0].reps, completed: false }; }
+      else { const p = getPreviousWorkoutLog(exerciseId, today); if (p?.sets.length>0) ns = { weight: p.sets[0].weight, reps: p.sets[0].reps, completed: false, setType: 'N' }; }
       return { ...log, sets: [...log.sets, ns] };
     }));
     // Make sure the exercise is expanded
@@ -427,6 +428,106 @@ const Workout: React.FC = () => {
       return next;
     });
     saveWorkoutWithLogs(nl);
+  };
+
+  // -------------------------------------------------------------------------
+  // Reordenar ejercicios (mover arriba/abajo en la lista)
+  // -------------------------------------------------------------------------
+  const moveExercise = (exerciseId: string, direction: 'up' | 'down') => {
+    const currentIndex = exercises.findIndex(e => e.id === exerciseId);
+    if (currentIndex === -1) return;
+    if (direction === 'up' && currentIndex === 0) return;
+    if (direction === 'down' && currentIndex === exercises.length - 1) return;
+
+    const swapIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    const newExercises = [...exercises];
+    [newExercises[currentIndex], newExercises[swapIndex]] = [newExercises[swapIndex], newExercises[currentIndex]];
+    setExercises(newExercises);
+
+    // También reordenar los logs para mantener coherencia
+    const newLogs = [...logs];
+    const logCurrentIndex = newLogs.findIndex(l => l.exerciseId === exerciseId);
+    if (logCurrentIndex !== -1) {
+      const logSwapIndex = direction === 'up' ? logCurrentIndex - 1 : logCurrentIndex + 1;
+      if (logSwapIndex >= 0 && logSwapIndex < newLogs.length) {
+        [newLogs[logCurrentIndex], newLogs[logSwapIndex]] = [newLogs[logSwapIndex], newLogs[logCurrentIndex]];
+        setLogs(newLogs);
+        saveWorkoutWithLogs(newLogs);
+      }
+    }
+  };
+
+  // -------------------------------------------------------------------------
+  // Ciclo de tipo de serie (W/N/D/F)
+  // -------------------------------------------------------------------------
+  const cycleSetType = (exerciseId: string, setIndex: number) => {
+    setLogs(prev => prev.map(log => {
+      if (log.exerciseId !== exerciseId) return log;
+      const sets = [...log.sets];
+      if (!sets[setIndex]) return log;
+      const currentType = sets[setIndex].setType || 'N';
+      const typeOrder: Array<'N' | 'W' | 'D' | 'F'> = ['N', 'W', 'D', 'F'];
+      const currentIndex = typeOrder.indexOf(currentType);
+      const nextType = typeOrder[(currentIndex + 1) % typeOrder.length];
+      sets[setIndex] = { ...sets[setIndex], setType: nextType };
+      return { ...log, sets };
+    }));
+    saveWorkout();
+  };
+
+  // -------------------------------------------------------------------------
+  // Actualizar notas de ajuste de máquina
+  // -------------------------------------------------------------------------
+  const updateSetupNotes = (exerciseId: string, notes: string) => {
+    setLogs(prev => prev.map(log => 
+      log.exerciseId === exerciseId ? { ...log, setupNotes: notes } : log
+    ));
+  };
+
+  // -------------------------------------------------------------------------
+  // Sustituir ejercicio por alternativa
+  // -------------------------------------------------------------------------
+  const substituteExercise = (originalId: string, alternativeName: string) => {
+    // Buscar el ID del ejercicio alternativo
+    const allExercises = [...EXERCISES_PUSH, ...EXERCISES_PULL, ...EXERCISES_LEGS, ...EXERCISES_UPPER, ...EXERCISES_LOWER];
+    const alternativeExercise = allExercises.find(e => e.name === alternativeName);
+    
+    if (!alternativeExercise) {
+      console.error('Ejercicio alternativo no encontrado:', alternativeName);
+      return;
+    }
+
+    // Actualizar en la lista de ejercicios
+    setExercises(prev => prev.map(ex => 
+      ex.id === originalId ? alternativeExercise : ex
+    ));
+
+    // Actualizar en los logs (resetear series si es necesario)
+    setLogs(prev => prev.map(log => {
+      if (log.exerciseId !== originalId) return log;
+      
+      // Cargar datos previos del nuevo ejercicio si existen
+      const prevLog = getPreviousWorkoutLog(alternativeExercise.id, today);
+      const preloaded = prevLog?.sets.length > 0
+        ? prevLog.sets.map((s: any) => ({ 
+            weight: s.weight, 
+            reps: s.reps, 
+            rir: s.rir, 
+            completed: false,
+            setType: s.setType || 'N'
+          }))
+        : [{ weight: 0, reps: 0, completed: false, setType: 'N' as const }];
+      
+      return {
+        exerciseId: alternativeExercise.id,
+        sets: preloaded,
+        completed: false,
+        setupNotes: log.setupNotes
+      };
+    }));
+
+    saveWorkout();
+    setShowAlternativeFor(null);
   };
 
   const calculateSessionAnalysis = (currentLogs: WorkoutLogEntry[], routine: RoutineType) => {
@@ -748,34 +849,58 @@ const Workout: React.FC = () => {
         ) : isGymMode ? (
           <div className="animate-in fade-in zoom-in-95 duration-300">
             {restTimer !== null ? (
-              <motion.div initial={{opacity:0,scale:0.9}} animate={{opacity:1,scale:1}}
-                className="glass-panel border-brand-500/30 rounded-[32px] p-12 flex flex-col items-center justify-center shadow-[0_20px_60px_rgba(0,0,0,0.6)] premium-bisel aspect-square">
-                <p className="text-brand-400 font-bold text-[10px] uppercase tracking-[0.3em] mb-6 animate-pulse">Descansando</p>
-                <div className="relative w-64 h-64 flex items-center justify-center">
-                  <svg className="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="2"/>
-                    <motion.circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round"
-                      className="text-brand-500"
-                      style={{ strokeDasharray: CIRCUMFERENCE, strokeDashoffset: CIRCUMFERENCE*(1-circleProgress) }}/>
-                  </svg>
-                  <div className="text-7xl font-display font-black text-white tabular-nums tracking-tighter z-10">{formatTime(restTimer)}</div>
-                </div>
-                <div className="flex gap-4 mt-12">
-                  <button onClick={() => { setRestTimer(p=>(p??0)+30); navigator.serviceWorker?.controller?.postMessage({type:'ADD_REST_SECONDS',seconds:30}); }}
-                    className="px-8 py-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs uppercase tracking-widest active:scale-95 transition-all">+30s</button>
-                  <button
-                    onPointerDown={() => { skipTimerRef.current = setTimeout(() => { setRestTimer(null); dispatchLiveActivity({restTimer:null}); navigator.serviceWorker?.controller?.postMessage({type:'CANCEL_REST_TIMER'}); }, 800); }}
-                    onPointerUp={() => { if(skipTimerRef.current) clearTimeout(skipTimerRef.current); }}
-                    onPointerLeave={() => { if(skipTimerRef.current) clearTimeout(skipTimerRef.current); }}
-                    className="px-8 py-4 rounded-2xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs uppercase tracking-widest active:scale-95 transition-all shadow-xl shadow-brand-900/40">Saltar (mant.)</button>
-                </div>
-                {currentGymExercise && (
-                  <div className="mt-10 text-center">
-                    <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-2">Siguiente</p>
-                    <p className="text-zinc-300 font-display font-bold text-lg">{currentGymExercise.name}{prevGymSet?` · ${prevGymSet.weight}kg`:''}</p>
+              <div className="space-y-4">
+                {/* Temporizador en la mitad superior */}
+                <motion.div initial={{opacity:0,scale:0.9}} animate={{opacity:1,scale:1}}
+                  className="glass-panel border-brand-500/30 rounded-[32px] p-10 flex flex-col items-center justify-center shadow-[0_20px_60px_rgba(0,0,0,0.6)] premium-bisel">
+                  <p className="text-brand-400 font-bold text-[10px] uppercase tracking-[0.3em] mb-6 animate-pulse">Descansando</p>
+                  <div className="relative w-52 h-52 flex items-center justify-center">
+                    <svg className="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                      <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="2"/>
+                      <motion.circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round"
+                        className="text-brand-500"
+                        style={{ strokeDasharray: CIRCUMFERENCE, strokeDashoffset: CIRCUMFERENCE*(1-circleProgress) }}/>
+                    </svg>
+                    <div className="text-6xl font-display font-black text-white tabular-nums tracking-tighter z-10">{formatTime(restTimer)}</div>
                   </div>
+                  <div className="flex gap-4 mt-10">
+                    <button onClick={() => { setRestTimer(p=>(p??0)-30); navigator.serviceWorker?.controller?.postMessage({type:'ADD_REST_SECONDS',seconds:-30}); }}
+                      className="px-6 py-3 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs uppercase tracking-widest active:scale-95 transition-all">-30s</button>
+                    <button onClick={() => { setRestTimer(p=>(p??0)+30); navigator.serviceWorker?.controller?.postMessage({type:'ADD_REST_SECONDS',seconds:30}); }}
+                      className="px-6 py-3 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs uppercase tracking-widest active:scale-95 transition-all">+30s</button>
+                    <button
+                      onPointerDown={() => { skipTimerRef.current = setTimeout(() => { setRestTimer(null); dispatchLiveActivity({restTimer:null}); navigator.serviceWorker?.controller?.postMessage({type:'CANCEL_REST_TIMER'}); }, 800); }}
+                      onPointerUp={() => { if(skipTimerRef.current) clearTimeout(skipTimerRef.current); }}
+                      onPointerLeave={() => { if(skipTimerRef.current) clearTimeout(skipTimerRef.current); }}
+                      className="px-6 py-3 rounded-2xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs uppercase tracking-widest active:scale-95 transition-all shadow-xl shadow-brand-900/40">Saltar (mant.)</button>
+                  </div>
+                </motion.div>
+
+                {/* Inputs de la siguiente serie visibles debajo del temporizador */}
+                {currentGymExercise && currentSet && (
+                  <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}}
+                    className="glass-panel rounded-2xl p-6 border border-white/10">
+                    <div className="text-center mb-4">
+                      <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-1">Siguiente Serie</p>
+                      <h3 className="text-xl font-display font-bold text-white">{currentGymExercise.name}</h3>
+                      <p className="text-brand-400 text-sm font-bold mt-1">Set {currentSetIndex+1}</p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      {(['weight','reps','rir'] as const).map(field => (
+                        <div key={field} className="bg-black/60 rounded-xl p-3 border border-white/5">
+                          <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-widest text-center mb-2">{field==='weight'?'Peso':field==='reps'?'Reps':'RIR'}</p>
+                          <input type="number"
+                            placeholder={prevGymSet?`${prevGymSet[field]??0}`:'0'}
+                            value={currentSet[field]||''}
+                            onChange={e=>updateSet(currentGymExercise.id,currentSetIndex,field,parseFloat(e.target.value))}
+                            onBlur={()=>saveWorkout()}
+                            className={`w-full bg-transparent text-center font-display font-bold text-2xl focus:outline-none ${field==='rir'?'text-brand-400':'text-white'}`}/>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
                 )}
-              </motion.div>
+              </div>
             ) : currentGymExercise && currentSet ? (
               <div className={`glass-panel rounded-[32px] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.6)] premium-bisel border transition-all duration-500 ${
                 currentSet.rir===0?'border-red-500/50':currentSet.rir<=2?'border-amber-500/50':'border-brand-500/30'
@@ -790,23 +915,54 @@ const Workout: React.FC = () => {
                     Set {currentSetIndex+1} / {currentGymLog?.sets.length || currentGymExercise.targetSets}
                   </div>
                 </div>
+
+                {/* Botones de microcargas y sobrecarga */}
                 <div className="grid grid-cols-3 gap-5 mb-8">
                   {(['weight','reps','rir'] as const).map(field => (
-                    <motion.div key={field} drag="x" dragConstraints={{left:0,right:0}}
-                      onDragEnd={(_,info) => { if(Math.abs(info.offset.x)>50) { const step=field==='weight'?1.25:1; const diff=info.offset.x>0?step:-step; updateSet(currentGymExercise.id,currentSetIndex,field,Math.max(0,(currentSet[field]||0)+diff)); }}}
-                      className="bg-black/60 rounded-2xl p-5 border border-white/5 focus-within:border-brand-500/50 transition-all cursor-ew-resize">
-                      <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest text-center mb-3">{field==='weight'?'Peso (kg)':field==='reps'?'Reps':'RIR'}</p>
-                      <input type="number"
-                        placeholder={field==='rir'?(prevGymSet?.rir!=null?`${prevGymSet.rir}`:'-'):(prevGymSet?`${prevGymSet[field]}`:'0')}
-                        value={currentSet[field]||''}
-                        onChange={e=>updateSet(currentGymExercise.id,currentSetIndex,field,parseFloat(e.target.value))}
-                        onBlur={()=>saveWorkout()}
-                        className={`w-full bg-transparent text-center font-display font-bold text-4xl focus:outline-none tracking-tighter ${field==='rir'?'text-brand-400':'text-white'}`}/>
-                    </motion.div>
+                    <div key={field} className="space-y-2">
+                      <motion.div drag="x" dragConstraints={{left:0,right:0}}
+                        onDragEnd={(_,info) => { if(Math.abs(info.offset.x)>50) { const step=field==='weight'?1.25:1; const diff=info.offset.x>0?step:-step; updateSet(currentGymExercise.id,currentSetIndex,field,Math.max(0,(currentSet[field]||0)+diff)); }}}
+                        className="bg-black/60 rounded-2xl p-5 border border-white/5 focus-within:border-brand-500/50 transition-all cursor-ew-resize">
+                        <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest text-center mb-3">{field==='weight'?'Peso (kg)':field==='reps'?'Reps':'RIR'}</p>
+                        <input type="number"
+                          placeholder={field==='rir'?(prevGymSet?.rir!=null?`${prevGymSet.rir}`:'-'):(prevGymSet?`${prevGymSet[field]}`:'0')}
+                          value={currentSet[field]||''}
+                          onChange={e=>updateSet(currentGymExercise.id,currentSetIndex,field,parseFloat(e.target.value))}
+                          onBlur={()=>saveWorkout()}
+                          className={`w-full bg-transparent text-center font-display font-bold text-4xl focus:outline-none tracking-tighter ${field==='rir'?'text-brand-400':'text-white'}`}/>
+                      </motion.div>
+                      
+                      {/* Botones de microcargas */}
+                      {field !== 'rir' && (
+                        <div className="flex gap-1.5 justify-center">
+                          <button
+                            onClick={() => updateSet(currentGymExercise.id, currentSetIndex, field, Math.max(0, (currentSet[field]||0) - (field === 'weight' ? 1.25 : 1)))}
+                            className="flex-1 py-1 px-2 rounded-lg bg-zinc-800/50 hover:bg-zinc-700 text-zinc-400 text-xs font-bold transition-all active:scale-95">
+                            -{field === 'weight' ? '1.25' : '1'}
+                          </button>
+                          <button
+                            onClick={() => updateSet(currentGymExercise.id, currentSetIndex, field, (currentSet[field]||0) + (field === 'weight' ? 1.25 : 1))}
+                            className="flex-1 py-1 px-2 rounded-lg bg-zinc-800/50 hover:bg-zinc-700 text-zinc-400 text-xs font-bold transition-all active:scale-95">
+                            +{field === 'weight' ? '1.25' : '1'}
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Botón de sobrecarga progresiva */}
+                      {field !== 'rir' && prevGymSet && prevGymSet[field] && (
+                        <button
+                          onClick={() => updateSet(currentGymExercise.id, currentSetIndex, field, prevGymSet[field] + (field === 'weight' ? 1.25 : 1))}
+                          className="w-full py-2 rounded-lg bg-gradient-to-r from-amber-600/20 to-orange-600/20 hover:from-amber-600/30 hover:to-orange-600/30 border border-amber-500/30 text-amber-400 text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-1.5">
+                          <Zap size={14} fill="currentColor" />
+                          Sobrecarga
+                        </button>
+                      )}
+                    </div>
                   ))}
                 </div>
+
                 {prevGymSet && <p className="text-center text-zinc-500 font-display font-bold text-sm mb-6 tracking-tight">Anterior: <span className="text-zinc-300">{prevGymSet.weight}kg × {prevGymSet.reps}</span>{prevGymSet.rir!=null&&<span className="text-brand-500/60 ml-1">(RIR {prevGymSet.rir})</span>}</p>}
-                {currentSet.weight > 20 && <PlateCalculator weight={currentSet.weight}/>}
+                {currentSet.weight > 20 && <PlateCalculator weight={currentSet.weight} barWeight={currentGymExercise.equipmentWeight ?? 20}/>}
                 <button onClick={()=>toggleSetComplete(currentGymExercise.id,currentSetIndex)}
                   className="w-full mt-10 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-6 rounded-2xl shadow-2xl shadow-emerald-900/40 flex items-center justify-center gap-4 transition-all active:scale-[0.98] text-xl uppercase tracking-[0.2em]">
                   <Check size={32} strokeWidth={3}/> Completar Serie
@@ -822,7 +978,7 @@ const Workout: React.FC = () => {
             )}
           </div>
         ) : (
-          exercises.map(exercise => {
+          exercises.map((exercise, exerciseIndex) => {
             const log = logs.find(l=>l.exerciseId===exercise.id) || { exerciseId: exercise.id, sets: [], completed: false };
             const prevLog = getPreviousWorkoutLog(exercise.id, today);
             const isCompleted = log.completed;
@@ -844,6 +1000,24 @@ const Workout: React.FC = () => {
 
                 {/* Header row — always visible */}
                 <div className="px-4 py-3 flex items-center gap-3 relative z-10">
+                  {/* Botones de reordenamiento (solo si no completado) */}
+                  {!isCompleted && (
+                    <div className="flex flex-col gap-0.5 shrink-0">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); moveExercise(exercise.id, 'up'); }}
+                        disabled={exerciseIndex === 0}
+                        className={`p-0.5 rounded transition-all ${exerciseIndex === 0 ? 'text-zinc-800 cursor-not-allowed' : 'text-zinc-600 hover:text-brand-400 active:scale-95'}`}>
+                        <ArrowUp size={14} />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); moveExercise(exercise.id, 'down'); }}
+                        disabled={exerciseIndex === exercises.length - 1}
+                        className={`p-0.5 rounded transition-all ${exerciseIndex === exercises.length - 1 ? 'text-zinc-800 cursor-not-allowed' : 'text-zinc-600 hover:text-brand-400 active:scale-95'}`}>
+                        <ArrowDown size={14} />
+                      </button>
+                    </div>
+                  )}
+
                   <div className="flex-1 min-w-0">
                     <h3 className={`font-display font-bold text-base leading-tight transition-all truncate ${
                       isCompleted ? 'text-emerald-400 line-through' : isExpanded ? 'text-white' : 'text-zinc-300'
@@ -880,6 +1054,18 @@ const Workout: React.FC = () => {
                 {/* Expanded body */}
                 {isExpanded && !isCompleted && (
                   <div onClick={e=>e.stopPropagation()} className="px-4 pb-4 animate-in slide-in-from-top-2 duration-200 relative z-10">
+                    {/* Campo de notas de ajuste de máquina */}
+                    <div className="mb-3">
+                      <input
+                        type="text"
+                        placeholder="Ej: Asiento al 4, pies altos..."
+                        value={log.setupNotes || ''}
+                        onChange={(e) => updateSetupNotes(exercise.id, e.target.value)}
+                        onBlur={() => saveWorkout()}
+                        className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/5 text-xs text-zinc-300 placeholder-zinc-600 focus:border-brand-500/50 focus:outline-none transition-all"
+                      />
+                    </div>
+
                     {/* Previous session */}
                     {prevLog && (
                       <div className="mb-3 bg-black/30 rounded-xl border border-white/5 p-3">
@@ -898,7 +1084,7 @@ const Workout: React.FC = () => {
                     {/* Sets */}
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-[9px] text-zinc-500 font-bold uppercase tracking-[0.2em] text-center mb-1">
-                        <div className="w-7"/>
+                        <div className="w-16">Tipo</div>
                         <div className="grid grid-cols-12 gap-2 flex-1">
                           <span className="col-span-4">Peso kg</span>
                           <span className="col-span-4">Reps</span>
@@ -908,15 +1094,30 @@ const Workout: React.FC = () => {
                       </div>
                       {logs.find(l=>l.exerciseId===exercise.id)?.sets.map((set,idx) => {
                         const ps = prevLog?.sets[idx] ?? null;
+                        const setType = set.setType || 'N';
+                        const setTypeColors = {
+                          'W': 'bg-zinc-700/50 text-zinc-400 border-zinc-600/50',
+                          'N': 'bg-brand-500/20 text-brand-400 border-brand-500/30',
+                          'D': 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+                          'F': 'bg-red-500/20 text-red-400 border-red-500/30'
+                        };
+                        const setTypeLabels = { 'W': 'W', 'N': 'N', 'D': 'D', 'F': 'F' };
+
                         return (
                           <div key={idx} className="group">
                             <div className="flex items-center gap-2">
-                              <button onClick={e=>{e.stopPropagation();removeSet(exercise.id,idx);}} className="w-7 flex justify-center text-zinc-700 hover:text-red-500 transition-all"><Minus size={16}/></button>
+                              {/* Botón para ciclar tipo de serie */}
+                              <button
+                                onClick={(e) => { e.stopPropagation(); cycleSetType(exercise.id, idx); }}
+                                className={`w-16 h-9 rounded-xl border font-bold text-xs transition-all flex items-center justify-center ${setTypeColors[setType]}`}>
+                                {setTypeLabels[setType]}
+                              </button>
+
                               <div className={`grid grid-cols-12 gap-2 flex-1 rounded-xl p-1 border transition-all ${
                                 set.completed ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-black/40 border-white/5 focus-within:border-brand-500/50'
                               }`}>
                                 {(['weight','reps','rir'] as const).map((field,fi) => (
-                                  <div key={field} className={`col-span-4 ${fi>0?'border-l border-white/5':''}`}>
+                                  <div key={field} className={`col-span-4 ${fi>0?'border-l border-white/5':''} relative`}>
                                     <input type="number"
                                       placeholder={field==='rir'?(ps?.rir!=null?`${ps.rir}`:'-'):(ps?`${ps[field]}`:'0')}
                                       value={set[field]||''}
@@ -928,6 +1129,11 @@ const Workout: React.FC = () => {
                                   </div>
                                 ))}
                               </div>
+                              <button
+                                onClick={e=>{e.stopPropagation();removeSet(exercise.id,idx);}}
+                                className="shrink-0 w-9 h-9 rounded-xl border border-zinc-700 hover:border-red-500 flex items-center justify-center text-zinc-700 hover:text-red-500 transition-all">
+                                <Minus size={16}/>
+                              </button>
                               <button onClick={e=>{e.stopPropagation();toggleSetComplete(exercise.id,idx);}}
                                 className={`shrink-0 w-9 h-9 rounded-xl border flex items-center justify-center transition-all ${
                                   set.completed ? 'bg-emerald-500 border-emerald-500 text-white shadow-[0_0_12px_rgba(16,185,129,0.4)]' :
@@ -936,7 +1142,7 @@ const Workout: React.FC = () => {
                                 <Check size={18} strokeWidth={set.completed?4:2}/>
                               </button>
                             </div>
-                            {ps && <p className="text-[9px] text-zinc-600 font-display font-bold text-right pr-11 mt-0.5 tracking-tight">ant: <span className="text-zinc-500">{ps.weight}kg × {ps.reps}</span>{ps.rir!=null&&<span className="text-brand-500/40 ml-1">· RIR {ps.rir}</span>}</p>}
+                            {ps && <p className="text-[9px] text-zinc-600 font-display font-bold text-right pr-20 mt-0.5 tracking-tight">ant: <span className="text-zinc-500">{ps.weight}kg × {ps.reps}</span>{ps.rir!=null&&<span className="text-brand-500/40 ml-1">· RIR {ps.rir}</span>}</p>}
                           </div>
                         );
                       })}
@@ -1009,8 +1215,28 @@ const Workout: React.FC = () => {
             <div className="flex items-center gap-2 mb-6 text-brand-400"><Bot size={20}/><span className="text-xs font-bold uppercase tracking-widest">Coach AI: Alternativas</span></div>
             <h3 className="text-xl font-bold text-white mb-6 pr-6 leading-tight">{exercises.find(e=>e.id===showAlternativeFor)?.name}</h3>
             <div className="space-y-4">
-              <div className="glass-card p-4 rounded-xl border-l-2 border-l-brand-500"><div className="flex items-start gap-3"><div className="p-2 rounded-lg bg-brand-500/10 text-brand-400"><Dumbbell size={18}/></div><div><p className="text-[10px] text-brand-400 uppercase font-bold mb-0.5">Peso Libre</p><p className="text-sm font-bold text-white">{EXERCISE_ALTERNATIVES[showAlternativeFor].main}</p></div></div></div>
-              <div className="glass-card p-4 rounded-xl border-l-2 border-l-purple-500"><div className="flex items-start gap-3"><div className="p-2 rounded-lg bg-purple-500/10 text-purple-400"><Settings size={18}/></div><div><p className="text-[10px] text-purple-400 uppercase font-bold mb-0.5">Máquina / Cable</p><p className="text-sm font-bold text-white">{EXERCISE_ALTERNATIVES[showAlternativeFor].secondary}</p></div></div></div>
+              <div className="glass-card p-4 rounded-xl border-l-2 border-l-brand-500 cursor-pointer hover:bg-brand-500/5 transition-all"
+                onClick={() => substituteExercise(showAlternativeFor, EXERCISE_ALTERNATIVES[showAlternativeFor].main)}>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-brand-500/10 text-brand-400"><Dumbbell size={18}/></div>
+                  <div className="flex-1">
+                    <p className="text-[10px] text-brand-400 uppercase font-bold mb-0.5">Peso Libre</p>
+                    <p className="text-sm font-bold text-white">{EXERCISE_ALTERNATIVES[showAlternativeFor].main}</p>
+                  </div>
+                  <Replace size={16} className="text-brand-400 shrink-0 mt-1" />
+                </div>
+              </div>
+              <div className="glass-card p-4 rounded-xl border-l-2 border-l-purple-500 cursor-pointer hover:bg-purple-500/5 transition-all"
+                onClick={() => substituteExercise(showAlternativeFor, EXERCISE_ALTERNATIVES[showAlternativeFor].secondary)}>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400"><Settings size={18}/></div>
+                  <div className="flex-1">
+                    <p className="text-[10px] text-purple-400 uppercase font-bold mb-0.5">Máquina / Cable</p>
+                    <p className="text-sm font-bold text-white">{EXERCISE_ALTERNATIVES[showAlternativeFor].secondary}</p>
+                  </div>
+                  <Replace size={16} className="text-purple-400 shrink-0 mt-1" />
+                </div>
+              </div>
               <div className="glass-card p-4 rounded-xl bg-slate-800/50"><div className="flex items-start gap-3"><Info size={16} className="text-slate-400 mt-0.5 shrink-0"/><p className="text-xs text-slate-300 italic leading-relaxed">"{EXERCISE_ALTERNATIVES[showAlternativeFor].note}"</p></div></div>
             </div>
           </div>

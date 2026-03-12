@@ -45,7 +45,7 @@ const ROUTINE_META: Record<RoutineType, {
   label: string;
   emoji: string;
   muscles: string;
-  accent: string;          // Tailwind gradient classes
+  accent: string;
   border: string;
   glow: string;
   badge: string;
@@ -156,13 +156,32 @@ const Workout: React.FC = () => {
 
   const defaultRoutine = ROUTINE_MAPPING[dayOfWeek];
 
-  // null = selector screen, string = inside a routine
   const [selectedRoutine, setSelectedRoutine] = useState<RoutineType | null>(null);
 
   const [exercises, setExercises]       = useState<Exercise[]>([]);
   const [logs, setLogs]                 = useState<WorkoutLogEntry[]>([]);
   const [allLogs, setAllLogs]           = useState<Record<string, any>>({});
-  const [activeExercise, setActiveExercise]     = useState<string | null>(null);
+
+  // Set of exercise IDs that are currently expanded.
+  // Replaces the old single activeExercise string so multiple cards can be
+  // open at the same time (and all uncompleted start expanded).
+  const [expandedExercises, setExpandedExercises] = useState<Set<string>>(new Set());
+
+  // Keep a legacy alias so gym-mode code that reads activeExercise still works
+  const activeExercise = expandedExercises.size > 0 ? [...expandedExercises][0] : null;
+  const setActiveExercise = (id: string | null) => {
+    if (id === null) return; // no-op for legacy callers; collapse is handled by toggleExpanded
+    setExpandedExercises(prev => new Set([...prev, id]));
+  };
+
+  const toggleExpanded = (exerciseId: string) => {
+    setExpandedExercises(prev => {
+      const next = new Set(prev);
+      if (next.has(exerciseId)) next.delete(exerciseId); else next.add(exerciseId);
+      return next;
+    });
+  };
+
   const [showAlternativeFor, setShowAlternativeFor] = useState<string | null>(null);
   const [showTechFor, setShowTechFor]   = useState<string | null>(null);
   const [showWarmup, setShowWarmup]     = useState(false);
@@ -290,17 +309,24 @@ const Workout: React.FC = () => {
     const saved = getLogs();
     setAllLogs(saved);
     const existing = saved[today];
+    let initialLogs: WorkoutLogEntry[];
     if (existing?.exercises && existing.workoutType === selectedRoutine) {
-      setLogs(existing.exercises);
+      initialLogs = existing.exercises;
     } else {
-      setLogs(list.map(ex => {
+      initialLogs = list.map(ex => {
         const prev = getPreviousWorkoutLog(ex.id, today);
         const preloaded = prev?.sets.length > 0
           ? prev.sets.map((s: any) => ({ weight: s.weight, reps: s.reps, rir: s.rir, completed: false }))
           : [];
         return { exerciseId: ex.id, sets: preloaded, completed: false };
-      }));
+      });
     }
+    setLogs(initialLogs);
+    // Expand all uncompleted exercises by default
+    const uncompletedIds = new Set(
+      initialLogs.filter(l => !l.completed).map(l => l.exerciseId)
+    );
+    setExpandedExercises(uncompletedIds);
   }, [selectedRoutine, today]);
 
   // Sync sets to live activity
@@ -312,12 +338,34 @@ const Workout: React.FC = () => {
     dispatchLiveActivity({ setsCompleted: sc, setsTotal: st, exerciseName: curEx?.name ?? '' });
   }, [logs, sessionState, exercises, selectedRoutine]);
 
+  // -------------------------------------------------------------------------
+  // updateSet — propagates value forward to subsequent uncompleted sets
+  // whose current value equals the previous set's value (or is empty),
+  // so editing set N auto-fills N+1, N+2, etc.
+  // -------------------------------------------------------------------------
   const updateSet = (exerciseId: string, idx: number, field: keyof WorkoutSet, value: number) => {
     setLogs(prev => prev.map(log => {
       if (log.exerciseId !== exerciseId) return log;
       const sets = [...log.sets];
       if (!sets[idx]) sets[idx] = { weight: 0, reps: 0 };
+
+      const oldValue = sets[idx][field] as number | undefined;
       sets[idx] = { ...sets[idx], [field]: value };
+
+      // Forward-fill: propagate to sets after idx that are not completed and
+      // whose value matches the old value (or is empty / 0)
+      for (let i = idx + 1; i < sets.length; i++) {
+        if (sets[i].completed) break; // stop at first completed set
+        const cur = sets[i][field] as number | undefined;
+        const isEmpty = cur === undefined || cur === 0 || cur === null;
+        const matchesPrevious = cur === oldValue;
+        if (isEmpty || matchesPrevious) {
+          sets[i] = { ...sets[i], [field]: value };
+        } else {
+          break; // user has deliberately set a different value — stop propagating
+        }
+      }
+
       return { ...log, sets };
     }));
   };
@@ -330,7 +378,8 @@ const Workout: React.FC = () => {
       else { const p = getPreviousWorkoutLog(exerciseId, today); if (p?.sets.length>0) ns = { weight: p.sets[0].weight, reps: p.sets[0].reps, completed: false }; }
       return { ...log, sets: [...log.sets, ns] };
     }));
-    setActiveExercise(exerciseId);
+    // Make sure the exercise is expanded
+    setExpandedExercises(prev => new Set([...prev, exerciseId]));
   };
 
   const removeSet = (exerciseId: string, idx: number) => {
@@ -353,8 +402,16 @@ const Workout: React.FC = () => {
     if (justCompleted) { const ex = exercises.find(e=>e.id===exerciseId); startRestTimer(exerciseId, ex?.name ?? exerciseId); }
     const tl = newLogs.find(l=>l.exerciseId===exerciseId);
     if (tl?.completed) {
-      setTimeout(() => setActiveExercise(null), 500);
-      if (isGymMode) { const ci = exercises.findIndex(e=>e.id===exerciseId); if (ci < exercises.length-1) setTimeout(() => setActiveExercise(exercises[ci+1].id), 1000); }
+      // Collapse the just-finished exercise and expand the next one
+      setExpandedExercises(prev => {
+        const next = new Set(prev);
+        next.delete(exerciseId);
+        if (isGymMode) {
+          const ci = exercises.findIndex(e=>e.id===exerciseId);
+          if (ci < exercises.length-1) next.add(exercises[ci+1].id);
+        }
+        return next;
+      });
     }
   };
 
@@ -362,7 +419,13 @@ const Workout: React.FC = () => {
     e.stopPropagation();
     const nl = logs.map(l => l.exerciseId !== exerciseId ? l : { ...l, completed: !l.completed });
     setLogs(nl);
-    if (nl.find(l=>l.exerciseId===exerciseId)?.completed) setActiveExercise(null);
+    // If marking as complete, collapse it; if unmarking, expand it
+    const nowComplete = nl.find(l=>l.exerciseId===exerciseId)?.completed;
+    setExpandedExercises(prev => {
+      const next = new Set(prev);
+      if (nowComplete) next.delete(exerciseId); else next.add(exerciseId);
+      return next;
+    });
     saveWorkoutWithLogs(nl);
   };
 
@@ -434,7 +497,6 @@ const Workout: React.FC = () => {
     const ORDERED: RoutineType[] = [RoutineType.PUSH, RoutineType.PULL, RoutineType.LEGS, RoutineType.UPPER, RoutineType.LOWER, RoutineType.REST];
     return (
       <div className="min-h-screen pb-32">
-        {/* Header */}
         <div className="pt-12 px-6 pb-8">
           <h1 className="text-4xl font-display font-bold text-white tracking-tight mb-1">Entrenamiento</h1>
           <p className="text-brand-400 text-[10px] font-bold tracking-[0.2em] uppercase flex items-center gap-2">
@@ -442,8 +504,6 @@ const Workout: React.FC = () => {
             {phase.trainingFocus}
           </p>
         </div>
-
-        {/* Routine cards grid */}
         <div className="px-4 grid grid-cols-2 gap-3">
           {ORDERED.map(routine => {
             const meta    = ROUTINE_META[routine];
@@ -451,63 +511,38 @@ const Workout: React.FC = () => {
             const exList  = ROUTINE_EXERCISES[routine] || [];
             const savedLog = Object.values(getLogs()).find((l:any) => l.workoutType === routine && l.date === today);
             const doneToday = !!(savedLog as any)?.workoutCompleted;
-
             return (
               <motion.button
                 key={routine}
                 onClick={() => setSelectedRoutine(routine)}
                 whileTap={{ scale: 0.97 }}
-                className={`
-                  relative overflow-hidden rounded-[24px] border text-left
-                  transition-all duration-300 active:scale-[0.97]
-                  bg-zinc-900/70 backdrop-blur-sm
-                  ${
-                    isToday
-                      ? `${meta.border} ${meta.glow}`
-                      : 'border-white/6'
-                  }
-                `}
+                className={`relative overflow-hidden rounded-[24px] border text-left transition-all duration-300 active:scale-[0.97] bg-zinc-900/70 backdrop-blur-sm ${
+                  isToday ? `${meta.border} ${meta.glow}` : 'border-white/6'
+                }`}
               >
-                {/* Gradient wash */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${meta.accent} pointer-events-none`} />
-
-                {/* TODAY badge — top-right */}
                 {isToday && (
                   <div className="absolute top-3 right-3 z-10">
-                    <span className={`text-[9px] font-black uppercase tracking-[0.15em] px-2 py-0.5 rounded-full border ${meta.badge}`}>
-                      HOY
-                    </span>
+                    <span className={`text-[9px] font-black uppercase tracking-[0.15em] px-2 py-0.5 rounded-full border ${meta.badge}`}>HOY</span>
                   </div>
                 )}
-
-                {/* Done checkmark */}
                 {doneToday && (
                   <div className="absolute top-3 left-3 z-10 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.5)]">
                     <Check size={11} strokeWidth={3} className="text-white" />
                   </div>
                 )}
-
                 <div className="relative z-10 p-4 pt-5">
-                  {/* Emoji */}
                   <span className="text-3xl mb-3 block">{meta.emoji}</span>
-
-                  {/* Title */}
                   <h2 className={`text-xl font-display font-black leading-none tracking-tight mb-1 ${
                     isToday ? 'text-white' : 'text-zinc-300'
                   }`}>{meta.label}</h2>
-
-                  {/* Muscles */}
                   <p className="text-[10px] font-bold text-zinc-500 leading-snug mb-3">{meta.muscles}</p>
-
-                  {/* Exercise count pill */}
                   {exList.length > 0 && (
                     <div className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-lg border ${meta.badge}`}>
                       <Dumbbell size={9} />
                       {exList.length} ejercicios
                     </div>
                   )}
-
-                  {/* Today glow line */}
                   {isToday && (
                     <div className={`absolute bottom-0 left-0 right-0 h-[3px] rounded-b-[24px] bg-gradient-to-r ${
                       routine === RoutineType.PUSH  ? 'from-orange-500 to-rose-500' :
@@ -523,8 +558,6 @@ const Workout: React.FC = () => {
             );
           })}
         </div>
-
-        {/* Phase info */}
         <div className="mx-4 mt-5 p-4 rounded-2xl bg-zinc-900/40 border border-white/5 flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl bg-brand-500/10 flex items-center justify-center shrink-0">
             <Flame size={16} className="text-brand-400" />
@@ -601,16 +634,14 @@ const Workout: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* HEADER inside routine */}
-      <div className="relative pt-12 px-6 pb-6">
-        {/* Back button */}
+      {/* HEADER */}
+      <div className="relative pt-12 px-4 pb-4">
         <button
           onClick={() => setSelectedRoutine(null)}
-          className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors mb-6 text-sm font-bold"
+          className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors mb-4 text-sm font-bold"
         >
           <ArrowLeft size={18} /> Rutinas
         </button>
-
         <div className="flex justify-between items-start gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-3 mb-1">
@@ -619,8 +650,6 @@ const Workout: React.FC = () => {
             </div>
             <p className="text-zinc-500 text-xs font-medium">{meta.muscles}</p>
           </div>
-
-          {/* Status cluster */}
           <div className="shrink-0 flex items-center gap-2 bg-zinc-900/40 p-1.5 rounded-2xl border border-white/5 backdrop-blur-md">
             {sessionState === 'active' && (
               <button
@@ -655,7 +684,7 @@ const Workout: React.FC = () => {
 
       {/* BANNERS */}
       {!isGymMode && (
-        <div className="px-5 mb-6 flex gap-3 overflow-x-auto no-scrollbar snap-x pb-2">
+        <div className="px-3 mb-4 flex gap-3 overflow-x-auto no-scrollbar snap-x pb-2">
           {specialSchedule && (
             <div className={`shrink-0 w-[85vw] max-w-[320px] snap-center p-4 rounded-xl border flex items-center gap-3 ${
               specialSchedule==='Cerrado'?'bg-red-900/20 border-red-500/30':'bg-gold-500/10 border-gold-500/30'
@@ -708,8 +737,8 @@ const Workout: React.FC = () => {
         </div>
       )}
 
-      {/* EXERCISES */}
-      <div className="px-6 space-y-5">
+      {/* EXERCISES — compact, edge-to-edge with small side padding */}
+      <div className="px-3 space-y-3">
         {selectedRoutine === RoutineType.REST ? (
           <div className="flex flex-col items-center justify-center py-24 opacity-40">
             <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6"><Trophy size={32} className="text-zinc-600"/></div>
@@ -797,7 +826,7 @@ const Workout: React.FC = () => {
             const log = logs.find(l=>l.exerciseId===exercise.id) || { exerciseId: exercise.id, sets: [], completed: false };
             const prevLog = getPreviousWorkoutLog(exercise.id, today);
             const isCompleted = log.completed;
-            const isExpanded  = activeExercise === exercise.id;
+            const isExpanded  = expandedExercises.has(exercise.id);
             const alternatives = EXERCISE_ALTERNATIVES[exercise.id];
             const hasTechGuide = !!TECHNICAL_GUIDES[exercise.id];
             let displaySets = exercise.targetSets;
@@ -806,73 +835,85 @@ const Workout: React.FC = () => {
 
             return (
               <div key={exercise.id}
-                onClick={()=>setActiveExercise(isExpanded?null:exercise.id)}
-                className={`rounded-[24px] border transition-all overflow-hidden relative ${
-                  isCompleted?'bg-emerald-950/10 border-emerald-500/20 opacity-50':
-                  isExpanded?'bg-zinc-900 border-brand-500/30 shadow-2xl':
+                onClick={() => { if (!isCompleted) toggleExpanded(exercise.id); }}
+                className={`rounded-2xl border transition-all overflow-hidden relative ${
+                  isCompleted ? 'bg-emerald-950/10 border-emerald-500/20 opacity-50' :
+                  isExpanded  ? 'bg-zinc-900 border-brand-500/30 shadow-xl' :
                   'bg-zinc-900/40 border-white/5'
                 }`}>
-                <div className="p-5 flex flex-col gap-3 relative z-10">
-                  <div className="flex justify-between items-start gap-4">
-                    <div className="flex-1 min-w-0">
-                      <h3 className={`font-display font-bold text-lg leading-tight transition-all truncate ${
-                        isCompleted?'text-emerald-400 line-through':isExpanded?'text-white':'text-zinc-400'
-                      }`}>{exercise.name}</h3>
-                    </div>
-                    <div className="flex items-center gap-4 shrink-0">
-                      {hasTechGuide && !isCompleted && <button onClick={e=>{e.stopPropagation();setShowTechFor(exercise.id);}} className="text-zinc-600 hover:text-brand-400 transition-all p-1.5"><BookOpen size={18}/></button>}
-                      {alternatives && !isCompleted && <button onClick={e=>{e.stopPropagation();setShowAlternativeFor(exercise.id);}} className="text-zinc-600 hover:text-brand-400 transition-all p-1.5"><ArrowRightLeft size={18}/></button>}
-                      <button onClick={e=>toggleExerciseComplete(exercise.id,e)}
-                        className={`shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${
-                          isCompleted?'bg-emerald-500 border-emerald-500 scale-110 shadow-[0_0_15px_rgba(16,185,129,0.4)]':'border-zinc-700 hover:border-zinc-500'
-                        }`}>
-                        {isCompleted && <Check size={16} className="text-white" strokeWidth={4}/>}
-                      </button>
-                    </div>
+
+                {/* Header row — always visible */}
+                <div className="px-4 py-3 flex items-center gap-3 relative z-10">
+                  <div className="flex-1 min-w-0">
+                    <h3 className={`font-display font-bold text-base leading-tight transition-all truncate ${
+                      isCompleted ? 'text-emerald-400 line-through' : isExpanded ? 'text-white' : 'text-zinc-300'
+                    }`}>{exercise.name}</h3>
+                    {!isCompleted && (
+                      <div className="flex flex-wrap gap-1.5 mt-1">
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded border font-bold uppercase tracking-wider ${
+                          showVR ? 'bg-amber-500/10 border-amber-500/30 text-amber-500' : 'bg-zinc-800/60 border-white/5 text-zinc-500'
+                        }`}>{showVR && <span className="line-through opacity-40 mr-1">{exercise.targetSets}</span>}{displaySets} sets{showVR&&' (Déficit)'}</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded border bg-zinc-800/60 border-white/5 text-zinc-500 font-bold uppercase tracking-wider">{exercise.targetReps} reps</span>
+                        {exercise.notes && <span className="text-[9px] px-1.5 py-0.5 rounded border bg-brand-500/10 border-brand-500/20 text-brand-400/80 font-bold uppercase tracking-wider truncate max-w-[140px]">{exercise.notes}</span>}
+                      </div>
+                    )}
                   </div>
-                  {!isCompleted && (
-                    <div className="flex flex-wrap gap-2 text-[10px] font-bold tracking-widest mt-1">
-                      <span className={`px-2 py-1 rounded-lg border uppercase ${
-                        showVR?'bg-amber-500/10 border-amber-500/30 text-amber-500':'bg-zinc-800/50 border-white/5 text-zinc-500'
-                      }`}>SETS: {showVR&&<span className="line-through opacity-40 mr-1">{exercise.targetSets}</span>}{displaySets}{showVR&&' (Déficit)'}</span>
-                      <span className="text-zinc-500 bg-zinc-800/50 px-2 py-1 rounded-lg border border-white/5 uppercase">REPS: {exercise.targetReps}</span>
-                      {exercise.notes && <span className="text-brand-400/80 bg-brand-500/10 px-2 py-1 rounded-lg border border-brand-500/20 truncate max-w-full uppercase">{exercise.notes}</span>}
-                    </div>
-                  )}
-                  {prevLog && isExpanded && !isCompleted && (
-                    <div className="mt-4 bg-black/40 rounded-2xl border border-white/5 p-4 premium-bisel">
-                      <div className="flex justify-between items-center mb-3">
-                        <div className="flex items-center gap-2 text-gold-500"><History size={14}/><span className="text-[10px] font-bold uppercase tracking-[0.15em]">Última Sesión</span></div>
-                        <button onClick={e=>{e.stopPropagation();setShowHistoryFor(exercise.id);}} className="text-[10px] text-zinc-500 hover:text-brand-400 font-bold uppercase tracking-widest flex items-center gap-1.5 transition-all">
-                          <CalendarDays size={14}/> Historial
-                        </button>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {prevLog.sets.map((s,i) => <span key={i} className="text-xs font-display font-bold text-zinc-300 bg-zinc-800/50 px-3 py-1.5 rounded-xl border border-white/5">{s.weight}kg × {s.reps}</span>)}
-                      </div>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {hasTechGuide && !isCompleted && (
+                      <button onClick={e=>{e.stopPropagation();setShowTechFor(exercise.id);}} className="text-zinc-600 hover:text-brand-400 transition-all p-1"><BookOpen size={16}/></button>
+                    )}
+                    {alternatives && !isCompleted && (
+                      <button onClick={e=>{e.stopPropagation();setShowAlternativeFor(exercise.id);}} className="text-zinc-600 hover:text-brand-400 transition-all p-1"><ArrowRightLeft size={16}/></button>
+                    )}
+                    {!isCompleted && (
+                      <ChevronDown size={16} className={`text-zinc-600 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                    )}
+                    <button onClick={e=>toggleExerciseComplete(exercise.id,e)}
+                      className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                        isCompleted ? 'bg-emerald-500 border-emerald-500 scale-110 shadow-[0_0_12px_rgba(16,185,129,0.4)]' : 'border-zinc-700 hover:border-zinc-500'
+                      }`}>
+                      {isCompleted && <Check size={13} className="text-white" strokeWidth={4}/>}
+                    </button>
+                  </div>
                 </div>
+
+                {/* Expanded body */}
                 {isExpanded && !isCompleted && (
-                  <div onClick={e=>e.stopPropagation()} className="px-5 pb-5 animate-in slide-in-from-top-2 duration-300 relative z-10">
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3 text-[9px] text-zinc-500 font-bold uppercase tracking-[0.2em] text-center mb-2">
-                        <div className="w-8"/>
-                        <div className="grid grid-cols-12 gap-3 flex-1">
-                          <span className="col-span-4">Peso (kg)</span>
+                  <div onClick={e=>e.stopPropagation()} className="px-4 pb-4 animate-in slide-in-from-top-2 duration-200 relative z-10">
+                    {/* Previous session */}
+                    {prevLog && (
+                      <div className="mb-3 bg-black/30 rounded-xl border border-white/5 p-3">
+                        <div className="flex justify-between items-center mb-2">
+                          <div className="flex items-center gap-1.5 text-gold-500"><History size={12}/><span className="text-[9px] font-bold uppercase tracking-[0.15em]">Última Sesión</span></div>
+                          <button onClick={e=>{e.stopPropagation();setShowHistoryFor(exercise.id);}} className="text-[9px] text-zinc-500 hover:text-brand-400 font-bold uppercase tracking-widest flex items-center gap-1 transition-all">
+                            <CalendarDays size={12}/> Historial
+                          </button>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {prevLog.sets.map((s,i) => <span key={i} className="text-xs font-display font-bold text-zinc-300 bg-zinc-800/50 px-2.5 py-1 rounded-lg border border-white/5">{s.weight}kg × {s.reps}</span>)}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Sets */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-[9px] text-zinc-500 font-bold uppercase tracking-[0.2em] text-center mb-1">
+                        <div className="w-7"/>
+                        <div className="grid grid-cols-12 gap-2 flex-1">
+                          <span className="col-span-4">Peso kg</span>
                           <span className="col-span-4">Reps</span>
                           <span className="col-span-4">RIR</span>
                         </div>
-                        <div className="w-10"/>
+                        <div className="w-9"/>
                       </div>
                       {logs.find(l=>l.exerciseId===exercise.id)?.sets.map((set,idx) => {
                         const ps = prevLog?.sets[idx] ?? null;
                         return (
-                          <div key={idx} className="relative group mb-3">
-                            <div className="flex items-center gap-3">
-                              <button onClick={e=>{e.stopPropagation();removeSet(exercise.id,idx);}} className="w-8 flex justify-center text-zinc-700 hover:text-red-500 transition-all"><Minus size={18}/></button>
-                              <div className={`grid grid-cols-12 gap-3 flex-1 rounded-xl p-1 border transition-all ${
-                                set.completed?'bg-emerald-500/10 border-emerald-500/30':'bg-black/40 border-white/5 focus-within:border-brand-500/50'
+                          <div key={idx} className="group">
+                            <div className="flex items-center gap-2">
+                              <button onClick={e=>{e.stopPropagation();removeSet(exercise.id,idx);}} className="w-7 flex justify-center text-zinc-700 hover:text-red-500 transition-all"><Minus size={16}/></button>
+                              <div className={`grid grid-cols-12 gap-2 flex-1 rounded-xl p-1 border transition-all ${
+                                set.completed ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-black/40 border-white/5 focus-within:border-brand-500/50'
                               }`}>
                                 {(['weight','reps','rir'] as const).map((field,fi) => (
                                   <div key={field} className={`col-span-4 ${fi>0?'border-l border-white/5':''}`}>
@@ -881,28 +922,28 @@ const Workout: React.FC = () => {
                                       value={set[field]||''}
                                       onChange={e=>updateSet(exercise.id,idx,field,parseFloat(e.target.value))}
                                       onBlur={()=>saveWorkout()}
-                                      className={`w-full bg-transparent text-center font-display font-bold text-lg py-2 focus:outline-none tracking-tight ${
-                                        set.completed?(field==='rir'?'text-emerald-400/70':'text-emerald-400'):(field==='rir'?'text-brand-400':'text-white')
+                                      className={`w-full bg-transparent text-center font-display font-bold text-base py-2 focus:outline-none tracking-tight ${
+                                        set.completed ? (field==='rir'?'text-emerald-400/70':'text-emerald-400') : (field==='rir'?'text-brand-400':'text-white')
                                       }`}/>
                                   </div>
                                 ))}
                               </div>
                               <button onClick={e=>{e.stopPropagation();toggleSetComplete(exercise.id,idx);}}
-                                className={`shrink-0 w-10 h-10 rounded-xl border flex items-center justify-center transition-all ${
-                                  set.completed?'bg-emerald-500 border-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]':
+                                className={`shrink-0 w-9 h-9 rounded-xl border flex items-center justify-center transition-all ${
+                                  set.completed ? 'bg-emerald-500 border-emerald-500 text-white shadow-[0_0_12px_rgba(16,185,129,0.4)]' :
                                   'bg-zinc-800 border-zinc-700 text-zinc-500 hover:border-brand-500 hover:text-brand-400'
                                 }`}>
-                                <Check size={20} strokeWidth={set.completed?4:2}/>
+                                <Check size={18} strokeWidth={set.completed?4:2}/>
                               </button>
                             </div>
-                            {ps && <p className="text-[10px] text-zinc-600 font-display font-bold text-right pr-12 mt-1 tracking-tight">ant: <span className="text-zinc-500">{ps.weight}kg × {ps.reps}</span>{ps.rir!=null&&<span className="text-brand-500/40 ml-1">· RIR {ps.rir}</span>}</p>}
+                            {ps && <p className="text-[9px] text-zinc-600 font-display font-bold text-right pr-11 mt-0.5 tracking-tight">ant: <span className="text-zinc-500">{ps.weight}kg × {ps.reps}</span>{ps.rir!=null&&<span className="text-brand-500/40 ml-1">· RIR {ps.rir}</span>}</p>}
                           </div>
                         );
                       })}
                     </div>
                     <button onClick={e=>{e.stopPropagation();addSet(exercise.id);}}
-                      className="w-full mt-4 py-3.5 rounded-2xl border border-dashed border-zinc-800 hover:border-brand-500 hover:bg-brand-500/5 text-zinc-500 hover:text-brand-400 transition-all flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em]">
-                      <Plus size={16}/> Añadir Serie
+                      className="w-full mt-3 py-3 rounded-xl border border-dashed border-zinc-800 hover:border-brand-500 hover:bg-brand-500/5 text-zinc-500 hover:text-brand-400 transition-all flex items-center justify-center gap-2 text-[9px] font-bold uppercase tracking-[0.2em]">
+                      <Plus size={14}/> Añadir Serie
                     </button>
                   </div>
                 )}

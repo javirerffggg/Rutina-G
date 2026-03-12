@@ -18,12 +18,16 @@ const getTierStyles = (tier: string) => TIER_META[tier] ?? FALLBACK_TIER;
 
 const Layout: React.FC = () => {
   const [showNav, setShowNav] = useState(true);
-  const lastScrollYRef = useRef(0);
+  // We track scroll direction with a velocity-filtered approach to ignore
+  // iOS rubber-band bounce (which fires a large negative delta at the bottom).
+  const lastScrollYRef   = useRef(0);
+  const scrollingDownRef = useRef(false);   // true while we are scrolling DOWN
+  const bounceGuardRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const [toastQueue, setToastQueue] = useState<AchievementDef[]>([]);
   const toastAchievement = toastQueue[0] ?? null;
   const liveActivity = useLiveActivity();
 
-  // Expose rest-timer control to Workout via custom events
   const handleDismissRest = useCallback(() => {
     window.dispatchEvent(new CustomEvent('live-activity-dismiss-rest'));
   }, []);
@@ -57,17 +61,56 @@ const Layout: React.FC = () => {
   }, [handleUnlock]);
 
   const handleScroll = useCallback((e: React.UIEvent<HTMLElement>) => {
-    const currentY = (e.target as HTMLElement).scrollTop;
-    if (currentY > lastScrollYRef.current && currentY > 50) {
+    const el = e.target as HTMLElement;
+    const currentY = el.scrollTop;
+    const maxScroll = el.scrollHeight - el.clientHeight;
+    const delta = currentY - lastScrollYRef.current;
+
+    // --- Bounce guard ---
+    // On iOS, rubber-band bounce at the bottom fires a large negative delta
+    // (scroll "back up") even though the user is not intentionally scrolling up.
+    // We ignore upward deltas that happen when the scroller is at/near the bottom.
+    const nearBottom = maxScroll - currentY < 60;   // within 60px of the bottom
+    const isBounceUp = nearBottom && delta < 0;
+
+    // Also ignore tiny jitter (< 4px) to avoid noise
+    if (Math.abs(delta) < 4) {
+      lastScrollYRef.current = currentY;
+      return;
+    }
+
+    if (isBounceUp) {
+      // Suppress — schedule a guard that prevents nav toggle for 400 ms
+      if (bounceGuardRef.current) clearTimeout(bounceGuardRef.current);
+      bounceGuardRef.current = setTimeout(() => {
+        bounceGuardRef.current = null;
+      }, 400);
+      lastScrollYRef.current = currentY;
+      return;
+    }
+
+    // If a bounce guard is active, ignore this event entirely
+    if (bounceGuardRef.current) {
+      lastScrollYRef.current = currentY;
+      return;
+    }
+
+    if (delta > 0 && currentY > 50) {
+      // Scrolling DOWN — hide nav
+      scrollingDownRef.current = true;
       setShowNav(false);
-    } else {
+    } else if (delta < 0) {
+      // Scrolling UP — show nav
+      scrollingDownRef.current = false;
       setShowNav(true);
     }
+
     lastScrollYRef.current = currentY;
   }, []);
 
   return (
-    <div className="flex flex-col h-screen text-white overflow-hidden font-sans bg-black">
+    <div className="flex flex-col text-white overflow-hidden font-sans bg-black"
+      style={{ height: '100dvh' }}>
 
       {/* Achievement toast */}
       {toastAchievement && (() => {
@@ -104,8 +147,16 @@ const Layout: React.FC = () => {
       })()}
 
       <main
-        className="flex-1 overflow-y-auto no-scrollbar pb-28 relative z-10"
-        style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
+        className="flex-1 overflow-y-auto no-scrollbar relative z-10"
+        style={{
+          // Content starts below the iOS status bar
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          // Extra bottom padding so content clears the floating nav + home indicator
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 7rem)',
+          // overscroll-behavior: contain prevents the page-level rubber-band
+          // from propagating and firing false "scroll up" events on the scroller
+          overscrollBehaviorY: 'contain',
+        }}
         onScroll={handleScroll}
       >
         <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-brand-900/10 to-transparent pointer-events-none z-0" />
@@ -114,7 +165,7 @@ const Layout: React.FC = () => {
         </div>
       </main>
 
-      {/* Live Activity Pill — visible en todas las pantallas durante el entreno */}
+      {/* Live Activity Pill */}
       <LiveActivityPill
         state={liveActivity}
         onDismissRest={handleDismissRest}

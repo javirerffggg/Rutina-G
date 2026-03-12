@@ -64,6 +64,11 @@ export interface DailyLog {
   arm?: number;
   thigh?: number;
 
+  // NEW: Body composition (for US Navy method)
+  neck?: number;    // cm
+  height?: number;  // cm
+  gender?: Gender;  // for BF% calculation
+
   // Biofeedback
   sleep?: number;   // 1-5
   energy?: number;  // 1-5
@@ -88,4 +93,16 @@ export interface PlanPhase {
   trainingFocus: string;
   /** Drives badge color in Plan.tsx and supplement alert in Workout.tsx */
   type?: PhaseKind;
+}
+
+// ========================================
+// BODY COMPOSITION TYPES
+// ========================================
+
+export type Gender = 'male' | 'female';
+
+export interface BodyComposition {
+  bodyFatPercentage: number;  // %
+  fatMass: number;            // kg
+  leanBodyMass: number;       // kg (LBM = peso total - grasa)
 }

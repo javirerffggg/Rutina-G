@@ -581,19 +581,19 @@
           "sets": [
             {
               "weight": 7,
-              "reps": 0,
+              "reps": 8,
               "completed": false,
               "setType": "N"
             },
             {
               "weight": 7,
-              "reps": 0,
+              "reps": 8,
               "completed": false,
               "setType": "N"
             },
             {
               "weight": 7,
-              "reps": 0,
+              "reps": 8,
               "completed": false,
               "setType": "N"
             }
@@ -615,7 +615,8 @@
     "sesion_rapida": "2026-06-20T10:56:20.935Z",
     "5000_sesion": "2026-06-20T17:07:22.723Z",
     "rir_0": "2026-06-20T17:09:53.484Z",
-    "rir_0_x3": "2026-06-20T17:09:53.484Z"
+    "rir_0_x3": "2026-06-20T17:09:53.484Z",
+    "noctambulo": "2026-06-20T20:53:25.167Z"
   },
   "statistics": {
     "muscleSets": {
@@ -684,7 +685,7 @@
     ],
     "monthlyReport": {
       "currentMonth": {
-        "volumeKg": 0,
+        "volumeKg": 168,
         "totalSets": 6,
         "workouts": 1
       },
@@ -695,5 +696,5 @@
       }
     }
   },
-  "lastSync": "2026-06-20T20:53:25.166Z"
+  "lastSync": "2026-06-20T20:53:30.718Z"
 }

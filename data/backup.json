@@ -661,7 +661,7 @@
               "setType": "N"
             }
           ],
-          "completed": false
+          "completed": true
         },
         {
           "exerciseId": "push_lat_raise",
@@ -685,7 +685,7 @@
               "setType": "N"
             }
           ],
-          "completed": false
+          "completed": true
         },
         {
           "exerciseId": "push_tri_seat",
@@ -835,5 +835,5 @@
       }
     }
   },
-  "lastSync": "2026-06-20T23:11:03.540Z"
+  "lastSync": "2026-06-20T23:11:06.046Z"
 }

@@ -549,7 +549,7 @@
     },
     "2026-06-20": {
       "date": "2026-06-20",
-      "workoutCompleted": false,
+      "workoutCompleted": true,
       "workoutType": "Lower (Glúteo/Femoral)",
       "exercises": [
         {
@@ -614,7 +614,7 @@
               "setType": "N"
             }
           ],
-          "completed": false
+          "completed": true
         },
         {
           "exerciseId": "low_curl",
@@ -755,7 +755,7 @@
           "completed": false
         }
       ],
-      "duration": 22
+      "duration": 45
     }
   },
   "achievements": {
@@ -848,5 +848,5 @@
       }
     }
   },
-  "lastSync": "2026-06-20T11:39:44.502Z"
+  "lastSync": "2026-06-20T11:39:47.089Z"
 }

@@ -226,7 +226,7 @@ export const Settings: React.FC = () => {
             <div className="bg-zinc-950 p-4">
               <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest block mb-1">Altura (cm)</label>
               <input 
-                type="number" 
+                type="number" inputMode="decimal" 
                 value={settings.profile.height || ''} 
                 onChange={e => updateProfile('height', parseInt(e.target.value) || null)}
                 placeholder="Ej: 180"
@@ -236,7 +236,7 @@ export const Settings: React.FC = () => {
             <div className="bg-zinc-950 p-4">
               <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest block mb-1">Peso Objetivo (kg)</label>
               <input 
-                type="number" 
+                type="number" inputMode="decimal" 
                 value={settings.profile.goalWeight || ''} 
                 onChange={e => updateProfile('goalWeight', parseFloat(e.target.value) || null)}
                 placeholder="Ej: 75.5"

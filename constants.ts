@@ -301,41 +301,31 @@ export const WARMUP_GUIDE: Record<string, WarmupStep[]> = {
     { phase: 'movilidad', name: 'Balanceos de brazos horizontales', reps: 15, notes: 'Frente al pecho.' },
     { phase: 'movilidad', name: 'Círculos de hombros (Molinos)', reps: 20, notes: '10 adelante, 10 atrás.' },
     { phase: 'movilidad', name: 'Rotaciones Externas "en L"', reps: 15, notes: 'Codos pegados al torso.' },
-    { phase: 'activacion', name: 'Plancha Frontal', duration: 30, rest: 30, notes: 'Activa el core antes de empujar.' },
-    { phase: 'aproximacion', name: 'Aproximación 1', reps: 15, weightPercent: 0.30, rest: 45, tempo: '3:1:1:0', notes: 'Asiento alineado a mitad del pecho.' },
-    { phase: 'aproximacion', name: 'Aproximación 2', reps: 8, weightPercent: 0.60, rest: 60, tempo: '3:1:1:0' }
+    { phase: 'activacion', name: 'Plancha Frontal', duration: 30, rest: 30, notes: 'Activa el core antes de empujar.' }
   ],
   [RoutineType.PULL]: [
     { phase: 'movilidad', name: 'Rotaciones de Tronco', reps: 20, notes: 'Brazos relajados.' },
     { phase: 'movilidad', name: 'Círculos Escapulares', reps: 12, notes: 'Lentos y amplios.' },
     { phase: 'movilidad', name: 'Círculos de muñecas', duration: 30 },
-    { phase: 'activacion', name: 'Superman + Puente Glúteo', sets: 2, reps: 15, rest: 45, notes: 'Fija la pelvis para prevenir balanceo lumbar.' },
-    { phase: 'aproximacion', name: 'Aproximación 1', reps: 15, weightPercent: 0.30, rest: 45, tempo: '3:1:1:0' },
-    { phase: 'aproximacion', name: 'Aproximación 2', reps: 8, weightPercent: 0.60, rest: 60, tempo: '3:1:1:0' }
+    { phase: 'activacion', name: 'Superman + Puente Glúteo', sets: 2, reps: 15, rest: 45, notes: 'Fija la pelvis para prevenir balanceo lumbar.' }
   ],
   [RoutineType.LEGS]: [
     { phase: 'temperatura', name: 'Bicicleta / Elíptica', duration: 300, notes: 'Ritmo suave, que permita hablar.' },
     { phase: 'movilidad', name: 'Balanceos de Pierna', reps: 30, notes: '15 frontales, 15 laterales por pierna.' },
     { phase: 'movilidad', name: 'Sentadilla Cossack', reps: 10, notes: 'Totales.' },
-    { phase: 'movilidad', name: 'Plancha Lateral', duration: 30, notes: 'Por lado.' },
-    { phase: 'aproximacion', name: 'Aproximación 1', reps: 15, weightPercent: 0, rest: 60, tempo: '3:1:1:0', notes: 'Máquina vacía.' },
-    { phase: 'aproximacion', name: 'Aproximación 2', reps: 8, weightPercent: 0.50, rest: 90, tempo: '3:1:1:0' }
+    { phase: 'movilidad', name: 'Plancha Lateral', duration: 30, notes: 'Por lado.' }
   ],
   [RoutineType.UPPER]: [
     { phase: 'movilidad', name: 'Círculos de cuello y muñecas', duration: 30 },
     { phase: 'movilidad', name: 'Balanceos de brazos (Horiz/Vert)', reps: 30, notes: '15 de cada.' },
     { phase: 'movilidad', name: 'Círculos Escapulares', reps: 12 },
     { phase: 'movilidad', name: 'Rotaciones Externas "en L"', reps: 15 },
-    { phase: 'activacion', name: 'Plancha + Superman', duration: 30, rest: 45, notes: 'Plancha 30s, luego Superman 10/lado.' },
-    { phase: 'aproximacion', name: 'Aproximación 1', reps: 15, weightPercent: 0.30, rest: 45, tempo: '3:1:1:0' },
-    { phase: 'aproximacion', name: 'Aproximación 2', reps: 8, weightPercent: 0.60, rest: 60, tempo: '3:1:1:0' }
+    { phase: 'activacion', name: 'Plancha + Superman', duration: 30, rest: 45, notes: 'Plancha 30s, luego Superman 10/lado.' }
   ],
   [RoutineType.LOWER]: [
     { phase: 'temperatura', name: 'Bicicleta / Elíptica', duration: 300 },
     { phase: 'movilidad', name: 'Balanceos de Pierna', reps: 30 },
     { phase: 'movilidad', name: 'Rotaciones de Cadera', reps: 20, notes: '10 por lado.' },
-    { phase: 'movilidad', name: 'Sentadilla Profunda (Pry)', duration: 45, notes: 'Usa codos para abrir rodillas.' },
-    { phase: 'aproximacion', name: 'Aproximación 1', reps: 15, weightPercent: 0, rest: 60, tempo: '3:1:1:0', notes: 'Máquina vacía.' },
-    { phase: 'aproximacion', name: 'Aproximación 2', reps: 8, weightPercent: 0.50, rest: 90, tempo: '3:1:1:0' }
+    { phase: 'movilidad', name: 'Sentadilla Profunda (Pry)', duration: 45, notes: 'Usa codos para abrir rodillas.' }
   ]
 };

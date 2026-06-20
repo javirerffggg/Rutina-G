@@ -167,23 +167,24 @@ const Workout: React.FC = () => {
         });
       }, 1000);
     } else if (restTimer === 0) {
-      setRestTimer(null);
       dispatchLiveActivity({ restTimer: null });
-      if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+      if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 500]);
       try {
         const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
         const oscillator = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1);
-        gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
         oscillator.connect(gainNode);
         gainNode.connect(audioCtx.destination);
-        oscillator.start();
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        oscillator.start(audioCtx.currentTime);
         oscillator.stop(audioCtx.currentTime + 0.5);
-      } catch(e) {}
+      } catch (e) { console.error(e); }
+      const timeout = setTimeout(() => { setRestTimer(null); }, 10000);
+      return () => clearTimeout(timeout);
     }
     return () => clearInterval(iv);
   }, [restTimer]);
@@ -852,27 +853,6 @@ const Workout: React.FC = () => {
              </div>
           )}
         </div>
-        
-        {/* TIMER DOMINANT BAR */}
-        <AnimatePresence>
-          {restTimer !== null && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-              <div className="mt-4 p-4 rounded-2xl bg-brand-500/10 border border-brand-500/30 flex items-center justify-between shadow-[0_0_20px_rgba(217,119,6,0.15)]">
-                 <div className="flex items-center gap-3">
-                   <Timer size={24} className="text-brand-400 animate-pulse" />
-                   <div>
-                     <p className="text-[10px] text-brand-400 font-bold uppercase tracking-widest">Descanso</p>
-                     <p className="text-2xl font-display font-black text-white tabular-nums leading-none mt-0.5">{formatTime(restTimer)}</p>
-                   </div>
-                 </div>
-                 <div className="flex items-center gap-2">
-                   <button onClick={() => { setRestTimer(p=>(p??0)+30); navigator.serviceWorker?.controller?.postMessage({type:'ADD_REST_SECONDS',seconds:30}); }} className="w-10 h-10 rounded-xl bg-black/40 text-white font-bold text-xs flex items-center justify-center">+30</button>
-                   <button onClick={() => { setRestTimer(null); dispatchLiveActivity({restTimer:null}); navigator.serviceWorker?.controller?.postMessage({type:'CANCEL_REST_TIMER'}); }} className="px-4 h-10 rounded-xl bg-brand-500 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-brand-500/20 active:scale-95">Saltar</button>
-                 </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
       {/* EXERCISES AUTO-ACCORDION */}
@@ -985,14 +965,14 @@ const Workout: React.FC = () => {
                             {/* PESO */}
                             <div className="bg-zinc-900/80 rounded-xl p-3 border border-white/5 relative">
                                <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-widest text-center mb-1">Peso (kg)</p>
-                               <input type="number" placeholder={ps?`${ps.weight}`:'0'} value={set.weight||''} onChange={e=>updateSet(exercise.id,idx,'weight',parseFloat(e.target.value))} onBlur={()=>saveWorkout()}
+                               <input type="number" inputMode="decimal" placeholder={ps?`${ps.weight}`:'0'} value={set.weight||''} onChange={e=>updateSet(exercise.id,idx,'weight',parseFloat(e.target.value))} onBlur={()=>saveWorkout()}
                                  className="w-full bg-transparent text-center font-display font-bold text-3xl focus:outline-none text-white"/>
                                {ps && <p className="text-[9px] text-center text-zinc-600 mt-1">ant: {ps.weight}</p>}
                             </div>
                             {/* REPS */}
                             <div className="bg-zinc-900/80 rounded-xl p-3 border border-white/5 relative">
                                <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-widest text-center mb-1">Reps</p>
-                               <input type="number" placeholder={ps?`${ps.reps}`:'0'} value={set.reps||''} onChange={e=>updateSet(exercise.id,idx,'reps',parseFloat(e.target.value))} onBlur={()=>saveWorkout()}
+                               <input type="number" inputMode="decimal" placeholder={ps?`${ps.reps}`:'0'} value={set.reps||''} onChange={e=>updateSet(exercise.id,idx,'reps',parseFloat(e.target.value))} onBlur={()=>saveWorkout()}
                                  className="w-full bg-transparent text-center font-display font-bold text-3xl focus:outline-none text-white"/>
                                {ps && <p className="text-[9px] text-center text-zinc-600 mt-1">ant: {ps.reps}</p>}
                             </div>
@@ -1041,8 +1021,30 @@ const Workout: React.FC = () => {
 
       {/* STICKY BOTTOM ACTION BAR */}
       {selectedRoutine !== RoutineType.REST && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black/90 to-transparent z-40 pb-safe">
-          {sessionState === 'idle' ? (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black/90 to-transparent z-40 pb-safe pointer-events-none flex flex-col gap-3">
+          
+          <AnimatePresence>
+            {restTimer !== null && (
+              <motion.div className="pointer-events-auto" initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 20, opacity: 0 }}>
+                <div className={`p-4 rounded-2xl flex items-center justify-between transition-all duration-300 ${restTimer === 0 ? 'bg-red-600 shadow-[0_0_40px_rgba(220,38,38,0.7)] animate-pulse' : 'bg-zinc-900 border border-brand-500/30 shadow-[0_0_20px_rgba(217,119,6,0.15)]'}`}>
+                   <div className="flex items-center gap-3">
+                     <Timer size={24} className={restTimer === 0 ? 'text-white' : 'text-brand-400 animate-pulse'} />
+                     <div>
+                       <p className={`text-[10px] font-bold uppercase tracking-widest ${restTimer === 0 ? 'text-white/80' : 'text-brand-400'}`}>Descanso</p>
+                       <p className="text-2xl font-display font-black text-white tabular-nums leading-none mt-0.5">{restTimer === 0 ? '¡TIEMPO!' : formatTime(restTimer)}</p>
+                     </div>
+                   </div>
+                   <div className="flex items-center gap-2">
+                     <button onClick={() => { setRestTimer(p=>(p??0)+30); navigator.serviceWorker?.controller?.postMessage({type:'ADD_REST_SECONDS',seconds:30}); }} className={`w-10 h-10 rounded-xl font-bold text-xs flex items-center justify-center ${restTimer === 0 ? 'bg-white/20 text-white' : 'bg-black/40 text-white'}`}>+30</button>
+                     <button onClick={() => { setRestTimer(null); dispatchLiveActivity({restTimer:null}); navigator.serviceWorker?.controller?.postMessage({type:'CANCEL_REST_TIMER'}); }} className={`px-4 h-10 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg active:scale-95 ${restTimer === 0 ? 'bg-white text-red-600 shadow-white/20' : 'bg-brand-500 text-white shadow-brand-500/20'}`}>{restTimer === 0 ? 'Seguir' : 'Saltar'}</button>
+                   </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="pointer-events-auto">
+            {sessionState === 'idle' ? (
             <div className="flex gap-2">
               <button onClick={() => setShowWarmupModal(true)} className={`flex-1 py-5 rounded-[24px] ${warmupCompleted ? 'bg-emerald-600/20 text-emerald-500 border border-emerald-500/30' : 'bg-brand-600/20 text-brand-500 border border-brand-500/30'} font-bold uppercase tracking-[0.2em] text-[10px] transition-all flex flex-col justify-center items-center gap-1`}>
                 <Activity size={18}/> {warmupCompleted ? 'OK' : 'Calentar'}
@@ -1056,8 +1058,9 @@ const Workout: React.FC = () => {
                <button onClick={()=>setShowFinishConfirm(true)} className="flex-1 py-5 rounded-[24px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold uppercase tracking-[0.2em] text-sm shadow-[0_10px_40px_rgba(16,185,129,0.4)] active:scale-[0.98] transition-all flex justify-center items-center gap-2">
                  <Check size={18}/> Finalizar
                </button>
-            </div>
-          ) : null}
+              </div>
+            ) : null}
+          </div>
         </div>
       )}
 

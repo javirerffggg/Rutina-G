@@ -169,7 +169,7 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
           <div className="flex-1">
             <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 block">Peso (kg)</label>
             <input 
-              type="number" 
+              type="number" inputMode="decimal" 
               inputMode="decimal" 
               step="0.1"
               defaultValue={todayLog.weight || ''}
@@ -184,7 +184,7 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
           <div>
             <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 block">Cintura (cm)</label>
             <input 
-              type="number" 
+              type="number" inputMode="decimal" 
               inputMode="decimal" 
               step="0.1"
               defaultValue={todayLog.waist || ''}
@@ -195,7 +195,7 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
           <div>
             <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 block">Cuello (cm)</label>
             <input 
-              type="number" 
+              type="number" inputMode="decimal" 
               inputMode="decimal" 
               step="0.1"
               defaultValue={todayLog.neck || ''}

@@ -6,7 +6,7 @@ import { computeAIStats } from "./aggregations";
 const http = httpRouter();
 
 http.route({
-  path: "/export",
+  path: "/get-data",
   method: "GET",
   handler: httpAction(async (ctx, request) => {
     const url = new URL(request.url);

@@ -565,7 +565,7 @@
               "weight": 55,
               "reps": 8,
               "setType": "W",
-              "completed": false
+              "completed": true
             },
             {
               "weight": 90,
@@ -835,5 +835,5 @@
       }
     }
   },
-  "lastSync": "2026-06-20T23:00:31.152Z"
+  "lastSync": "2026-06-20T23:00:58.668Z"
 }

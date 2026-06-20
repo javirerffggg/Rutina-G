@@ -572,12 +572,6 @@
               "reps": 0,
               "completed": false,
               "setType": "N"
-            },
-            {
-              "weight": 67,
-              "reps": 0,
-              "completed": false,
-              "setType": "N"
             }
           ],
           "completed": false
@@ -709,7 +703,8 @@
     "5000_sesion": "2026-06-20T17:07:22.723Z",
     "rir_0": "2026-06-20T17:09:53.484Z",
     "rir_0_x3": "2026-06-20T17:09:53.484Z",
-    "noctambulo": "2026-06-20T20:53:25.167Z"
+    "noctambulo": "2026-06-20T20:53:25.167Z",
+    "madrugador": "2026-06-20T22:54:07.017Z"
   },
   "statistics": {
     "muscleSets": {
@@ -718,8 +713,8 @@
       "shoulders": 9,
       "back": 6,
       "biceps": 3,
-      "quads": 22,
-      "glutes": 19,
+      "quads": 21,
+      "glutes": 18,
       "calves": 4,
       "abs": 4
     },
@@ -737,7 +732,7 @@
     "topExercises": [
       {
         "name": "Sentadilla Hack",
-        "totalSets": 10
+        "totalSets": 9
       },
       {
         "name": "Prensa de Piernas",
@@ -779,7 +774,7 @@
     "monthlyReport": {
       "currentMonth": {
         "volumeKg": 0,
-        "totalSets": 18,
+        "totalSets": 17,
         "workouts": 1
       },
       "previousMonth": {
@@ -789,5 +784,5 @@
       }
     }
   },
-  "lastSync": "2026-06-20T22:54:07.015Z"
+  "lastSync": "2026-06-20T22:54:23.489Z"
 }

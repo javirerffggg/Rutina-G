@@ -179,14 +179,14 @@ const Layout: React.FC = () => {
         }`}
         style={{ bottom: 'max(16px, env(safe-area-inset-bottom, 16px))' }}
       >
-        <div className="glass-panel rounded-[28px] shadow-[0_8px_40px_rgba(0,0,0,0.7)] border border-white/10 px-8 pt-2 pb-2 w-fit">
-          <div className="flex items-center h-16 gap-8">
+        <div className="glass-panel rounded-[24px] shadow-[0_8px_40px_rgba(0,0,0,0.7)] border border-white/10 px-5 pt-2 pb-2 w-fit max-w-[95vw]">
+          <div className="flex items-center h-14 gap-5 sm:gap-8">
             <NavLink to="/plan" className={({ isActive }) =>
               `flex flex-col items-center gap-1.5 transition-all ${ isActive ? 'text-amber-500 scale-110' : 'text-zinc-500 hover:text-zinc-300' }`
             }>
               {({ isActive }) => (<>
-                <CalendarRange size={24} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[10px] font-bold tracking-[0.15em] uppercase">Plan</span>
+                <CalendarRange size={22} strokeWidth={isActive ? 2.5 : 2} />
+                <span className="text-[9px] font-bold tracking-[0.1em] uppercase">Plan</span>
               </>)}
             </NavLink>
 
@@ -194,8 +194,8 @@ const Layout: React.FC = () => {
               `flex flex-col items-center gap-1.5 transition-all ${ isActive ? 'text-brand-500 scale-110' : 'text-zinc-500 hover:text-zinc-300' }`
             }>
               {({ isActive }) => (<>
-                <LayoutDashboard size={24} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[10px] font-bold tracking-[0.15em] uppercase">Hoy</span>
+                <LayoutDashboard size={22} strokeWidth={isActive ? 2.5 : 2} />
+                <span className="text-[9px] font-bold tracking-[0.1em] uppercase">Hoy</span>
               </>)}
             </NavLink>
 
@@ -203,8 +203,8 @@ const Layout: React.FC = () => {
               `flex flex-col items-center gap-1.5 transition-all ${ isActive ? 'text-emerald-400 scale-110' : 'text-zinc-500 hover:text-zinc-300' }`
             }>
               {({ isActive }) => (<>
-                <Dumbbell size={24} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[10px] font-bold tracking-[0.15em] uppercase">Entreno</span>
+                <Dumbbell size={22} strokeWidth={isActive ? 2.5 : 2} />
+                <span className="text-[9px] font-bold tracking-[0.1em] uppercase">Entreno</span>
               </>)}
             </NavLink>
 
@@ -212,8 +212,8 @@ const Layout: React.FC = () => {
               `flex flex-col items-center gap-1.5 transition-all ${ isActive ? 'text-purple-400 scale-110' : 'text-zinc-500 hover:text-zinc-300' }`
             }>
               {({ isActive }) => (<>
-                <Scale size={24} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[10px] font-bold tracking-[0.15em] uppercase">Peso</span>
+                <Scale size={22} strokeWidth={isActive ? 2.5 : 2} />
+                <span className="text-[9px] font-bold tracking-[0.1em] uppercase">Peso</span>
               </>)}
             </NavLink>
 
@@ -221,8 +221,8 @@ const Layout: React.FC = () => {
               `flex flex-col items-center gap-1.5 transition-all ${ isActive ? 'text-amber-500 scale-110' : 'text-zinc-500 hover:text-zinc-300' }`
             }>
               {({ isActive }) => (<>
-                <Trophy size={24} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[10px] font-bold tracking-[0.15em] uppercase">Logros</span>
+                <Trophy size={22} strokeWidth={isActive ? 2.5 : 2} />
+                <span className="text-[9px] font-bold tracking-[0.1em] uppercase">Logros</span>
               </>)}
             </NavLink>
           </div>

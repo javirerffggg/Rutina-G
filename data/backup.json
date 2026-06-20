@@ -589,7 +589,7 @@
               "setType": "N"
             }
           ],
-          "completed": false
+          "completed": true
         },
         {
           "exerciseId": "push_incline_mach",
@@ -835,5 +835,5 @@
       }
     }
   },
-  "lastSync": "2026-06-20T23:10:04.785Z"
+  "lastSync": "2026-06-20T23:10:16.842Z"
 }

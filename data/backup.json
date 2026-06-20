@@ -590,25 +590,25 @@
           "exerciseId": "low_rdl",
           "sets": [
             {
-              "weight": 0,
+              "weight": 23,
               "reps": 0,
               "completed": false,
               "setType": "N"
             },
             {
-              "weight": 0,
+              "weight": 23,
               "reps": 0,
               "completed": false,
               "setType": "N"
             },
             {
-              "weight": 0,
+              "weight": 23,
               "reps": 0,
               "completed": false,
               "setType": "N"
             },
             {
-              "weight": 0,
+              "weight": 23,
               "reps": 0,
               "completed": false,
               "setType": "N"
@@ -848,5 +848,5 @@
       }
     }
   },
-  "lastSync": "2026-06-20T11:39:37.319Z"
+  "lastSync": "2026-06-20T11:39:44.502Z"
 }

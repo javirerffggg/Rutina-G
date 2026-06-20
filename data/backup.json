@@ -558,21 +558,21 @@
             {
               "weight": 90,
               "reps": 8,
-              "rir": 0.5,
+              "rir": 1,
               "completed": false,
               "setType": "N"
             },
             {
               "weight": 90,
               "reps": 7,
-              "rir": 0.5,
+              "rir": 1,
               "completed": false,
               "setType": "N"
             },
             {
               "weight": 90,
               "reps": 6,
-              "rir": 0.5,
+              "rir": 1,
               "completed": false,
               "setType": "N"
             }
@@ -736,7 +736,9 @@
     "sesion_larga": "2026-03-11T20:26:28.011Z",
     "vuelta_tras_descanso": "2026-03-11T20:26:28.013Z",
     "sesion_rapida": "2026-06-20T10:56:20.935Z",
-    "5000_sesion": "2026-06-20T17:07:22.723Z"
+    "5000_sesion": "2026-06-20T17:07:22.723Z",
+    "rir_0": "2026-06-20T17:09:53.484Z",
+    "rir_0_x3": "2026-06-20T17:09:53.484Z"
   },
   "statistics": {
     "muscleSets": {
@@ -816,5 +818,5 @@
       }
     }
   },
-  "lastSync": "2026-06-20T17:09:52.511Z"
+  "lastSync": "2026-06-20T17:10:11.243Z"
 }

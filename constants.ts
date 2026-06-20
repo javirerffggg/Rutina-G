@@ -293,90 +293,49 @@ export const ROUTINE_MAPPING: Record<number, RoutineType> = {
   0: RoutineType.REST     // Domingo
 };
 
-export const WARMUP_GUIDE = {
+import { WarmupStep } from './types';
+
+export const WARMUP_GUIDE: Record<string, WarmupStep[]> = {
   [RoutineType.PUSH]: [
-    {
-      title: "1. Movilidad (Universal)",
-      tasks: [
-        "Cuello y Muñecas (30s)",
-        "Balanceos de brazos (15 reps)",
-        "Círculos de hombros (20 reps)",
-        "Rotaciones 'en L' (15 reps)"
-      ]
-    },
-    {
-      title: "2. Activación PUSH",
-      tasks: [
-        "Flexiones Escapulares: 2 x 12",
-        "Aproximación Press: 1x15 (30%), 1x8 (60%)"
-      ]
-    }
+    { phase: 'movilidad', name: 'Círculos de cuello y muñecas', duration: 30, notes: 'Lentos y controlados.' },
+    { phase: 'movilidad', name: 'Balanceos de brazos horizontales', reps: 15, notes: 'Frente al pecho.' },
+    { phase: 'movilidad', name: 'Círculos de hombros (Molinos)', reps: 20, notes: '10 adelante, 10 atrás.' },
+    { phase: 'movilidad', name: 'Rotaciones Externas "en L"', reps: 15, notes: 'Codos pegados al torso.' },
+    { phase: 'activacion', name: 'Plancha Frontal', duration: 30, rest: 30, notes: 'Activa el core antes de empujar.' },
+    { phase: 'aproximacion', name: 'Aproximación 1', reps: 15, weightPercent: 0.30, rest: 45, tempo: '3:1:1:0', notes: 'Asiento alineado a mitad del pecho.' },
+    { phase: 'aproximacion', name: 'Aproximación 2', reps: 8, weightPercent: 0.60, rest: 60, tempo: '3:1:1:0' }
   ],
   [RoutineType.PULL]: [
-    {
-      title: "1. Movilidad (Universal)",
-      tasks: [
-        "Rotaciones de Tronco (20 reps)",
-        "Círculos Escapulares (12 reps)",
-        "Muñecas (30s)"
-      ]
-    },
-    {
-      title: "2. Activación PULL",
-      tasks: [
-        "Aperturas 'Cactus': 2 x 12",
-        "Aproximación Jalón: 1x15 (30%), 1x8 (60%)"
-      ]
-    }
-  ],
-  [RoutineType.UPPER]: [
-    {
-      title: "1. Movilidad Híbrida",
-      tasks: [
-        "Círculos de hombros completos (30s)",
-        "Aperturas pectorales dinámicas (15 reps)",
-        "Rotaciones torácicas (10/lado)"
-      ]
-    },
-    {
-      title: "2. Aproximación",
-      tasks: [
-        "Jalón al pecho: 1x12 ligero",
-        "Fondos (o flexiones): 1x10 controlado"
-      ]
-    }
+    { phase: 'movilidad', name: 'Rotaciones de Tronco', reps: 20, notes: 'Brazos relajados.' },
+    { phase: 'movilidad', name: 'Círculos Escapulares', reps: 12, notes: 'Lentos y amplios.' },
+    { phase: 'movilidad', name: 'Círculos de muñecas', duration: 30 },
+    { phase: 'activacion', name: 'Superman + Puente Glúteo', sets: 2, reps: 15, rest: 45, notes: 'Fija la pelvis para prevenir balanceo lumbar.' },
+    { phase: 'aproximacion', name: 'Aproximación 1', reps: 15, weightPercent: 0.30, rest: 45, tempo: '3:1:1:0' },
+    { phase: 'aproximacion', name: 'Aproximación 2', reps: 8, weightPercent: 0.60, rest: 60, tempo: '3:1:1:0' }
   ],
   [RoutineType.LEGS]: [
-    {
-      title: "1. Temp y Movilidad",
-      tasks: [
-        "Bici/Elíptica (5 min)",
-        "Balanceos de Pierna (15/lado)",
-        "Sentadilla Cossack (10 total)"
-      ]
-    },
-    {
-      title: "2. Activación Rodilla",
-      tasks: [
-        "Anclaje de Tobillo: 12 reps",
-        "Aproximación Hack: 1x15 (vacía), 1x8 (50%)"
-      ]
-    }
+    { phase: 'temperatura', name: 'Bicicleta / Elíptica', duration: 300, notes: 'Ritmo suave, que permita hablar.' },
+    { phase: 'movilidad', name: 'Balanceos de Pierna', reps: 30, notes: '15 frontales, 15 laterales por pierna.' },
+    { phase: 'movilidad', name: 'Sentadilla Cossack', reps: 10, notes: 'Totales.' },
+    { phase: 'movilidad', name: 'Plancha Lateral', duration: 30, notes: 'Por lado.' },
+    { phase: 'aproximacion', name: 'Aproximación 1', reps: 15, weightPercent: 0, rest: 60, tempo: '3:1:1:0', notes: 'Máquina vacía.' },
+    { phase: 'aproximacion', name: 'Aproximación 2', reps: 8, weightPercent: 0.50, rest: 90, tempo: '3:1:1:0' }
+  ],
+  [RoutineType.UPPER]: [
+    { phase: 'movilidad', name: 'Círculos de cuello y muñecas', duration: 30 },
+    { phase: 'movilidad', name: 'Balanceos de brazos (Horiz/Vert)', reps: 30, notes: '15 de cada.' },
+    { phase: 'movilidad', name: 'Círculos Escapulares', reps: 12 },
+    { phase: 'movilidad', name: 'Rotaciones Externas "en L"', reps: 15 },
+    { phase: 'activacion', name: 'Plancha + Superman', duration: 30, rest: 45, notes: 'Plancha 30s, luego Superman 10/lado.' },
+    { phase: 'aproximacion', name: 'Aproximación 1', reps: 15, weightPercent: 0.30, rest: 45, tempo: '3:1:1:0' },
+    { phase: 'aproximacion', name: 'Aproximación 2', reps: 8, weightPercent: 0.60, rest: 60, tempo: '3:1:1:0' }
   ],
   [RoutineType.LOWER]: [
-    {
-      title: "1. Temp y Movilidad",
-      tasks: [
-        "Caminata inclinada (5 min)",
-        "Balanceos de Pierna (15/lado)",
-        "Puente de Glúteo suelo (15 reps)"
-      ]
-    },
-    {
-      title: "2. Activación Cadera",
-      tasks: [
-        "Aproximación Hip Thrust: 1x15 (30%), 1x8 (60%)"
-      ]
-    }
+    { phase: 'temperatura', name: 'Bicicleta / Elíptica', duration: 300 },
+    { phase: 'movilidad', name: 'Balanceos de Pierna', reps: 30 },
+    { phase: 'movilidad', name: 'Rotaciones de Cadera', reps: 20, notes: '10 por lado.' },
+    { phase: 'movilidad', name: 'Sentadilla Profunda (Pry)', duration: 45, notes: 'Usa codos para abrir rodillas.' },
+    { phase: 'aproximacion', name: 'Aproximación 1', reps: 15, weightPercent: 0, rest: 60, tempo: '3:1:1:0', notes: 'Máquina vacía.' },
+    { phase: 'aproximacion', name: 'Aproximación 2', reps: 8, weightPercent: 0.50, rest: 90, tempo: '3:1:1:0' }
   ]
 };

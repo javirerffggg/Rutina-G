@@ -17,6 +17,23 @@ export enum RoutineType {
   REST  = 'Descanso'
 }
 
+export interface WarmupStep {
+  phase: 'temperatura' | 'movilidad' | 'activacion' | 'aproximacion';
+  name: string;
+  duration?: number;    // segundos (para movilidad con tiempo o temperatura)
+  reps?: number;        // para ejercicios por repetición
+  sets?: number;        // para series de aproximación/activación
+  weightPercent?: number; // 30% / 50% / 60% del peso real
+  rest?: number;        // segundos de descanso
+  tempo?: string;       // "3:1:1:0"
+  notes?: string;
+}
+
+export interface WarmupRoutine {
+  routineType: RoutineType;
+  steps: WarmupStep[];
+}
+
 export interface Exercise {
   id: string;
   name: string;
@@ -100,6 +117,7 @@ export interface DailyLog {
   stress?: number;  // 1-5
 
   notes?: string;
+  warmupCompleted?: boolean;
   workoutCompleted?: boolean;
   workoutType?: string; // Can be RoutineType enum or custom routine id
   exercises?: WorkoutLogEntry[];

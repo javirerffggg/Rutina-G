@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   ROUTINE_MAPPING, EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS,
   EXERCISES_UPPER, EXERCISES_LOWER, EXERCISE_ALTERNATIVES, WARMUP_GUIDE, TECHNICAL_GUIDES,
@@ -12,7 +12,7 @@ import { RoutineType, Exercise, WorkoutLogEntry, WorkoutSet, CustomRoutine, Exer
 import { saveLog, getLogs, getPreviousWorkoutLog, getExerciseHistory } from '../services/storage';
 import {
   Save, History, Plus, Minus, Check, Trophy, ArrowRightLeft, X,
-  Dumbbell, Settings, Info, Bot, AlertTriangle, Clock, Flame,
+  Dumbbell, Settings, Info, Bot, AlertTriangle, Clock, Flame, Activity,
   ChevronRight, Timer, Flag, Milk, BookOpen, GraduationCap,
   CalendarDays, Award, Zap, TrendingUp, ArrowUpRight, ArrowLeft,
   ChevronDown, ArrowUp, ArrowDown, Replace, PlaySquare, Image as ImageIcon,
@@ -24,6 +24,8 @@ import { CustomRoutineBuilder } from '../components/CustomRoutineBuilder';
 import { MUSCLE_NAMES_ES, EQUIPMENT_ES } from '../data/translations.es';
 import { useProgression } from '../hooks/useProgression';
 import { getSettings } from '../services/settings';
+import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer, YAxis, CartesianGrid, ReferenceLine } from 'recharts';
+import { WarmupModal } from '../components/WarmupModal';
 
 const COMPOUND_EXERCISES = new Set([
   'squat','deadlift','bench_press','overhead_press','barbell_row',
@@ -39,7 +41,7 @@ const getRestSeconds = (id: string) => 120;
 const ROUTINE_META: Record<RoutineType, any> = {
   [RoutineType.PUSH]: { label: 'Push', emoji: '💪', muscles: 'Pecho · Hombros · Tríceps', accent: 'from-orange-600/30 via-rose-600/20 to-transparent', border: 'border-orange-500/40', glow: 'shadow-[0_0_30px_rgba(249,115,22,0.25)]', badge: 'bg-orange-500/20 text-orange-300 border-orange-500/30' },
   [RoutineType.PULL]: { label: 'Pull', emoji: '🏋️', muscles: 'Espalda · Bíceps · Trapecios', accent: 'from-sky-600/30 via-blue-600/20 to-transparent', border: 'border-sky-500/40', glow: 'shadow-[0_0_30px_rgba(14,165,233,0.25)]', badge: 'bg-sky-500/20 text-sky-300 border-sky-500/30' },
-  [RoutineType.LEGS]: { label: 'Legs', emoji: '🦵', muscles: 'Cuádriceps · Gemelos · Core', accent: 'from-emerald-600/30 via-green-600/20 to-transparent', border: 'border-emerald-500/40', glow: 'shadow-[0_0_30px_rgba(16,185,129,0.25)]', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
+  [RoutineType.LEGS]: { label: 'Legs', emoji: '🦵', muscles: 'Cuádriceps · Gemelos · Core', accent: 'from-emerald-600/30 via-green-600/20 to-transparent', border: 'border-emerald-500/40', glow: 'shadow-[0_0_30px_rgba(10,185,129,0.25)]', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
   [RoutineType.UPPER]: { label: 'Upper', emoji: '⬆️', muscles: 'Pecho · Espalda · Brazos', accent: 'from-violet-600/30 via-purple-600/20 to-transparent', border: 'border-violet-500/40', glow: 'shadow-[0_0_30px_rgba(139,92,246,0.25)]', badge: 'bg-violet-500/20 text-violet-300 border-violet-500/30' },
   [RoutineType.LOWER]: { label: 'Lower', emoji: '⬇️', muscles: 'Glúteos · Isquios · Gemelos', accent: 'from-pink-600/30 via-rose-600/20 to-transparent', border: 'border-pink-500/40', glow: 'shadow-[0_0_30px_rgba(236,72,153,0.25)]', badge: 'bg-pink-500/20 text-pink-300 border-pink-500/30' },
   [RoutineType.REST]: { label: 'Descanso', emoji: '😴', muscles: 'Recuperación activa', accent: 'from-zinc-700/20 to-transparent', border: 'border-zinc-700/40', glow: '', badge: 'bg-zinc-700/30 text-zinc-400 border-zinc-700/40' },
@@ -88,14 +90,13 @@ const Workout: React.FC = () => {
   const [logs, setLogs] = useState<WorkoutLogEntry[]>([]);
   const [allLogs, setAllLogs] = useState<Record<string, any>>({});
   
-  // NEW AUTO-ACCORDION STATE
   const [activeExercise, setActiveExercise] = useState<string | null>(null);
 
   const [showAlternativeFor, setShowAlternativeFor] = useState<string | null>(null);
   const [showTechFor, setShowTechFor] = useState<string | null>(null);
   const [techExerciseDb, setTechExerciseDb] = useState<ExerciseDBEntry | null>(null);
 
-  const { addXP } = useProgression();
+  const { addXP: addProgressionXP } = useProgression();
 
   useEffect(() => {
     if (!showTechFor) {
@@ -109,7 +110,7 @@ const Workout: React.FC = () => {
       })
       .catch(console.error);
   }, [showTechFor]);
-  const [showWarmup, setShowWarmup] = useState(false);
+  const [showWarmupModal, setShowWarmupModal] = useState(false);
   const [showHistoryFor, setShowHistoryFor] = useState<string | null>(null);
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(false);
@@ -215,10 +216,7 @@ const Workout: React.FC = () => {
 
   const startWorkout = async () => {
     if (sessionState !== 'idle') return;
-    const now = Date.now();
-    setStartTime(now);
     setSessionState('active');
-    localStorage.setItem(`workoutStartTime_${today}`, now.toString());
     localStorage.setItem(`workoutSessionState_${today}`, 'active');
     dispatchLiveActivity({ active: true, sessionState: 'active', elapsedSeconds: 0, setsCompleted: 0, setsTotal: 0 });
     if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
@@ -264,7 +262,35 @@ const Workout: React.FC = () => {
     setLogs(initialLogs);
   }, [selectedRoutine, today]);
 
-  // Set active exercise automatically if null
+  const firstExerciseMaxWeight = React.useMemo(() => {
+    if (exercises.length === 0) return 0;
+    const firstExId = exercises[0].id;
+    const history = getExerciseHistory(firstExId, 5);
+    if (history.length === 0) return 0;
+    return Math.max(...history.map((h:any) => Math.max(...h.log.sets.map((s:any) => s.weight))));
+  }, [exercises]);
+
+  const warmupCompleted = !!(allLogs[today]?.warmupCompleted);
+
+  const handleWarmupComplete = (warmupSets: WorkoutSet[]) => {
+    const existing = allLogs[today] || { date: today };
+    const u = { ...existing, warmupCompleted: true };
+    saveLog(u);
+    setAllLogs(prev => ({...prev, [today]: u}));
+    addProgressionXP(10, 'WARMUP_COMPLETED');
+    
+    if (exercises.length > 0 && warmupSets.length > 0) {
+      const firstExId = exercises[0].id;
+      setLogs(prev => prev.map(log => {
+        if (log.exerciseId === firstExId) {
+          return { ...log, sets: [...warmupSets, ...log.sets] };
+        }
+        return log;
+      }));
+      saveWorkoutWithLogs(logs.map(log => log.exerciseId === firstExId ? { ...log, sets: [...warmupSets, ...log.sets] } : log), false);
+    }
+  };
+
   useEffect(() => {
     if (selectedRoutine === null || logs.length === 0) return;
     if (activeExercise === null) {
@@ -317,6 +343,11 @@ const Workout: React.FC = () => {
 
   const toggleSetComplete = (exerciseId: string, setIndex: number) => {
     if (sessionState === 'idle') startWorkout();
+    if (!startTime) {
+      const now = Date.now();
+      setStartTime(now);
+      localStorage.setItem(`workoutStartTime_${today}`, now.toString());
+    }
     const prevGymLog = getPreviousWorkoutLog(exerciseId, today);
     const newLogs = logs.map(log => {
       if (log.exerciseId !== exerciseId) return log;
@@ -340,7 +371,7 @@ const Workout: React.FC = () => {
     if (justCompleted) { 
       const ex = exercises.find(e=>e.id===exerciseId); 
       startRestTimer(exerciseId, ex?.name ?? exerciseId); 
-      addXP(2, 'SET_COMPLETED');
+      addProgressionXP(2, 'SET_COMPLETED');
     }
     
     const tl = newLogs.find(l=>l.exerciseId===exerciseId);
@@ -365,27 +396,6 @@ const Workout: React.FC = () => {
     }
   };
 
-  const moveExercise = (exerciseId: string, direction: 'up' | 'down') => {
-    const currentIndex = exercises.findIndex(e => e.id === exerciseId);
-    if (currentIndex === -1) return;
-    if (direction === 'up' && currentIndex === 0) return;
-    if (direction === 'down' && currentIndex === exercises.length - 1) return;
-    const swapIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-    const newExercises = [...exercises];
-    [newExercises[currentIndex], newExercises[swapIndex]] = [newExercises[swapIndex], newExercises[currentIndex]];
-    setExercises(newExercises);
-    const newLogs = [...logs];
-    const logCurrentIndex = newLogs.findIndex(l => l.exerciseId === exerciseId);
-    if (logCurrentIndex !== -1) {
-      const logSwapIndex = direction === 'up' ? logCurrentIndex - 1 : logCurrentIndex + 1;
-      if (logSwapIndex >= 0 && logSwapIndex < newLogs.length) {
-        [newLogs[logCurrentIndex], newLogs[logSwapIndex]] = [newLogs[logSwapIndex], newLogs[logCurrentIndex]];
-        setLogs(newLogs);
-        saveWorkoutWithLogs(newLogs);
-      }
-    }
-  };
-
   const cycleSetType = (exerciseId: string, setIndex: number) => {
     setLogs(prev => prev.map(log => {
       if (log.exerciseId !== exerciseId) return log;
@@ -398,10 +408,6 @@ const Workout: React.FC = () => {
       return { ...log, sets };
     }));
     saveWorkout();
-  };
-
-  const updateSetupNotes = (exerciseId: string, notes: string) => {
-    setLogs(prev => prev.map(log => log.exerciseId === exerciseId ? { ...log, setupNotes: notes } : log));
   };
 
   const substituteExercise = (originalId: string, alternativeName: string) => {
@@ -455,28 +461,17 @@ const Workout: React.FC = () => {
       setRestTimer(null);
       dispatchLiveActivity({ sessionState: 'finished', restTimer: null, elapsedSeconds });
       navigator.serviceWorker?.controller?.postMessage({ type: 'CANCEL_REST_TIMER' });
-      addXP(50, 'WORKOUT_COMPLETED');
+      addProgressionXP(50, 'WORKOUT_COMPLETED');
     }
   };
 
   const saveWorkout = (finish = false) => saveWorkoutWithLogs(logs, finish);
-
-  const undoFinishWorkout = () => {
-    const cl = allLogs[today];
-    if (cl) { const u = { ...cl, workoutCompleted: false }; saveLog(u); setAllLogs(prev => ({ ...prev, [today]: u })); }
-    setSessionState('active');
-    localStorage.setItem(`workoutSessionState_${today}`, 'active');
-    dispatchLiveActivity({ sessionState: 'active' });
-  };
 
   const totalExercises = exercises.length;
   const completedExercises = logs.filter(l=>l.completed).length;
   const progressPercentage = totalExercises>0 ? Math.round((completedExercises/totalExercises)*100) : 0;
   const setsCompletedCount = logs.reduce((a,l) => a + l.sets.filter(s=>s.completed).length, 0);
   const setsTotalCount = logs.reduce((a,l) => a + l.sets.length, 0);
-
-  const circleProgress = restTimer !== null ? (restTimer/restDurationRef.current) : 1;
-  const CIRCUMFERENCE = 2*Math.PI*45;
 
   if (selectedRoutine === null) {
     const ORDERED: RoutineType[] = [RoutineType.PUSH, RoutineType.PULL, RoutineType.LEGS, RoutineType.UPPER, RoutineType.LOWER, RoutineType.REST];
@@ -523,7 +518,6 @@ const Workout: React.FC = () => {
           </p>
         </div>
 
-        {/* HISTORIAL RECIENTE */}
         {recentHistory.length > 0 && (
           <div className="px-4 mb-6">
             <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-3 px-2">Historial Reciente</h2>
@@ -543,7 +537,6 @@ const Workout: React.FC = () => {
           </div>
         )}
 
-        {/* HOY TOCA & CONTINUAR CTA */}
         <div className="px-4 mb-8 space-y-3">
           {activeSession && (
             <motion.button onClick={() => setSelectedRoutine(localStorage.getItem(`workoutSessionState_${today}`) || defaultRoutine)} whileTap={{ scale: 0.98 }}
@@ -580,7 +573,6 @@ const Workout: React.FC = () => {
           )}
         </div>
 
-        {/* GRID DE RUTINAS PREDEFINIDAS */}
         {!settings.hideDefaultRoutines && (
           <div className="px-4 grid grid-cols-3 gap-2">
             {ORDERED.map(routine => {
@@ -596,7 +588,6 @@ const Workout: React.FC = () => {
                   className={`w-full relative overflow-hidden rounded-[24px] border text-left transition-all duration-300 active:scale-[0.97] bg-zinc-900/70 backdrop-blur-sm ${isToday ? `${meta.border} ${meta.glow}` : 'border-white/6'}`}>
                   <div className={`absolute inset-0 bg-gradient-to-br ${meta.accent} pointer-events-none`} />
                   
-                  {/* Franja/Borde destacado para HOY */}
                   {isToday && <div className={`absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b ${meta.accent} from-50%`} />}
                   {isToday && <div className="absolute top-3 right-3 z-10"><span className={`text-[9px] font-black uppercase tracking-[0.15em] px-2 py-0.5 rounded-full border ${meta.badge}`}>HOY</span></div>}
                   {doneToday && <div className="absolute top-3 left-3 z-10 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.5)]"><Check size={11} strokeWidth={3} className="text-white" /></div>}
@@ -625,7 +616,6 @@ const Workout: React.FC = () => {
           </div>
         )}
 
-        {/* CUSTOM ROUTINES SECTION */}
         <div className="px-4 mt-8 mb-4">
            <div className="flex justify-between items-end mb-4">
              <h2 className="text-xl font-display font-bold text-white tracking-tight">Mis Rutinas</h2>
@@ -666,7 +656,6 @@ const Workout: React.FC = () => {
         ) : (
           <div className="px-4 pb-8 space-y-6">
              {settings.routineFolders ? (
-               // GROUPED BY FOLDER
                Object.entries(
                  filteredCustomRoutines.reduce((acc, r) => {
                    const f = r.folder || 'Sin Categoría';
@@ -703,7 +692,6 @@ const Workout: React.FC = () => {
                               </div>
                             </motion.button>
                             
-                            {/* Botón de opciones */}
                             <button 
                               onClick={(e) => { e.stopPropagation(); setCustomMenuOpen(isMenuOpen ? null : routine.id); }}
                               className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
@@ -711,11 +699,10 @@ const Workout: React.FC = () => {
                               <MoreVertical size={16} />
                             </button>
 
-                            {/* Menú Contextual */}
                             {isMenuOpen && (
                               <div className="absolute top-12 right-2 z-30 w-36 bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl overflow-hidden animate-in zoom-in-95 origin-top-right">
                                 <div className="flex flex-col">
-                                  <button onClick={(e) => { e.stopPropagation(); /* TODO: Editar */ setCustomMenuOpen(null); }} className="px-4 py-2.5 text-left text-xs font-bold text-white hover:bg-zinc-700 transition-colors border-b border-zinc-700/50">
+                                  <button onClick={(e) => { e.stopPropagation(); setCustomMenuOpen(null); }} className="px-4 py-2.5 text-left text-xs font-bold text-white hover:bg-zinc-700 transition-colors border-b border-zinc-700/50">
                                     Editar Rutina
                                   </button>
                                   <button onClick={(e) => deleteCustomRoutine(routine.id, e)} className="px-4 py-2.5 text-left text-xs font-bold text-red-400 hover:bg-zinc-700 transition-colors">
@@ -731,7 +718,6 @@ const Workout: React.FC = () => {
                  </div>
                ))
              ) : (
-               // FLAT LIST
                <div className="grid grid-cols-3 gap-2">
                  {filteredCustomRoutines.map(routine => {
                     const doneToday = !!Object.values(getLogs()).find((l:any) => l.workoutType === routine.id && l.date === today && l.workoutCompleted);
@@ -758,7 +744,6 @@ const Workout: React.FC = () => {
                           </div>
                         </motion.button>
                         
-                        {/* Botón de opciones */}
                         <button 
                           onClick={(e) => { e.stopPropagation(); setCustomMenuOpen(isMenuOpen ? null : routine.id); }}
                           className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
@@ -766,11 +751,10 @@ const Workout: React.FC = () => {
                           <MoreVertical size={16} />
                         </button>
 
-                        {/* Menú Contextual */}
                         {isMenuOpen && (
                           <div className="absolute top-12 right-2 z-30 w-36 bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl overflow-hidden animate-in zoom-in-95 origin-top-right">
                             <div className="flex flex-col">
-                              <button onClick={(e) => { e.stopPropagation(); /* TODO: Editar */ setCustomMenuOpen(null); }} className="px-4 py-2.5 text-left text-xs font-bold text-white hover:bg-zinc-700 transition-colors border-b border-zinc-700/50">
+                              <button onClick={(e) => { e.stopPropagation(); setCustomMenuOpen(null); }} className="px-4 py-2.5 text-left text-xs font-bold text-white hover:bg-zinc-700 transition-colors border-b border-zinc-700/50">
                                 Editar Rutina
                               </button>
                               <button onClick={(e) => deleteCustomRoutine(routine.id, e)} className="px-4 py-2.5 text-left text-xs font-bold text-red-400 hover:bg-zinc-700 transition-colors">
@@ -816,6 +800,10 @@ const Workout: React.FC = () => {
                 <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-500/10 text-emerald-400 mb-2"><Trophy size={40} /></div>
                 <h2 className="text-3xl font-display font-bold text-white tracking-tight">¡Sesión Finalizada!</h2>
                 <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest">Resumen de Rendimiento</p>
+                <div className="flex justify-center items-center gap-2 pt-2">
+                  <Timer size={18} className="text-zinc-400" />
+                  <span className="text-2xl font-display font-bold text-white">{formatTime(elapsedSeconds)}</span>
+                </div>
               </div>
               <button onClick={() => setShowAnalysis(false)} className="w-full py-5 bg-white text-black font-bold uppercase tracking-[0.2em] rounded-2xl hover:bg-zinc-200 transition-all active:scale-[0.98]">Cerrar Resumen</button>
             </motion.div>
@@ -823,7 +811,14 @@ const Workout: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* HEADER / DASHBOARD */}
+      <WarmupModal
+        isOpen={showWarmupModal}
+        onClose={() => setShowWarmupModal(false)}
+        routineId={selectedRoutine || ''}
+        firstExerciseMaxWeight={firstExerciseMaxWeight}
+        onComplete={handleWarmupComplete}
+      />
+
       <div className={`relative bg-black/80 backdrop-blur-xl border-b border-white/5 pt-12 px-4 pb-4 transition-all duration-300`}>
         <div className="flex justify-between items-start gap-3">
           <div className="min-w-0 flex-1">
@@ -1045,9 +1040,14 @@ const Workout: React.FC = () => {
       {selectedRoutine !== RoutineType.REST && (
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black/90 to-transparent z-40 pb-safe">
           {sessionState === 'idle' ? (
-            <button onClick={startWorkout} className="w-full py-5 rounded-[24px] bg-brand-600 hover:bg-brand-500 text-white font-bold uppercase tracking-[0.2em] text-sm shadow-[0_10px_40px_rgba(217,119,6,0.4)] active:scale-[0.98] transition-all flex justify-center items-center gap-2">
-               <Timer size={18}/> Iniciar Sesión
-            </button>
+            <div className="flex gap-2">
+              <button onClick={() => setShowWarmupModal(true)} className={`flex-1 py-5 rounded-[24px] ${warmupCompleted ? 'bg-emerald-600/20 text-emerald-500 border border-emerald-500/30' : 'bg-brand-600/20 text-brand-500 border border-brand-500/30'} font-bold uppercase tracking-[0.2em] text-[10px] transition-all flex flex-col justify-center items-center gap-1`}>
+                <Activity size={18}/> {warmupCompleted ? 'OK' : 'Calentar'}
+              </button>
+              <button onClick={startWorkout} className="flex-[3] py-5 rounded-[24px] bg-brand-600 hover:bg-brand-500 text-white font-bold uppercase tracking-[0.2em] text-sm shadow-[0_10px_40px_rgba(217,119,6,0.4)] active:scale-[0.98] transition-all flex justify-center items-center gap-2">
+                 <PlaySquare size={18}/> Iniciar Sesión
+              </button>
+            </div>
           ) : sessionState === 'active' ? (
             <div className="flex gap-3">
                <button onClick={()=>setShowFinishConfirm(true)} className="flex-1 py-5 rounded-[24px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold uppercase tracking-[0.2em] text-sm shadow-[0_10px_40px_rgba(16,185,129,0.4)] active:scale-[0.98] transition-all flex justify-center items-center gap-2">

@@ -603,17 +603,17 @@
             {
               "weight": 45,
               "reps": 10,
-              "completed": false,
+              "completed": true,
               "setType": "N"
             },
             {
               "weight": 45,
               "reps": 8,
-              "completed": false,
+              "completed": true,
               "setType": "N"
             }
           ],
-          "completed": false
+          "completed": true
         },
         {
           "exerciseId": "push_dips",
@@ -835,5 +835,5 @@
       }
     }
   },
-  "lastSync": "2026-06-20T23:11:00.592Z"
+  "lastSync": "2026-06-20T23:11:01.779Z"
 }

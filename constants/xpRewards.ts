@@ -14,3 +14,11 @@ export const XP_REWARDS = {
   NEW_EXERCISE_TRIED: 30,         // Primer registro de un ejercicio nuevo
   CATEGORY_COMPLETED: 75,         // Completar todos los ejercicios de una categoría muscular
 } as const;
+
+export const ACHIEVEMENT_XP = {
+  BRONZE: 500,
+  SILVER: 1500,
+  GOLD: 5000,
+  DIAMOND: 15000,
+  ELITE: 50000
+} as const;

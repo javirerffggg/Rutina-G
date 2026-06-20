@@ -19,7 +19,7 @@ import { getUnlockedAchievements } from '../services/storage';
  * @param logs - Historial completo de entrenamientos
  * @returns Cantidad de días consecutivos (desde hoy hacia atrás)
  */
-function calculateCurrentStreak(logs: Record<string, DailyLog>): number {
+export function calculateCurrentStreak(logs: Record<string, DailyLog>): number {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   

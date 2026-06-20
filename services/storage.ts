@@ -1,5 +1,7 @@
 import { DailyLog, WorkoutLogEntry } from '../types';
 import { ACHIEVEMENTS } from '../achievements';
+import { ACHIEVEMENT_XP } from '../constants/xpRewards';
+import { dispatchGlobalXP } from '../hooks/useProgression';
 import {
   EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS,
   EXERCISES_UPPER, EXERCISES_LOWER
@@ -43,6 +45,12 @@ export const saveLog = (log: DailyLog) => {
       if (ach.condition(updated, log.date)) {
         unlocked[ach.id] = new Date().toISOString();
         newlyUnlocked.push(ach.id);
+        
+        // Grant XP for achievement unlock
+        const xpAmount = ACHIEVEMENT_XP[ach.tier] || 0;
+        if (xpAmount > 0) {
+          dispatchGlobalXP(xpAmount, `LOGRO_DESBLOQUEADO_${ach.id}`);
+        }
       }
     } catch (e) {
       console.warn(`Achievement condition error [${ach.id}]:`, e);

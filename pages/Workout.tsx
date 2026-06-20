@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { dispatchLiveActivity } from '../hooks/useLiveActivity';
+import { calculateCurrentStreak } from '../hooks/useRPGStats';
 import { CustomRoutineBuilder } from '../components/CustomRoutineBuilder';
 import { MUSCLE_NAMES_ES, EQUIPMENT_ES } from '../data/translations.es';
 import { useProgression } from '../hooks/useProgression';
@@ -373,6 +374,23 @@ const Workout: React.FC = () => {
       const ex = exercises.find(e=>e.id===exerciseId); 
       startRestTimer(exerciseId, ex?.name ?? exerciseId); 
       addProgressionXP(2, 'SET_COMPLETED');
+      
+      // PR Check
+      const setWeight = newLogs.find(l=>l.exerciseId===exerciseId)?.sets[setIndex].weight ?? 0;
+      if (setWeight > 0) {
+        const history = getExerciseHistory(exerciseId, 50);
+        let maxPastWeight = 0;
+        history.forEach((h: any) => {
+          if (h.log.date !== today) {
+            h.log.sets.forEach((s: any) => {
+              if (s.completed && s.weight > maxPastWeight) maxPastWeight = s.weight;
+            });
+          }
+        });
+        if (setWeight > maxPastWeight && maxPastWeight > 0) {
+          addProgressionXP(100, 'PR_ACHIEVED');
+        }
+      }
     }
     
     const tl = newLogs.find(l=>l.exerciseId===exerciseId);
@@ -462,7 +480,12 @@ const Workout: React.FC = () => {
       setRestTimer(null);
       dispatchLiveActivity({ sessionState: 'finished', restTimer: null, elapsedSeconds });
       navigator.serviceWorker?.controller?.postMessage({ type: 'CANCEL_REST_TIMER' });
-      addProgressionXP(50, 'WORKOUT_COMPLETED');
+      
+      const streak = calculateCurrentStreak(allLogs);
+      const streakMultiplier = Math.min(1 + (streak * 0.1), 2.0); // max 2x multiplier
+      const baseXP = 50;
+      const finalXP = Math.round(baseXP * streakMultiplier);
+      addProgressionXP(finalXP, 'WORKOUT_COMPLETED');
     }
   };
 

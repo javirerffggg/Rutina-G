@@ -8,7 +8,6 @@ import { EXERCISE_MUSCLE_MAP, PHASES } from '../constants';
 import { BodyHeatmap } from '../components/BodyHeatmap';
 import { calculate7DayAverage, calculate7DayTrend } from '../utils/bodyComposition';
 import { useProgression } from '../hooks/useProgression';
-import { RankBadge } from '../components/RankBadge';
 
 const getGreeting = () => {
   const h = new Date().getHours();
@@ -422,10 +421,7 @@ const Dashboard: React.FC = () => {
         </div>
       </section>
 
-      {/* ── RPG RANK BADGE ── */}
-      <div className="mb-5 bg-zinc-900/50 border border-zinc-800/50 rounded-2xl p-4 flex flex-col items-center">
-        <RankBadge rankInfo={rankInfo} size="lg" showLabel showProgress animated />
-      </div>
+      {/* RPG RANK BADGE REMOVED - MOVED TO TROPHY ROOM */}
 
       {/* ── MAPA DE CALOR MUSCULAR ── */}
       <section className="bg-zinc-900/50 border border-zinc-800/50 p-5 rounded-2xl space-y-4">

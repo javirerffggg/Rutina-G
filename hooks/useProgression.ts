@@ -3,7 +3,24 @@ import { RankInfo } from '../types/progression';
 import { XP_REWARDS } from '../constants/xpRewards';
 import { getRankInfo, addXP } from '../utils/progression';
 
-const XP_STORAGE_KEY = 'rutinag_xp_total';
+export const XP_STORAGE_KEY = 'rutinag_xp_total';
+
+export function dispatchGlobalXP(amount: number, reason?: string) {
+  if (typeof window === 'undefined') return;
+  const stored = localStorage.getItem(XP_STORAGE_KEY);
+  const currentXP = stored ? parseInt(stored, 10) : 0;
+  const result = addXP(currentXP, amount);
+  localStorage.setItem(XP_STORAGE_KEY, result.newXPTotal.toString());
+  
+  window.dispatchEvent(new CustomEvent('xp-updated', { 
+    detail: { 
+      newXP: result.newXPTotal, 
+      oldXP: currentXP, 
+      levelsGained: result.levelsGained,
+      newRank: result.newRank 
+    } 
+  }));
+}
 
 export function useProgression() {
   const [xpTotal, setXpTotal] = useState<number>(0);
@@ -41,25 +58,8 @@ export function useProgression() {
     return () => window.removeEventListener('xp-updated', handleUpdate);
   }, []);
 
-  const handleAddXP = useCallback((amount: number, reason: keyof typeof XP_REWARDS) => {
-    if (typeof window === 'undefined') return;
-    
-    setXpTotal(prev => {
-      const result = addXP(prev, amount);
-      localStorage.setItem(XP_STORAGE_KEY, result.newXPTotal.toString());
-      
-      // Emitir evento para que otros hooks se actualicen
-      window.dispatchEvent(new CustomEvent('xp-updated', { 
-        detail: { 
-          newXP: result.newXPTotal, 
-          oldXP: prev, 
-          levelsGained: result.levelsGained,
-          newRank: result.newRank 
-        } 
-      }));
-      
-      return result.newXPTotal;
-    });
+  const handleAddXP = useCallback((amount: number, reason: keyof typeof XP_REWARDS | string) => {
+    dispatchGlobalXP(amount, reason);
   }, []);
 
   const clearLevelUp = useCallback(() => {

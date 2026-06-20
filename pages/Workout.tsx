@@ -3,21 +3,22 @@ import {
   ROUTINE_MAPPING, EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS,
   EXERCISES_UPPER, EXERCISES_LOWER, EXERCISE_ALTERNATIVES, WARMUP_GUIDE, TECHNICAL_GUIDES
 } from '../constants';
-import { RoutineType, Exercise, WorkoutLogEntry, WorkoutSet } from '../types';
 import {
   calculateOneRM, getCurrentPhase, getTodayDateString,
   getGymSchedule, calculatePlates
 } from '../utils';
+import { RoutineType, Exercise, WorkoutLogEntry, WorkoutSet, CustomRoutine, ExerciseDBEntry } from '../types';
 import { saveLog, getLogs, getPreviousWorkoutLog, getExerciseHistory } from '../services/storage';
 import {
   Save, History, Plus, Minus, Check, Trophy, ArrowRightLeft, X,
   Dumbbell, Settings, Info, Bot, AlertTriangle, Clock, Flame,
   ChevronRight, Timer, Flag, Milk, BookOpen, GraduationCap,
   CalendarDays, Award, Zap, TrendingUp, ArrowUpRight, ArrowLeft,
-  ChevronDown, ArrowUp, ArrowDown, Replace, PlaySquare
+  ChevronDown, ArrowUp, ArrowDown, Replace, PlaySquare, Image as ImageIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { dispatchLiveActivity } from '../hooks/useLiveActivity';
+import { CustomRoutineBuilder } from '../components/CustomRoutineBuilder';
 
 const COMPOUND_EXERCISES = new Set([
   'squat','deadlift','bench_press','overhead_press','barbell_row',
@@ -70,7 +71,12 @@ const Workout: React.FC = () => {
   const specialSchedule = getGymSchedule(today);
   const defaultRoutine = ROUTINE_MAPPING[dayOfWeek];
 
-  const [selectedRoutine, setSelectedRoutine] = useState<RoutineType | null>(null);
+  const [customRoutines, setCustomRoutines] = useState<any[]>(() => {
+    try { return JSON.parse(localStorage.getItem('customRoutines') || '[]'); } catch(e) { return []; }
+  });
+  const [showBuilder, setShowBuilder] = useState(false);
+
+  const [selectedRoutine, setSelectedRoutine] = useState<string | null>(null);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [logs, setLogs] = useState<WorkoutLogEntry[]>([]);
   const [allLogs, setAllLogs] = useState<Record<string, any>>({});
@@ -80,6 +86,20 @@ const Workout: React.FC = () => {
 
   const [showAlternativeFor, setShowAlternativeFor] = useState<string | null>(null);
   const [showTechFor, setShowTechFor] = useState<string | null>(null);
+  const [techExerciseDb, setTechExerciseDb] = useState<ExerciseDBEntry | null>(null);
+
+  useEffect(() => {
+    if (!showTechFor) {
+      setTechExerciseDb(null);
+      return;
+    }
+    import('../data/exercises.json')
+      .then(m => {
+        const entry = (m.default as ExerciseDBEntry[]).find(e => e.id === showTechFor);
+        if (entry) setTechExerciseDb(entry);
+      })
+      .catch(console.error);
+  }, [showTechFor]);
   const [showWarmup, setShowWarmup] = useState(false);
   const [showHistoryFor, setShowHistoryFor] = useState<string | null>(null);
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
@@ -198,7 +218,13 @@ const Workout: React.FC = () => {
 
   useEffect(() => {
     if (selectedRoutine === null) return;
-    const list = ROUTINE_EXERCISES[selectedRoutine] || [];
+    let list: Exercise[] = [];
+    if (selectedRoutine.startsWith('CUSTOM_')) {
+      const cr = customRoutines.find(r => r.id === selectedRoutine);
+      if (cr) list = cr.exercises;
+    } else {
+      list = ROUTINE_EXERCISES[selectedRoutine as RoutineType] || [];
+    }
     setExercises(list);
     const saved = getLogs();
     setAllLogs(saved);
@@ -381,7 +407,7 @@ const Workout: React.FC = () => {
     setShowAlternativeFor(null);
   };
 
-  const calculateSessionAnalysis = (currentLogs: WorkoutLogEntry[], routine: RoutineType) => {
+  const calculateSessionAnalysis = (currentLogs: WorkoutLogEntry[], routine: string) => {
     const tonnage = currentLogs.reduce((a,ex) => a + ex.sets.reduce((s,set) => s + set.weight*set.reps, 0), 0);
     const sameType = Object.values(allLogs).filter((l:any) => l.workoutType === routine && l.date !== today).sort((a:any,b:any) => b.date.localeCompare(a.date));
     const last = sameType[0] as any;
@@ -470,11 +496,64 @@ const Workout: React.FC = () => {
             );
           })}
         </div>
+
+        {/* CUSTOM ROUTINES SECTION */}
+        <div className="px-4 mt-8 mb-4 flex justify-between items-end">
+           <h2 className="text-xl font-display font-bold text-white tracking-tight">Mis Rutinas</h2>
+           <button onClick={() => setShowBuilder(true)} className="text-[10px] text-brand-400 font-bold uppercase tracking-widest flex items-center gap-1 bg-brand-500/10 hover:bg-brand-500/20 px-3 py-1.5 rounded-full transition-all">
+             <Plus size={12}/> Crear
+           </button>
+        </div>
+        
+        {customRoutines.length === 0 ? (
+          <div className="px-4">
+            <div className="p-6 border border-dashed border-zinc-800 rounded-3xl flex flex-col items-center justify-center text-zinc-600 text-center">
+              <Plus size={24} className="mb-2 opacity-50"/>
+              <p className="text-sm font-bold text-zinc-400">Sin rutinas personalizadas</p>
+              <p className="text-xs mt-1">Pulsa Crear para diseñar tu propio entreno usando la base de datos de ejercicios.</p>
+            </div>
+          </div>
+        ) : (
+          <div className="px-4 grid grid-cols-2 gap-3 pb-8">
+             {customRoutines.map(routine => {
+                const doneToday = !!Object.values(getLogs()).find((l:any) => l.workoutType === routine.id && l.date === today && l.workoutCompleted);
+                return (
+                  <motion.button key={routine.id} onClick={() => setSelectedRoutine(routine.id)} whileTap={{ scale: 0.97 }}
+                    className={`relative overflow-hidden rounded-[24px] border border-white/6 text-left transition-all duration-300 active:scale-[0.97] bg-zinc-900/70 backdrop-blur-sm`}>
+                    <div className={`absolute inset-0 bg-gradient-to-br from-brand-600/10 to-transparent pointer-events-none`} />
+                    {doneToday && <div className="absolute top-3 left-3 z-10 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.5)]"><Check size={11} strokeWidth={3} className="text-white" /></div>}
+                    <div className="relative z-10 p-4 pt-5">
+                      <span className="text-3xl mb-3 block">{routine.emoji}</span>
+                      <h2 className={`text-xl font-display font-black leading-none tracking-tight mb-1 text-zinc-200`}>{routine.name}</h2>
+                      <p className="text-[10px] font-bold text-brand-500/70 leading-snug mb-3">Rutina Custom</p>
+                      <div className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-lg border bg-zinc-800 text-zinc-400 border-white/10`}>
+                        <Dumbbell size={9} /> {routine.exercises.length} ejercicios
+                      </div>
+                    </div>
+                  </motion.button>
+                )
+             })}
+          </div>
+        )}
+
+        {showBuilder && (
+          <CustomRoutineBuilder 
+            onClose={() => setShowBuilder(false)} 
+            onSave={(newRoutine) => {
+              const updated = [...customRoutines, newRoutine];
+              setCustomRoutines(updated);
+              localStorage.setItem('customRoutines', JSON.stringify(updated));
+              setShowBuilder(false);
+            }} 
+          />
+        )}
       </div>
     );
   }
 
-  const meta = ROUTINE_META[selectedRoutine];
+  const isCustomRoutine = selectedRoutine.startsWith('CUSTOM_');
+  const customRoutineDef = isCustomRoutine ? customRoutines.find(r => r.id === selectedRoutine) : null;
+  const meta = isCustomRoutine ? { label: customRoutineDef?.name, emoji: customRoutineDef?.emoji } : ROUTINE_META[selectedRoutine as RoutineType];
 
   return (
     <div className="pb-32 min-h-screen">
@@ -601,6 +680,7 @@ const Workout: React.FC = () => {
                   <div className="flex-1 pr-4">
                     <p className="text-brand-400 font-bold text-[10px] uppercase tracking-[0.2em] mb-1.5 flex items-center gap-1"><PlaySquare size={12} fill="currentColor"/> Ejercicio Actual</p>
                     <h2 className="text-2xl font-display font-bold text-white leading-tight tracking-tight">{exercise.name}</h2>
+                    <button onClick={() => setShowTechFor(exercise.id)} className="text-brand-400 flex items-center gap-1 text-[10px] uppercase tracking-widest font-bold mt-2 bg-brand-500/10 hover:bg-brand-500/20 px-2 py-1.5 rounded-md w-fit transition-all"><ImageIcon size={12}/> Ver Técnica</button>
                   </div>
                   <button onClick={e=>toggleExerciseComplete(exercise.id,e)} className="w-10 h-10 rounded-full border-2 border-zinc-700 hover:border-zinc-500 flex items-center justify-center shrink-0">
                      <Check size={16} className="text-zinc-500" />
@@ -736,6 +816,61 @@ const Workout: React.FC = () => {
             <div className="flex gap-3">
               <button onClick={()=>setShowFinishConfirm(false)} className="flex-1 py-3 rounded-xl bg-zinc-800 text-white font-bold text-sm">Cancelar</button>
               <button onClick={()=>{setShowFinishConfirm(false);saveWorkoutWithLogs(logs,true);}} className="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm">Finalizar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TECH MODAL */}
+      {showTechFor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-md max-h-[85vh] bg-zinc-950 border border-white/10 rounded-3xl overflow-hidden shadow-2xl flex flex-col premium-bisel animate-in zoom-in-95 duration-200">
+            <div className="p-5 border-b border-white/5 flex justify-between items-center bg-zinc-900/50">
+              <h2 className="text-xl font-display font-bold text-white truncate pr-4">
+                {techExerciseDb?.name || "Técnica del Ejercicio"}
+              </h2>
+              <button onClick={() => setShowTechFor(null)} className="text-zinc-500 hover:text-white shrink-0"><X size={20}/></button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-5 space-y-6 custom-scrollbar">
+              {techExerciseDb ? (
+                <>
+                  {techExerciseDb.images && techExerciseDb.images.length > 0 && (
+                    <div className="flex gap-2 overflow-x-auto snap-x pb-2 no-scrollbar">
+                      {techExerciseDb.images.map((img, i) => (
+                        <img key={i} src={`/exercises/${img}`} className="h-48 rounded-xl object-contain bg-zinc-900 snap-center shrink-0 border border-white/5" alt={`Paso ${i+1}`} loading="lazy"/>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap gap-2">
+                    {techExerciseDb.primaryMuscles.map(m => (
+                       <span key={m} className="text-[10px] bg-brand-500/20 text-brand-400 border border-brand-500/30 font-bold uppercase tracking-widest px-2 py-1 rounded-md">{m}</span>
+                    ))}
+                    {techExerciseDb.equipment && (
+                       <span className="text-[10px] bg-zinc-800 text-zinc-400 border border-zinc-700 font-bold uppercase tracking-widest px-2 py-1 rounded-md">{techExerciseDb.equipment}</span>
+                    )}
+                  </div>
+
+                  {techExerciseDb.instructions && techExerciseDb.instructions.length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                        <BookOpen size={14}/> Instrucciones
+                      </h3>
+                      <ol className="list-decimal pl-4 space-y-3 text-sm text-zinc-300">
+                        {techExerciseDb.instructions.map((inst, i) => (
+                          <li key={i} className="pl-1 leading-relaxed">{inst}</li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="py-10 text-center text-zinc-500 text-sm flex flex-col items-center justify-center gap-3">
+                   <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"/>
+                   Cargando técnica...
+                </div>
+              )}
             </div>
           </div>
         </div>

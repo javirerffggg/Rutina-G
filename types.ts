@@ -27,7 +27,29 @@ export interface Exercise {
   /** Optional override for rest timer in seconds */
   restSeconds?: number;
   /** Weight of the equipment/machine tare (e.g. hack squat sled). Used by PlateCalculator. */
+  /** Weight of the equipment/machine tare (e.g. hack squat sled). Used by PlateCalculator. */
   equipmentWeight?: number;
+}
+
+export interface CustomRoutine {
+  id: string;
+  name: string;
+  emoji: string;
+  exercises: Exercise[];
+}
+
+export interface ExerciseDBEntry {
+  id: string;
+  name: string;
+  force: string | null;
+  level: string;
+  mechanic: string | null;
+  equipment: string | null;
+  primaryMuscles: string[];
+  secondaryMuscles: string[];
+  instructions: string[];
+  category: string;
+  images: string[];
 }
 
 export interface ExerciseAlternative {
@@ -76,7 +98,7 @@ export interface DailyLog {
 
   notes?: string;
   workoutCompleted?: boolean;
-  workoutType?: RoutineType;
+  workoutType?: string; // Can be RoutineType enum or custom routine id
   exercises?: WorkoutLogEntry[];
   duration?: number; // minutes
 }

@@ -825,10 +825,13 @@ const Workout: React.FC = () => {
             <button onClick={() => setSelectedRoutine(null)} className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors mb-2 text-sm font-bold">
               <ArrowLeft size={16} /> Rutinas
             </button>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mt-1">
               <span className="text-2xl leading-none">{meta.emoji}</span>
               <h1 className="text-2xl font-display font-bold text-white tracking-tight truncate">{meta.label}</h1>
             </div>
+            <button onClick={() => setShowWarmupModal(true)} className={`mt-2 px-3 py-1.5 w-fit rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all flex items-center gap-1.5 ${warmupCompleted ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20' : 'bg-brand-500/10 text-brand-400 border-brand-500/30 hover:bg-brand-500/20'}`}>
+              <Activity size={14}/> {warmupCompleted ? 'Calentamiento Completado' : 'Guía de Calentamiento'}
+            </button>
           </div>
           
           {sessionState === 'active' ? (

@@ -626,19 +626,19 @@
               "setType": "N"
             },
             {
-              "weight": 0,
+              "weight": 29,
               "reps": 0,
               "completed": false,
               "setType": "N"
             },
             {
-              "weight": 0,
+              "weight": 29,
               "reps": 0,
               "completed": false,
               "setType": "N"
             },
             {
-              "weight": 0,
+              "weight": 29,
               "reps": 0,
               "completed": false,
               "setType": "N"
@@ -848,5 +848,5 @@
       }
     }
   },
-  "lastSync": "2026-06-20T16:51:38.143Z"
+  "lastSync": "2026-06-20T16:52:38.455Z"
 }

@@ -622,7 +622,7 @@
             {
               "weight": 0,
               "reps": 0,
-              "completed": false,
+              "completed": true,
               "setType": "N"
             },
             {
@@ -848,5 +848,5 @@
       }
     }
   },
-  "lastSync": "2026-06-20T12:39:21.339Z"
+  "lastSync": "2026-06-20T12:39:26.613Z"
 }

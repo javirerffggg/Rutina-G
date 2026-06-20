@@ -22,11 +22,12 @@
             },
             colors: {
               brand: {
-                50: '#f0f9ff',
-                100: '#e0f2fe',
-                500: '#0ea5e9',
-                600: '#0284c7',
-                900: '#0c4a6e',
+                50: 'var(--brand-50, #f0f9ff)',
+                100: 'var(--brand-100, #e0f2fe)',
+                400: 'var(--brand-400, #38bdf8)',
+                500: 'var(--brand-500, #0ea5e9)',
+                600: 'var(--brand-600, #0284c7)',
+                900: 'var(--brand-900, #0c4a6e)',
               },
               gold: {
                 400: '#fbbf24',
@@ -62,6 +63,17 @@
         font-family: 'Inter', sans-serif;
         overflow-x: hidden;
       }
+      
+      html.oled-mode body {
+        background-color: #000000 !important;
+      }
+      html.oled-mode .bg-black, html.oled-mode .bg-zinc-950, html.oled-mode .bg-zinc-900 {
+        background-color: #000000 !important;
+      }
+      html.large-text body {
+        font-size: 1.125rem;
+      }
+
       
       h1, h2, h3, .font-display {
         font-family: 'Outfit', sans-serif;

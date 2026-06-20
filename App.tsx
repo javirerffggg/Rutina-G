@@ -7,6 +7,7 @@ const Workout    = lazy(() => import('./pages/Workout'));
 const History    = lazy(() => import('./pages/History'));
 const Stats      = lazy(() => import('./pages/Stats'));
 const TrophyRoom = lazy(() => import('./pages/TrophyRoom'));
+const Settings   = lazy(() => import('./pages/Settings'));
 
 const Loader = () => (
   <div className="flex items-center justify-center min-h-screen">
@@ -24,6 +25,7 @@ const App: React.FC = () => (
           <Route path="history"  element={<History />} />
           <Route path="stats"    element={<Stats />} />
           <Route path="trophies" element={<TrophyRoom />} />
+          <Route path="settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/today" replace />} />
         </Route>
       </Routes>

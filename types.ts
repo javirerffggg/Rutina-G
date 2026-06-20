@@ -35,8 +35,9 @@ export interface Exercise {
 export interface CustomRoutine {
   id: string;
   name: string;
-  emoji: string;
   description?: string;
+  folder?: string;
+  emoji: string;
   exercises: Exercise[];
 }
 

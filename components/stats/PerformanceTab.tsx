@@ -79,13 +79,13 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
   }, [workoutLogs]);
 
   const muscleChartData = useMemo(
-    () => Object.entries(muscleSets).map(([name, sets]) => ({ name, sets })).sort((a, b) => b.sets - a.sets),
+    () => Object.entries(muscleSets).map(([name, sets]) => ({ name, sets })).sort((a, b) => (b.sets as number) - (a.sets as number)),
     [muscleSets]
   );
 
   const weeklyMuscleVolume = useMemo(() => getWeeklyMuscleVolume(logs, EXERCISE_MUSCLE_MAP), [logs]);
   const weeklyChartData = useMemo(
-    () => Object.entries(weeklyMuscleVolume).map(([name, sets]) => ({ name, sets })).sort((a, b) => b.sets - a.sets),
+    () => Object.entries(weeklyMuscleVolume).map(([name, sets]) => ({ name, sets })).sort((a, b) => (b.sets as number) - (a.sets as number)),
     [weeklyMuscleVolume]
   );
 

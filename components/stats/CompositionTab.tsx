@@ -1,7 +1,8 @@
 import React, { useState, useCallback, useRef, useMemo } from 'react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { DailyLog, Gender } from '../../types';
-import { Scale, Target, TrendingDown, TrendingUp, Minus, Activity, Ruler } from 'lucide-react';
+import { Scale, Target, TrendingDown, TrendingUp, Minus, Activity, Ruler, User } from 'lucide-react';
+import { getSettings } from '../../services/settings';
 import {
   calculateBodyComposition,
   calculate7DayAverage,
@@ -19,7 +20,9 @@ interface CompositionTabProps {
 
 export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weightLogs, updateLog }) => {
   const debounceRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-  const [gender, setGender] = useState<Gender>(todayLog.gender || 'male');
+  const settings = useMemo(() => getSettings(), []);
+  const gender = (todayLog.gender || (settings.profile.gender === 'F' ? 'female' : 'male')) as Gender;
+  const height = todayLog.height || settings.profile.height;
   const [chartMetric, setChartMetric] = useState<'weight' | 'bodyFat'>('weight');
 
   const debouncedUpdate = useCallback((key: keyof DailyLog, value: number | boolean | Gender) => {
@@ -34,7 +37,6 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
     const weight = todayLog.weight;
     const waist = todayLog.waist;
     const neck = todayLog.neck;
-    const height = todayLog.height;
 
     if (!weight || !waist || !neck || !height) return null;
 
@@ -43,15 +45,16 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
     } catch {
       return null;
     }
-  }, [todayLog.weight, todayLog.waist, todayLog.neck, todayLog.height, gender]);
+  }, [todayLog.weight, todayLog.waist, todayLog.neck, height, gender]);
 
   // 7-day averages for body composition
   const last7Logs = weightLogs.slice(-7);
   const bodyFatValues = last7Logs
     .map(log => {
-      if (!log.weight || !log.waist || !log.neck || !log.height) return null;
+      const logHeight = log.height || height;
+      if (!log.weight || !log.waist || !log.neck || !logHeight) return null;
       try {
-        const comp = calculateBodyComposition(log.weight, log.waist, log.neck, log.height, log.gender || gender);
+        const comp = calculateBodyComposition(log.weight, log.waist, log.neck, logHeight, log.gender || gender);
         return comp.bodyFatPercentage;
       } catch {
         return null;
@@ -84,9 +87,10 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
       const weight = log.weight || null;
 
       let bodyFat: number | null = null;
-      if (log.weight && log.waist && log.neck && log.height) {
+      const logHeight = log.height || height;
+      if (log.weight && log.waist && log.neck && logHeight) {
         try {
-          const comp = calculateBodyComposition(log.weight, log.waist, log.neck, log.height, log.gender || gender);
+          const comp = calculateBodyComposition(log.weight, log.waist, log.neck, logHeight, log.gender || gender);
           bodyFat = comp.bodyFatPercentage;
         } catch {}
       }
@@ -160,7 +164,7 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
           </div>
         </div>
 
-        {/* Fila 1: Peso + Género */}
+        {/* Fila 1: Peso */}
         <div className="flex gap-3 items-end">
           <div className="flex-1">
             <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 block">Peso (kg)</label>
@@ -172,15 +176,6 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
               onChange={e => debouncedUpdate('weight', parseFloat(e.target.value))}
               className="w-full bg-zinc-800/50 border border-zinc-700/50 rounded-xl px-4 py-3 text-white text-2xl font-bold placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all" 
             />
-          </div>
-          {/* Toggle género compacto */}
-          <div className="flex bg-zinc-800/50 rounded-xl p-1 gap-1 mb-[1px]">
-            <button 
-              onClick={() => { setGender('male'); updateLog({ gender: 'male' }); }} 
-              className={`px-3 py-2 rounded-lg text-xs font-bold transition-all ${gender === 'male' ? 'bg-brand-500 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'}`}>♂</button>
-            <button 
-              onClick={() => { setGender('female'); updateLog({ gender: 'female' }); }} 
-              className={`px-3 py-2 rounded-lg text-xs font-bold transition-all ${gender === 'female' ? 'bg-rose-500 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'}`}>♀</button>
           </div>
         </div>
 
@@ -210,18 +205,13 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
           </div>
         </div>
 
-        {/* Altura */}
-        {!todayLog.height && (
-          <div>
-            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 block">Altura (cm) — solo una vez</label>
-            <input 
-              type="number" 
-              inputMode="decimal" 
-              step="0.1"
-              defaultValue={todayLog.height || ''}
-              onChange={e => debouncedUpdate('height', parseFloat(e.target.value))}
-              className="w-full bg-zinc-800/50 border border-zinc-700/50 rounded-xl px-4 py-3 text-white text-lg font-bold placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all" 
-            />
+        {/* Missing Profile Data Notice */}
+        {(!height || !settings.profile.gender) && (
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 flex items-start gap-3">
+             <User size={16} className="text-amber-400 shrink-0 mt-0.5" />
+             <p className="text-xs text-amber-400 font-bold">
+               Completa tu Perfil Físico (Altura y Sexo) en Ajustes para calcular el % de Grasa Corporal y Masa Magra.
+             </p>
           </div>
         )}
       </div>

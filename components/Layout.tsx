@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Dumbbell, CalendarRange, Scale, Trophy } from 'lucide-react';
+import { LayoutDashboard, Dumbbell, CalendarRange, Scale, Trophy, Settings } from 'lucide-react';
 import { ACHIEVEMENTS, AchievementDef } from '../achievements';
 import * as Icons from 'lucide-react';
 import { useLiveActivity } from '../hooks/useLiveActivity';
@@ -200,7 +200,7 @@ const Layout: React.FC = () => {
         style={{ bottom: 'max(16px, env(safe-area-inset-bottom, 16px))' }}
       >
         <div className="glass-panel rounded-[24px] shadow-[0_8px_40px_rgba(0,0,0,0.7)] border border-white/10 px-5 pt-2 pb-2 w-fit max-w-[95vw]">
-          <div className="flex items-center h-14 gap-5 sm:gap-8">
+          <div className="flex items-center h-14 gap-3 sm:gap-6">
             <NavLink to="/history" className={({ isActive }) =>
               `flex flex-col items-center gap-1.5 transition-all ${ isActive ? 'text-blue-400 scale-110' : 'text-zinc-500 hover:text-zinc-300' }`
             }>
@@ -243,6 +243,15 @@ const Layout: React.FC = () => {
               {({ isActive }) => (<>
                 <Trophy size={22} strokeWidth={isActive ? 2.5 : 2} />
                 <span className="text-[9px] font-bold tracking-[0.1em] uppercase">Logros</span>
+              </>)}
+            </NavLink>
+            
+            <NavLink to="/settings" className={({ isActive }) =>
+              `flex flex-col items-center gap-1.5 transition-all ${ isActive ? 'text-zinc-200 scale-110' : 'text-zinc-500 hover:text-zinc-300' }`
+            }>
+              {({ isActive }) => (<>
+                <Settings size={22} strokeWidth={isActive ? 2.5 : 2} />
+                <span className="text-[9px] font-bold tracking-[0.1em] uppercase">Ajustes</span>
               </>)}
             </NavLink>
           </div>

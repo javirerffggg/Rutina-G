@@ -163,13 +163,13 @@ export const DataTab: React.FC = () => {
             <div className="flex items-center gap-2">
               <div className="flex-1 bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-zinc-400 font-mono truncate select-all">
                 {(() => {
-                  const url = import.meta.env.VITE_CONVEX_URL;
+                  const url = (import.meta as any).env.VITE_CONVEX_URL;
                   return url ? url.replace('.convex.cloud', '.convex.site') + `/export?token=${getDeviceId()}` : 'Configura Convex primero para generar tu enlace';
                 })()}
               </div>
               <button 
                 onClick={() => {
-                  const url = import.meta.env.VITE_CONVEX_URL;
+                  const url = (import.meta as any).env.VITE_CONVEX_URL;
                   if (url) {
                     navigator.clipboard.writeText(url.replace('.convex.cloud', '.convex.site') + `/export?token=${getDeviceId()}`);
                     alert('Enlace copiado al portapapeles');

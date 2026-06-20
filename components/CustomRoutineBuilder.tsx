@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { X, Search, Plus, Trash2, Dumbbell, ChevronUp, ChevronDown, Check, AlertTriangle, Minus } from 'lucide-react';
 import { CustomRoutine, Exercise, ExerciseDBEntry } from '../types';
 import { MUSCLE_NAMES_ES } from '../data/translations.es';
+import { getSettings } from '../services/settings';
 
 const EMOJIS = ['💪', '🏋️', '🦵', '🔥', '⚡', '🎯', '🏃', '🤸', '🧠', '💀', '👑', '🔱', '🦍', '🐅', '🦖', '🚀'];
 const POPULAR_EXERCISES = ['Barbell Squat', 'Bench Press', 'Deadlift', 'Pull Up', 'Push Up', 'Overhead Press', 'Barbell Row', 'Dumbbell Curl'];
@@ -16,9 +17,11 @@ interface CustomRoutineBuilderProps {
 export const CustomRoutineBuilder: React.FC<CustomRoutineBuilderProps> = ({ onClose, onSave }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [folder, setFolder] = useState('');
   const [emoji, setEmoji] = useState('💪');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const settings = useMemo(() => getSettings(), []);
   
   const [db, setDb] = useState<ExerciseDBEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -133,6 +136,7 @@ export const CustomRoutineBuilder: React.FC<CustomRoutineBuilderProps> = ({ onCl
       id: `CUSTOM_${Date.now()}`,
       name: name.trim(),
       description: description.trim() || undefined,
+      folder: settings.routineFolders && folder.trim() ? folder.trim() : undefined,
       emoji: emoji,
       exercises
     };
@@ -200,6 +204,19 @@ export const CustomRoutineBuilder: React.FC<CustomRoutineBuilderProps> = ({ onCl
                 className="w-full bg-zinc-900/50 border border-white/5 rounded-xl p-3 text-xs text-white focus:border-brand-500 focus:outline-none transition-all"
               />
             </div>
+
+            {settings.routineFolders && (
+              <div>
+                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Carpeta / Etiqueta (Opcional)</label>
+                <input 
+                  type="text" 
+                  value={folder} 
+                  onChange={e => setFolder(e.target.value)} 
+                  placeholder="Ej: Fuerza, Hipertrofia, Piernas..."
+                  className="w-full bg-zinc-900/50 border border-white/5 rounded-xl p-3 text-xs text-white focus:border-brand-500 focus:outline-none transition-all"
+                />
+              </div>
+            )}
           </div>
 
           {/* Ejercicios */}

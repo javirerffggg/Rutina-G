@@ -1,10 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { applySettings, getSettings } from './services/settings';
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { SyncManager } from "./components/SyncManager";
 
-const convexUrl = import.meta.env.VITE_CONVEX_URL;
+applySettings(getSettings());
+
+const convexUrl = (import.meta as any).env.VITE_CONVEX_URL;
 const convex = convexUrl ? new ConvexReactClient(convexUrl) : null;
 
 if ('serviceWorker' in navigator) {

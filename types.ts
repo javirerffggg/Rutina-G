@@ -27,14 +27,16 @@ export interface Exercise {
   /** Optional override for rest timer in seconds */
   restSeconds?: number;
   /** Weight of the equipment/machine tare (e.g. hack squat sled). Used by PlateCalculator. */
-  /** Weight of the equipment/machine tare (e.g. hack squat sled). Used by PlateCalculator. */
   equipmentWeight?: number;
+  primaryMuscles?: string[];
+  targetRIR?: number;
 }
 
 export interface CustomRoutine {
   id: string;
   name: string;
   emoji: string;
+  description?: string;
   exercises: Exercise[];
 }
 

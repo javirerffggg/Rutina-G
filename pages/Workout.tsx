@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   ROUTINE_MAPPING, EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS,
-  EXERCISES_UPPER, EXERCISES_LOWER, EXERCISE_ALTERNATIVES, WARMUP_GUIDE, TECHNICAL_GUIDES
+  EXERCISES_UPPER, EXERCISES_LOWER, EXERCISE_ALTERNATIVES, WARMUP_GUIDE, TECHNICAL_GUIDES,
+  EXERCISE_MUSCLE_MAP
 } from '../constants';
 import {
   calculateOneRM, getCurrentPhase, getTodayDateString,
@@ -14,7 +15,8 @@ import {
   Dumbbell, Settings, Info, Bot, AlertTriangle, Clock, Flame,
   ChevronRight, Timer, Flag, Milk, BookOpen, GraduationCap,
   CalendarDays, Award, Zap, TrendingUp, ArrowUpRight, ArrowLeft,
-  ChevronDown, ArrowUp, ArrowDown, Replace, PlaySquare, Image as ImageIcon
+  ChevronDown, ArrowUp, ArrowDown, Replace, PlaySquare, Image as ImageIcon,
+  MoreVertical, Search, PlayCircle, CalendarClock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { dispatchLiveActivity } from '../hooks/useLiveActivity';
@@ -77,6 +79,8 @@ const Workout: React.FC = () => {
     try { return JSON.parse(localStorage.getItem('customRoutines') || '[]'); } catch(e) { return []; }
   });
   const [showBuilder, setShowBuilder] = useState(false);
+  const [searchCustom, setSearchCustom] = useState('');
+  const [customMenuOpen, setCustomMenuOpen] = useState<string | null>(null);
 
   const [selectedRoutine, setSelectedRoutine] = useState<string | null>(null);
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -474,14 +478,107 @@ const Workout: React.FC = () => {
 
   if (selectedRoutine === null) {
     const ORDERED: RoutineType[] = [RoutineType.PUSH, RoutineType.PULL, RoutineType.LEGS, RoutineType.UPPER, RoutineType.LOWER, RoutineType.REST];
+    const allLogsList = Object.values(getLogs()).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const recentHistory = allLogsList.filter((l: any) => l.workoutCompleted && l.exercises?.length).slice(0, 3);
+    const activeSession = localStorage.getItem(`workoutSessionState_${today}`) === 'active';
+    const defaultMeta = ROUTINE_META[defaultRoutine as RoutineType];
+
+    const getRoutineStats = (routineId: string) => {
+      const routineLogs = allLogsList.filter((l: any) => l.workoutType === routineId && l.workoutCompleted && l.date !== today);
+      if (routineLogs.length === 0) return null;
+      const last = routineLogs[0];
+      const daysAgo = Math.floor((new Date(today).getTime() - new Date(last.date).getTime()) / 86400000);
+      const volume = last.exercises?.reduce((sum: number, ex: any) => sum + ex.sets.reduce((s: number, set: any) => s + ((set.weight || 0) * (set.reps || 0)), 0), 0) || 0;
+      const avgDuration = Math.round(routineLogs.reduce((sum: number, l: any) => sum + (l.duration || 0), 0) / routineLogs.length);
+      return { daysAgo, volume, avgDuration };
+    };
+
+    const getCustomMuscles = (routine: any) => {
+      const musclesCount: Record<string, number> = {};
+      routine.exercises.forEach((ex: any) => {
+        const m = EXERCISE_MUSCLE_MAP[ex.id] || [];
+        m.forEach((muscle: string) => { musclesCount[muscle] = (musclesCount[muscle] || 0) + 1; });
+      });
+      return Object.entries(musclesCount).sort((a,b) => b[1] - a[1]).slice(0,2).map(e => e[0]).join(' · ') || 'Varios';
+    };
+
+    const filteredCustomRoutines = customRoutines.filter(r => searchCustom === '' || r.name.toLowerCase().includes(searchCustom.toLowerCase()));
+
+    const deleteCustomRoutine = (id: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      const updated = customRoutines.filter(r => r.id !== id);
+      setCustomRoutines(updated);
+      localStorage.setItem('customRoutines', JSON.stringify(updated));
+      setCustomMenuOpen(null);
+    };
+
     return (
       <div className="min-h-screen pb-32">
-        <div className="pt-12 px-6 pb-8">
+        <div className="pt-12 px-6 pb-6">
           <h1 className="text-4xl font-display font-bold text-white tracking-tight mb-1">Entrenamiento</h1>
           <p className="text-brand-400 text-[10px] font-bold tracking-[0.2em] uppercase flex items-center gap-2">
             <Trophy size={14} /> {phase.trainingFocus}
           </p>
         </div>
+
+        {/* HISTORIAL RECIENTE */}
+        {recentHistory.length > 0 && (
+          <div className="px-4 mb-6">
+            <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-3 px-2">Historial Reciente</h2>
+            <div className="flex gap-3 overflow-x-auto no-scrollbar snap-x pb-2 -mx-4 px-4">
+              {recentHistory.map((log: any, i: number) => {
+                const dateStr = new Date(log.date).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' });
+                const volume = log.exercises?.reduce((sum: number, ex: any) => sum + ex.sets.reduce((s: number, set: any) => s + ((set.weight || 0) * (set.reps || 0)), 0), 0) || 0;
+                return (
+                  <div key={i} className="snap-center shrink-0 w-40 bg-zinc-900/50 border border-zinc-800/50 p-3 rounded-2xl">
+                    <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest capitalize mb-1">{dateStr}</p>
+                    <h4 className="text-xs font-bold text-white truncate">{log.workoutType}</h4>
+                    <p className="text-[10px] font-bold text-brand-400 mt-2">{volume.toLocaleString()} kg</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* HOY TOCA & CONTINUAR CTA */}
+        <div className="px-4 mb-8 space-y-3">
+          {activeSession && (
+            <motion.button onClick={() => setSelectedRoutine(localStorage.getItem(`workoutSessionState_${today}`) || defaultRoutine)} whileTap={{ scale: 0.98 }}
+              className="w-full relative overflow-hidden rounded-3xl border border-brand-500/50 bg-brand-900/20 text-left p-5 transition-all shadow-lg shadow-brand-900/20">
+              <div className="absolute inset-0 bg-gradient-to-r from-brand-600/10 to-transparent pointer-events-none" />
+              <div className="relative z-10 flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="w-2 h-2 rounded-full bg-brand-400 animate-pulse" />
+                    <span className="text-[10px] font-bold text-brand-400 uppercase tracking-widest">Sesión Activa</span>
+                  </div>
+                  <h3 className="text-xl font-display font-bold text-white">Continuar Entreno</h3>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400">
+                  <PlayCircle size={20} />
+                </div>
+              </div>
+            </motion.button>
+          )}
+
+          {!activeSession && defaultRoutine !== RoutineType.REST && defaultMeta && (
+            <div className="relative overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">
+               <div className="flex justify-between items-start mb-4">
+                 <div>
+                   <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-1">Hoy Toca</h2>
+                   <h3 className="text-2xl font-display font-bold text-white">{defaultMeta.label}</h3>
+                 </div>
+                 <span className="text-3xl opacity-80">{defaultMeta.emoji}</span>
+               </div>
+               <button onClick={() => setSelectedRoutine(defaultRoutine)} className="w-full py-3 bg-white text-black text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-zinc-200 transition-colors">
+                 Comenzar Sesión
+               </button>
+            </div>
+          )}
+        </div>
+
+        {/* GRID DE RUTINAS PREDEFINIDAS */}
         <div className="px-4 grid grid-cols-2 gap-3">
           {ORDERED.map(routine => {
             const meta = ROUTINE_META[routine];
@@ -489,17 +586,35 @@ const Workout: React.FC = () => {
             const exList = ROUTINE_EXERCISES[routine] || [];
             const savedLog = Object.values(getLogs()).find((l:any) => l.workoutType === routine && l.date === today);
             const doneToday = !!(savedLog as any)?.workoutCompleted;
+            const stats = getRoutineStats(routine);
+
             return (
               <motion.button key={routine} onClick={() => setSelectedRoutine(routine)} whileTap={{ scale: 0.97 }}
                 className={`relative overflow-hidden rounded-[24px] border text-left transition-all duration-300 active:scale-[0.97] bg-zinc-900/70 backdrop-blur-sm ${isToday ? `${meta.border} ${meta.glow}` : 'border-white/6'}`}>
                 <div className={`absolute inset-0 bg-gradient-to-br ${meta.accent} pointer-events-none`} />
+                
+                {/* Franja/Borde destacado para HOY */}
+                {isToday && <div className={`absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b ${meta.accent} from-50%`} />}
                 {isToday && <div className="absolute top-3 right-3 z-10"><span className={`text-[9px] font-black uppercase tracking-[0.15em] px-2 py-0.5 rounded-full border ${meta.badge}`}>HOY</span></div>}
                 {doneToday && <div className="absolute top-3 left-3 z-10 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.5)]"><Check size={11} strokeWidth={3} className="text-white" /></div>}
+                
                 <div className="relative z-10 p-4 pt-5">
                   <span className="text-3xl mb-3 block">{meta.emoji}</span>
                   <h2 className={`text-xl font-display font-black leading-none tracking-tight mb-1 ${isToday ? 'text-white' : 'text-zinc-300'}`}>{meta.label}</h2>
                   <p className="text-[10px] font-bold text-zinc-500 leading-snug mb-3">{meta.muscles}</p>
-                  {exList.length > 0 && <div className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-lg border ${meta.badge}`}><Dumbbell size={9} /> {exList.length} ejercicios</div>}
+                  
+                  {stats ? (
+                    <div className="space-y-1.5 mb-3">
+                      <div className="text-[9px] font-bold text-zinc-400 flex items-center gap-1">
+                        <Clock size={10} className="text-zinc-500" /> ~{stats.avgDuration || 50} min
+                      </div>
+                      <div className="text-[9px] font-bold text-zinc-500">
+                        Última: hace {stats.daysAgo}d · {stats.volume.toLocaleString()} kg
+                      </div>
+                    </div>
+                  ) : (
+                    exList.length > 0 && <div className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 mb-3 rounded-lg border ${meta.badge}`}><Dumbbell size={9} /> {exList.length} ejercicios</div>
+                  )}
                 </div>
               </motion.button>
             );
@@ -507,39 +622,92 @@ const Workout: React.FC = () => {
         </div>
 
         {/* CUSTOM ROUTINES SECTION */}
-        <div className="px-4 mt-8 mb-4 flex justify-between items-end">
-           <h2 className="text-xl font-display font-bold text-white tracking-tight">Mis Rutinas</h2>
-           <button onClick={() => setShowBuilder(true)} className="text-[10px] text-brand-400 font-bold uppercase tracking-widest flex items-center gap-1 bg-brand-500/10 hover:bg-brand-500/20 px-3 py-1.5 rounded-full transition-all">
-             <Plus size={12}/> Crear
-           </button>
+        <div className="px-4 mt-8 mb-4">
+           <div className="flex justify-between items-end mb-4">
+             <h2 className="text-xl font-display font-bold text-white tracking-tight">Mis Rutinas</h2>
+             {customRoutines.length > 0 && (
+               <button onClick={() => setShowBuilder(true)} className="text-[10px] text-brand-400 font-bold uppercase tracking-widest flex items-center gap-1 bg-brand-500/10 hover:bg-brand-500/20 px-3 py-1.5 rounded-full transition-all">
+                 <Plus size={12}/> Crear
+               </button>
+             )}
+           </div>
+
+           {customRoutines.length > 0 && (
+             <div className="relative mb-4">
+               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={14} />
+               <input 
+                 type="text" 
+                 placeholder="Buscar mis rutinas..." 
+                 value={searchCustom}
+                 onChange={e => setSearchCustom(e.target.value)}
+                 className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl py-2 pl-9 pr-3 text-xs font-bold text-white placeholder:text-zinc-600 focus:outline-none focus:border-brand-500/50 transition-all"
+               />
+             </div>
+           )}
         </div>
         
         {customRoutines.length === 0 ? (
           <div className="px-4">
-            <div className="p-6 border border-dashed border-zinc-800 rounded-3xl flex flex-col items-center justify-center text-zinc-600 text-center">
-              <Plus size={24} className="mb-2 opacity-50"/>
-              <p className="text-sm font-bold text-zinc-400">Sin rutinas personalizadas</p>
-              <p className="text-xs mt-1">Pulsa Crear para diseñar tu propio entreno usando la base de datos de ejercicios.</p>
+            <div className="p-8 border border-dashed border-zinc-800 rounded-3xl bg-zinc-900/30 flex flex-col items-center justify-center text-center">
+              <div className="w-16 h-16 rounded-full bg-zinc-800/50 flex items-center justify-center mb-4 text-zinc-500">
+                <Dumbbell size={28} />
+              </div>
+              <p className="text-sm font-bold text-white mb-1">Crea tu primera rutina</p>
+              <p className="text-xs text-zinc-500 mb-6 max-w-xs">Diseña un entrenamiento a tu medida usando nuestra base de datos completa de ejercicios.</p>
+              <button onClick={() => setShowBuilder(true)} className="flex items-center gap-2 bg-white text-black px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-zinc-200 transition-all active:scale-95">
+                <Plus size={16} /> Crear Rutina
+              </button>
             </div>
           </div>
         ) : (
           <div className="px-4 grid grid-cols-2 gap-3 pb-8">
-             {customRoutines.map(routine => {
+             {filteredCustomRoutines.map(routine => {
                 const doneToday = !!Object.values(getLogs()).find((l:any) => l.workoutType === routine.id && l.date === today && l.workoutCompleted);
+                const muscles = getCustomMuscles(routine);
+                const isMenuOpen = customMenuOpen === routine.id;
+
                 return (
-                  <motion.button key={routine.id} onClick={() => setSelectedRoutine(routine.id)} whileTap={{ scale: 0.97 }}
-                    className={`relative overflow-hidden rounded-[24px] border border-white/6 text-left transition-all duration-300 active:scale-[0.97] bg-zinc-900/70 backdrop-blur-sm`}>
-                    <div className={`absolute inset-0 bg-gradient-to-br from-brand-600/10 to-transparent pointer-events-none`} />
-                    {doneToday && <div className="absolute top-3 left-3 z-10 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.5)]"><Check size={11} strokeWidth={3} className="text-white" /></div>}
-                    <div className="relative z-10 p-4 pt-5">
-                      <span className="text-3xl mb-3 block">{routine.emoji}</span>
-                      <h2 className={`text-xl font-display font-black leading-none tracking-tight mb-1 text-zinc-200`}>{routine.name}</h2>
-                      <p className="text-[10px] font-bold text-brand-500/70 leading-snug mb-3">Rutina Custom</p>
-                      <div className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-lg border bg-zinc-800 text-zinc-400 border-white/10`}>
-                        <Dumbbell size={9} /> {routine.exercises.length} ejercicios
+                  <div key={routine.id} className="relative">
+                    <motion.button onClick={() => setSelectedRoutine(routine.id)} whileTap={{ scale: 0.97 }}
+                      className={`w-full relative overflow-hidden rounded-[24px] border border-white/6 text-left transition-all duration-300 active:scale-[0.97] bg-zinc-900/70 backdrop-blur-sm`}>
+                      <div className={`absolute inset-0 bg-gradient-to-br from-brand-600/10 to-transparent pointer-events-none`} />
+                      {doneToday && <div className="absolute top-3 left-3 z-10 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.5)]"><Check size={11} strokeWidth={3} className="text-white" /></div>}
+                      <div className="relative z-10 p-4 pt-5">
+                        <span className="text-3xl mb-3 block">{routine.emoji}</span>
+                        <h2 className={`text-xl font-display font-black leading-none tracking-tight mb-1 text-zinc-200 truncate`}>{routine.name}</h2>
+                        {routine.description ? (
+                          <p className="text-[10px] font-bold text-brand-500/70 leading-snug mb-3 truncate">{routine.description}</p>
+                        ) : (
+                          <p className="text-[10px] font-bold text-zinc-500 leading-snug mb-3 truncate">{muscles}</p>
+                        )}
+                        <div className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-lg border bg-zinc-800 text-zinc-400 border-white/10`}>
+                          <Dumbbell size={9} /> {routine.exercises.length} ej.
+                        </div>
                       </div>
-                    </div>
-                  </motion.button>
+                    </motion.button>
+                    
+                    {/* Botón de opciones */}
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setCustomMenuOpen(isMenuOpen ? null : routine.id); }}
+                      className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
+                    >
+                      <MoreVertical size={16} />
+                    </button>
+
+                    {/* Menú Contextual */}
+                    {isMenuOpen && (
+                      <div className="absolute top-12 right-2 z-30 w-36 bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl overflow-hidden animate-in zoom-in-95 origin-top-right">
+                        <div className="flex flex-col">
+                          <button onClick={(e) => { e.stopPropagation(); /* TODO: Editar */ setCustomMenuOpen(null); }} className="px-4 py-2.5 text-left text-xs font-bold text-white hover:bg-zinc-700 transition-colors border-b border-zinc-700/50">
+                            Editar Rutina
+                          </button>
+                          <button onClick={(e) => deleteCustomRoutine(routine.id, e)} className="px-4 py-2.5 text-left text-xs font-bold text-red-400 hover:bg-zinc-700 transition-colors">
+                            Eliminar
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )
              })}
           </div>

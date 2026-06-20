@@ -27,6 +27,7 @@ const Layout: React.FC = () => {
   const [toastQueue, setToastQueue] = useState<AchievementDef[]>([]);
   const toastAchievement = toastQueue[0] ?? null;
   const liveActivity = useLiveActivity();
+  const [forceHideNav, setForceHideNav] = useState(false);
 
   const handleDismissRest = useCallback(() => {
     window.dispatchEvent(new CustomEvent('live-activity-dismiss-rest'));
@@ -59,6 +60,12 @@ const Layout: React.FC = () => {
     window.addEventListener('achievements-unlocked', handleUnlock);
     return () => window.removeEventListener('achievements-unlocked', handleUnlock);
   }, [handleUnlock]);
+
+  useEffect(() => {
+    const handleForceHide = (e: Event) => setForceHideNav((e as CustomEvent<boolean>).detail);
+    window.addEventListener('force-hide-nav', handleForceHide);
+    return () => window.removeEventListener('force-hide-nav', handleForceHide);
+  }, []);
 
   const handleScroll = useCallback((e: React.UIEvent<HTMLElement>) => {
     const el = e.target as HTMLElement;
@@ -175,7 +182,7 @@ const Layout: React.FC = () => {
 
       <nav
         className={`fixed left-0 right-0 flex justify-center z-50 transition-all duration-300 ease-in-out ${
-          showNav ? 'translate-y-0 opacity-100' : 'translate-y-[120%] opacity-0'
+          (showNav && !forceHideNav) ? 'translate-y-0 opacity-100' : 'translate-y-[120%] opacity-0'
         }`}
         style={{ bottom: 'max(16px, env(safe-area-inset-bottom, 16px))' }}
       >

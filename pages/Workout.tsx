@@ -119,6 +119,13 @@ const Workout: React.FC = () => {
   }, [sessionState, startTime]);
 
   useEffect(() => {
+    window.dispatchEvent(new CustomEvent('force-hide-nav', { detail: selectedRoutine !== null }));
+    return () => {
+      window.dispatchEvent(new CustomEvent('force-hide-nav', { detail: false }));
+    };
+  }, [selectedRoutine]);
+
+  useEffect(() => {
     let iv: ReturnType<typeof setInterval>;
     if (restTimer !== null && restTimer > 0) {
       iv = setInterval(() => {
@@ -486,8 +493,8 @@ const Workout: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* HEADER / STICKY DASHBOARD */}
-      <div className={`sticky top-0 z-40 bg-black/80 backdrop-blur-xl border-b border-white/5 pt-12 px-4 pb-4 transition-all duration-300`}>
+      {/* HEADER / DASHBOARD */}
+      <div className={`relative bg-black/80 backdrop-blur-xl border-b border-white/5 pt-12 px-4 pb-4 transition-all duration-300`}>
         <div className="flex justify-between items-start gap-3">
           <div className="min-w-0 flex-1">
             <button onClick={() => setSelectedRoutine(null)} className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors mb-2 text-sm font-bold">
@@ -608,26 +615,44 @@ const Workout: React.FC = () => {
                      
                      if (set.completed) {
                        return (
-                         <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
+                         <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10 mb-2">
                            <div className="flex items-center gap-3">
                              <span className="text-[10px] font-bold text-emerald-500/50 w-4">{idx+1}</span>
-                             <span className="text-sm font-bold text-emerald-400 line-through">{set.weight}kg × {set.reps}</span>
+                             <span className="text-sm font-bold text-emerald-400 line-through">{set.weight}kg × {set.reps}{set.rir != null ? ` @ RPE ${10 - set.rir}` : ''}</span>
                            </div>
                            <button onClick={() => toggleSetComplete(exercise.id, idx)} className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest px-2 py-1 rounded bg-black/20 hover:text-white">Deshacer</button>
                          </div>
                        );
                      }
 
+                     if (!isCurrentSet) {
+                       return (
+                         <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-black/20 border border-white/5 opacity-60 mb-2">
+                           <div className="flex items-center gap-3">
+                             <span className="text-[10px] font-bold text-zinc-600 w-4">{idx+1}</span>
+                             <span className="text-sm font-bold text-zinc-500">{ps ? `Objetivo: ${ps.weight}kg × ${ps.reps}` : 'Próxima serie'}</span>
+                           </div>
+                           <button onClick={() => removeSet(exercise.id, idx)} className="text-[10px] text-zinc-600 hover:text-red-400 uppercase font-bold tracking-widest px-2 py-1">Quitar</button>
+                         </div>
+                       );
+                     }
+
                      return (
-                       <div key={idx} className={`p-4 rounded-2xl border transition-all ${isCurrentSet ? 'bg-black/40 border-brand-500/50 shadow-lg' : 'bg-black/20 border-white/5 opacity-60'}`}>
+                       <div key={idx} className={`p-4 rounded-2xl border transition-all mb-2 bg-black/40 border-brand-500/50 shadow-lg`}>
                           <div className="flex justify-between items-center mb-3">
                             <span className="text-[10px] font-bold uppercase tracking-widest text-brand-400">Set {idx+1}</span>
                             <div className="flex gap-2">
+                               <button onClick={() => cycleSetType(exercise.id, idx)} className={`w-8 h-6 rounded border text-[9px] font-bold flex items-center justify-center ${
+                                  setType === 'W' ? 'bg-zinc-700/50 text-zinc-400 border-zinc-600/50' :
+                                  setType === 'N' ? 'bg-brand-500/20 text-brand-400 border-brand-500/30' :
+                                  setType === 'D' ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' :
+                                  'bg-red-500/20 text-red-400 border-red-500/30'
+                               }`}>{setType}</button>
                                <button onClick={() => removeSet(exercise.id, idx)} className="text-[10px] text-zinc-500 uppercase tracking-widest hover:text-red-400">Quitar</button>
                             </div>
                           </div>
                           
-                          <div className="grid grid-cols-2 gap-3 mb-2">
+                          <div className="grid grid-cols-2 gap-3 mb-3">
                             {/* PESO */}
                             <div className="bg-zinc-900/80 rounded-xl p-3 border border-white/5 relative">
                                <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-widest text-center mb-1">Peso (kg)</p>
@@ -643,9 +668,33 @@ const Workout: React.FC = () => {
                                {ps && <p className="text-[9px] text-center text-zinc-600 mt-1">ant: {ps.reps}</p>}
                             </div>
                           </div>
+
+                          {/* RPE BUTTONS */}
+                          <div className="mb-4">
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 mb-2 text-center">Esfuerzo (RPE)</p>
+                            <div className="flex justify-between gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                               {[7.5, 8, 8.5, 9, 9.5, 10].map(rpe => {
+                                  const rir = 10 - rpe;
+                                  const isSelected = set.rir === rir;
+                                  let colorClass = 'bg-zinc-800 text-zinc-400 border-white/5';
+                                  if (isSelected) {
+                                     if (rpe === 10) colorClass = 'bg-red-500/20 text-red-400 border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.3)]';
+                                     else if (rpe >= 9) colorClass = 'bg-orange-500/20 text-orange-400 border-orange-500/50 shadow-[0_0_10px_rgba(249,115,22,0.3)]';
+                                     else if (rpe >= 8) colorClass = 'bg-amber-500/20 text-amber-400 border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.3)]';
+                                     else colorClass = 'bg-brand-500/20 text-brand-400 border-brand-500/50 shadow-[0_0_10px_rgba(217,119,6,0.3)]';
+                                  }
+                                  return (
+                                     <button key={rpe} onClick={() => { updateSet(exercise.id, idx, 'rir', rir); saveWorkout(); }}
+                                        className={`shrink-0 min-w-[3.5rem] py-2 rounded-lg border font-display font-bold text-sm transition-all active:scale-95 ${colorClass}`}>
+                                        {rpe}
+                                     </button>
+                                  );
+                               })}
+                            </div>
+                          </div>
                           
-                          <button onClick={() => toggleSetComplete(exercise.id, idx)} className="w-full py-4 mt-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold uppercase tracking-[0.15em] text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
-                            <Check size={18} strokeWidth={3}/> {isCurrentSet ? 'Completar' : 'Marcar Listo'}
+                          <button onClick={() => toggleSetComplete(exercise.id, idx)} className="w-full py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold uppercase tracking-[0.15em] text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-emerald-900/40">
+                            <Check size={18} strokeWidth={3}/> Completar
                           </button>
                        </div>
                      );

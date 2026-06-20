@@ -584,7 +584,7 @@
               "rir": 2
             }
           ],
-          "completed": true
+          "completed": false
         },
         {
           "exerciseId": "low_rdl",
@@ -848,5 +848,5 @@
       }
     }
   },
-  "lastSync": "2026-06-20T12:39:14.727Z"
+  "lastSync": "2026-06-20T12:39:21.339Z"
 }

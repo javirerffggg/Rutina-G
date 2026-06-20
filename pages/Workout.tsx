@@ -876,7 +876,7 @@ const Workout: React.FC = () => {
       )}
 
       {/* EXERCISES — compact, edge-to-edge with small side padding */}
-      <div className="px-3 space-y-3">
+      <div className="px-1.5 space-y-2.5">
         {selectedRoutine === RoutineType.REST ? (
           <div className="flex flex-col items-center justify-center py-24 opacity-40">
             <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6"><Trophy size={32} className="text-zinc-600"/></div>
@@ -1036,7 +1036,7 @@ const Workout: React.FC = () => {
                 }`}>
 
                 {/* Header row — always visible */}
-                <div className="px-4 py-3 flex items-center gap-3 relative z-10">
+                <div className="px-3 py-2.5 flex items-center gap-2 relative z-10">
                   {/* Botones de reordenamiento (solo si no completado) */}
                   {!isCompleted && (
                     <div className="flex flex-col gap-0.5 shrink-0">
@@ -1044,90 +1044,90 @@ const Workout: React.FC = () => {
                         onClick={(e) => { e.stopPropagation(); moveExercise(exercise.id, 'up'); }}
                         disabled={exerciseIndex === 0}
                         className={`p-0.5 rounded transition-all ${exerciseIndex === 0 ? 'text-zinc-800 cursor-not-allowed' : 'text-zinc-600 hover:text-brand-400 active:scale-95'}`}>
-                        <ArrowUp size={14} />
+                        <ArrowUp size={12} />
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); moveExercise(exercise.id, 'down'); }}
                         disabled={exerciseIndex === exercises.length - 1}
                         className={`p-0.5 rounded transition-all ${exerciseIndex === exercises.length - 1 ? 'text-zinc-800 cursor-not-allowed' : 'text-zinc-600 hover:text-brand-400 active:scale-95'}`}>
-                        <ArrowDown size={14} />
+                        <ArrowDown size={12} />
                       </button>
                     </div>
                   )}
 
                   <div className="flex-1 min-w-0">
-                    <h3 className={`font-display font-bold text-base leading-tight transition-all truncate ${
+                    <h3 className={`font-display font-bold text-sm leading-tight transition-all truncate ${
                       isCompleted ? 'text-emerald-400 line-through' : isExpanded ? 'text-white' : 'text-zinc-300'
                     }`}>{exercise.name}</h3>
                     {!isCompleted && (
-                      <div className="flex flex-wrap gap-1.5 mt-1">
-                        <span className={`text-[9px] px-1.5 py-0.5 rounded border font-bold uppercase tracking-wider ${
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        <span className={`text-[8px] px-1 py-0.5 rounded border font-bold uppercase tracking-wider ${
                           showVR ? 'bg-amber-500/10 border-amber-500/30 text-amber-500' : 'bg-zinc-800/60 border-white/5 text-zinc-500'
                         }`}>{showVR && <span className="line-through opacity-40 mr-1">{exercise.targetSets}</span>}{displaySets} sets{showVR&&' (Déficit)'}</span>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded border bg-zinc-800/60 border-white/5 text-zinc-500 font-bold uppercase tracking-wider">{exercise.targetReps} reps</span>
-                        {exercise.notes && <span className="text-[9px] px-1.5 py-0.5 rounded border bg-brand-500/10 border-brand-500/20 text-brand-400/80 font-bold uppercase tracking-wider truncate max-w-[140px]">{exercise.notes}</span>}
+                        <span className="text-[8px] px-1 py-0.5 rounded border bg-zinc-800/60 border-white/5 text-zinc-500 font-bold uppercase tracking-wider">{exercise.targetReps} reps</span>
+                        {exercise.notes && <span className="text-[8px] px-1 py-0.5 rounded border bg-brand-500/10 border-brand-500/20 text-brand-400/80 font-bold uppercase tracking-wider truncate max-w-[120px]">{exercise.notes}</span>}
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-1.5 shrink-0">
                     {hasTechGuide && !isCompleted && (
-                      <button onClick={e=>{e.stopPropagation();setShowTechFor(exercise.id);}} className="text-zinc-600 hover:text-brand-400 transition-all p-1"><BookOpen size={16}/></button>
+                      <button onClick={e=>{e.stopPropagation();setShowTechFor(exercise.id);}} className="text-zinc-600 hover:text-brand-400 transition-all p-1"><BookOpen size={14}/></button>
                     )}
                     {alternatives && !isCompleted && (
-                      <button onClick={e=>{e.stopPropagation();setShowAlternativeFor(exercise.id);}} className="text-zinc-600 hover:text-brand-400 transition-all p-1"><ArrowRightLeft size={16}/></button>
+                      <button onClick={e=>{e.stopPropagation();setShowAlternativeFor(exercise.id);}} className="text-zinc-600 hover:text-brand-400 transition-all p-1"><ArrowRightLeft size={14}/></button>
                     )}
                     {!isCompleted && (
-                      <ChevronDown size={16} className={`text-zinc-600 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                      <ChevronDown size={14} className={`text-zinc-600 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
                     )}
                     <button onClick={e=>toggleExerciseComplete(exercise.id,e)}
-                      className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                      className={`shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
                         isCompleted ? 'bg-emerald-500 border-emerald-500 scale-110 shadow-[0_0_12px_rgba(16,185,129,0.4)]' : 'border-zinc-700 hover:border-zinc-500'
                       }`}>
-                      {isCompleted && <Check size={13} className="text-white" strokeWidth={4}/>}
+                      {isCompleted && <Check size={11} className="text-white" strokeWidth={4}/>}
                     </button>
                   </div>
                 </div>
 
                 {/* Expanded body */}
                 {isExpanded && !isCompleted && (
-                  <div onClick={e=>e.stopPropagation()} className="px-4 pb-4 animate-in slide-in-from-top-2 duration-200 relative z-10">
+                  <div onClick={e=>e.stopPropagation()} className="px-3 pb-3 animate-in slide-in-from-top-2 duration-200 relative z-10">
                     {/* Campo de notas de ajuste de máquina */}
-                    <div className="mb-3">
+                    <div className="mb-2">
                       <input
                         type="text"
                         placeholder="Ej: Asiento al 4, pies altos..."
                         value={log.setupNotes || ''}
                         onChange={(e) => updateSetupNotes(exercise.id, e.target.value)}
                         onBlur={() => saveWorkout()}
-                        className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/5 text-xs text-zinc-300 placeholder-zinc-600 focus:border-brand-500/50 focus:outline-none transition-all"
+                        className="w-full px-3 py-1.5 rounded-lg bg-black/30 border border-white/5 text-[10px] text-zinc-300 placeholder-zinc-600 focus:border-brand-500/50 focus:outline-none transition-all"
                       />
                     </div>
 
                     {/* Previous session */}
                     {prevLog && (
-                      <div className="mb-3 bg-black/30 rounded-xl border border-white/5 p-3">
-                        <div className="flex justify-between items-center mb-2">
-                          <div className="flex items-center gap-1.5 text-gold-500"><History size={12}/><span className="text-[9px] font-bold uppercase tracking-[0.15em]">Última Sesión</span></div>
-                          <button onClick={e=>{e.stopPropagation();setShowHistoryFor(exercise.id);}} className="text-[9px] text-zinc-500 hover:text-brand-400 font-bold uppercase tracking-widest flex items-center gap-1 transition-all">
-                            <CalendarDays size={12}/> Historial
+                      <div className="mb-2 bg-black/30 rounded-xl border border-white/5 p-2">
+                        <div className="flex justify-between items-center mb-1.5">
+                          <div className="flex items-center gap-1 text-gold-500"><History size={10}/><span className="text-[8px] font-bold uppercase tracking-[0.1em]">Última Sesión</span></div>
+                          <button onClick={e=>{e.stopPropagation();setShowHistoryFor(exercise.id);}} className="text-[8px] text-zinc-500 hover:text-brand-400 font-bold uppercase tracking-widest flex items-center gap-1 transition-all">
+                            <CalendarDays size={10}/> Historial
                           </button>
                         </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {prevLog.sets.map((s,i) => <span key={i} className="text-xs font-display font-bold text-zinc-300 bg-zinc-800/50 px-2.5 py-1 rounded-lg border border-white/5">{s.weight}kg × {s.reps}</span>)}
+                        <div className="flex flex-wrap gap-1">
+                          {prevLog.sets.map((s,i) => <span key={i} className="text-[10px] font-display font-bold text-zinc-300 bg-zinc-800/50 px-2 py-0.5 rounded-md border border-white/5">{s.weight}kg × {s.reps}</span>)}
                         </div>
                       </div>
                     )}
 
                     {/* Sets */}
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-[9px] text-zinc-500 font-bold uppercase tracking-[0.2em] text-center mb-1">
-                        <div className="w-16">Tipo</div>
-                        <div className="grid grid-cols-12 gap-2 flex-1">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-[8px] text-zinc-500 font-bold uppercase tracking-[0.15em] text-center mb-1">
+                        <div className="w-12">Tipo</div>
+                        <div className="grid grid-cols-12 gap-1.5 flex-1">
                           <span className="col-span-4">Peso kg</span>
                           <span className="col-span-4">Reps</span>
                           <span className="col-span-4">RIR</span>
                         </div>
-                        <div className="w-9"/>
+                        <div className="w-7"/>
                       </div>
                       {logs.find(l=>l.exerciseId===exercise.id)?.sets.map((set,idx) => {
                         const ps = prevLog?.sets[idx] ?? null;
@@ -1142,15 +1142,15 @@ const Workout: React.FC = () => {
 
                         return (
                           <div key={idx} className="group">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5">
                               {/* Botón para ciclar tipo de serie */}
                               <button
                                 onClick={(e) => { e.stopPropagation(); cycleSetType(exercise.id, idx); }}
-                                className={`w-16 h-9 rounded-xl border font-bold text-xs transition-all flex items-center justify-center ${setTypeColors[setType]}`}>
+                                className={`w-12 h-8 rounded-lg border font-bold text-[10px] transition-all flex items-center justify-center ${setTypeColors[setType]}`}>
                                 {setTypeLabels[setType]}
                               </button>
 
-                              <div className={`grid grid-cols-12 gap-2 flex-1 rounded-xl p-1 border transition-all ${
+                              <div className={`grid grid-cols-12 gap-1.5 flex-1 rounded-lg p-0.5 border transition-all ${
                                 set.completed ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-black/40 border-white/5 focus-within:border-brand-500/50'
                               }`}>
                                 {(['weight','reps','rir'] as const).map((field,fi) => (
@@ -1160,7 +1160,7 @@ const Workout: React.FC = () => {
                                       value={set[field]||''}
                                       onChange={e=>updateSet(exercise.id,idx,field,parseFloat(e.target.value))}
                                       onBlur={()=>saveWorkout()}
-                                      className={`w-full bg-transparent text-center font-display font-bold text-base py-2 focus:outline-none tracking-tight ${
+                                      className={`w-full bg-transparent text-center font-display font-bold text-sm py-1.5 focus:outline-none tracking-tight ${
                                         set.completed ? (field==='rir'?'text-emerald-400/70':'text-emerald-400') : (field==='rir'?'text-brand-400':'text-white')
                                       }`}/>
                                   </div>
@@ -1168,15 +1168,15 @@ const Workout: React.FC = () => {
                               </div>
                               <button
                                 onClick={e=>{e.stopPropagation();removeSet(exercise.id,idx);}}
-                                className="shrink-0 w-9 h-9 rounded-xl border border-zinc-700 hover:border-red-500 flex items-center justify-center text-zinc-700 hover:text-red-500 transition-all">
-                                <Minus size={16}/>
+                                className="shrink-0 w-7 h-8 rounded-lg border border-zinc-700 hover:border-red-500 flex items-center justify-center text-zinc-700 hover:text-red-500 transition-all">
+                                <Minus size={14}/>
                               </button>
                               <button onClick={e=>{e.stopPropagation();toggleSetComplete(exercise.id,idx);}}
-                                className={`shrink-0 w-9 h-9 rounded-xl border flex items-center justify-center transition-all ${
-                                  set.completed ? 'bg-emerald-500 border-emerald-500 text-white shadow-[0_0_12px_rgba(16,185,129,0.4)]' :
+                                className={`shrink-0 w-8 h-8 rounded-lg border flex items-center justify-center transition-all ${
+                                  set.completed ? 'bg-emerald-500 border-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.4)]' :
                                   'bg-zinc-800 border-zinc-700 text-zinc-500 hover:border-brand-500 hover:text-brand-400'
                                 }`}>
-                                <Check size={18} strokeWidth={set.completed?4:2}/>
+                                <Check size={14} strokeWidth={set.completed?3:2}/>
                               </button>
                             </div>
                             {ps && <p className="text-[9px] text-zinc-600 font-display font-bold text-right pr-20 mt-0.5 tracking-tight">ant: <span className="text-zinc-500">{ps.weight}kg × {ps.reps}</span>{ps.rir!=null&&<span className="text-brand-500/40 ml-1">· RIR {ps.rir}</span>}</p>}

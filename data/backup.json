@@ -550,29 +550,26 @@
     "2026-06-20": {
       "date": "2026-06-20",
       "workoutCompleted": true,
-      "workoutType": "Push (Pecho/Hombro/Tríceps)",
+      "workoutType": "CUSTOM_1781988691695",
       "exercises": [
         {
-          "exerciseId": "push_bench_mach",
+          "exerciseId": "3_4_Sit-Up",
           "sets": [
             {
-              "weight": 90,
-              "reps": 8,
-              "rir": 1,
+              "weight": 0,
+              "reps": 0,
               "completed": false,
               "setType": "N"
             },
             {
-              "weight": 90,
-              "reps": 7,
-              "rir": 1,
+              "weight": 0,
+              "reps": 0,
               "completed": false,
               "setType": "N"
             },
             {
-              "weight": 90,
-              "reps": 6,
-              "rir": 1,
+              "weight": 0,
+              "reps": 0,
               "completed": false,
               "setType": "N"
             }
@@ -580,143 +577,23 @@
           "completed": false
         },
         {
-          "exerciseId": "push_incline_mach",
+          "exerciseId": "Ab_Crunch_Machine",
           "sets": [
             {
-              "weight": 45,
-              "reps": 10,
-              "completed": false,
-              "setType": "N"
-            },
-            {
-              "weight": 45,
-              "reps": 10,
-              "completed": false,
-              "setType": "N"
-            },
-            {
-              "weight": 45,
+              "weight": 7,
               "reps": 8,
               "completed": false,
               "setType": "N"
-            }
-          ],
-          "completed": false
-        },
-        {
-          "exerciseId": "push_dips",
-          "sets": [
+            },
             {
-              "weight": 0,
-              "reps": 0,
+              "weight": 7,
+              "reps": 8,
               "completed": false,
               "setType": "N"
             },
             {
-              "weight": 0,
-              "reps": 0,
-              "completed": false,
-              "setType": "N"
-            },
-            {
-              "weight": 0,
-              "reps": 0,
-              "completed": false,
-              "setType": "N"
-            }
-          ],
-          "completed": false
-        },
-        {
-          "exerciseId": "push_shoulder_mach",
-          "sets": [
-            {
-              "weight": 36,
-              "reps": 6,
-              "completed": false,
-              "setType": "N"
-            },
-            {
-              "weight": 36,
-              "reps": 6,
-              "completed": false,
-              "setType": "N"
-            },
-            {
-              "weight": 36,
-              "reps": 6,
-              "completed": false,
-              "setType": "N"
-            }
-          ],
-          "completed": false
-        },
-        {
-          "exerciseId": "push_lat_raise",
-          "sets": [
-            {
-              "weight": 10,
-              "reps": 13,
-              "completed": false,
-              "setType": "N"
-            },
-            {
-              "weight": 10,
-              "reps": 13,
-              "completed": false,
-              "setType": "N"
-            },
-            {
-              "weight": 10,
-              "reps": 13,
-              "completed": false,
-              "setType": "N"
-            }
-          ],
-          "completed": false
-        },
-        {
-          "exerciseId": "push_tri_seat",
-          "sets": [
-            {
-              "weight": 59,
-              "reps": 10,
-              "completed": false,
-              "setType": "N"
-            },
-            {
-              "weight": 59,
-              "reps": 10,
-              "completed": false,
-              "setType": "N"
-            },
-            {
-              "weight": 59,
-              "reps": 10,
-              "completed": false,
-              "setType": "N"
-            }
-          ],
-          "completed": false
-        },
-        {
-          "exerciseId": "push_tri_rope",
-          "sets": [
-            {
-              "weight": 15.6,
-              "reps": 10,
-              "completed": false,
-              "setType": "N"
-            },
-            {
-              "weight": 15.6,
-              "reps": 10,
-              "completed": false,
-              "setType": "N"
-            },
-            {
-              "weight": 15.6,
-              "reps": 10,
+              "weight": 7,
+              "reps": 8,
               "completed": false,
               "setType": "N"
             }
@@ -738,13 +615,14 @@
     "sesion_rapida": "2026-06-20T10:56:20.935Z",
     "5000_sesion": "2026-06-20T17:07:22.723Z",
     "rir_0": "2026-06-20T17:09:53.484Z",
-    "rir_0_x3": "2026-06-20T17:09:53.484Z"
+    "rir_0_x3": "2026-06-20T17:09:53.484Z",
+    "noctambulo": "2026-06-20T20:53:25.167Z"
   },
   "statistics": {
     "muscleSets": {
-      "chest": 17,
-      "triceps": 35,
-      "shoulders": 15,
+      "chest": 8,
+      "triceps": 17,
+      "shoulders": 9,
       "back": 6,
       "biceps": 3,
       "quads": 12,
@@ -753,9 +631,9 @@
       "abs": 0
     },
     "muscleVolume": {
-      "chest": 6300,
-      "triceps": 12072,
-      "shoulders": 3610,
+      "chest": 3150,
+      "triceps": 6036,
+      "shoulders": 2572,
       "back": 1642,
       "biceps": 108,
       "quads": 0,
@@ -765,30 +643,6 @@
     },
     "topExercises": [
       {
-        "name": "Press Banca Máquina",
-        "totalSets": 6
-      },
-      {
-        "name": "Press Inclinado Máquina",
-        "totalSets": 6
-      },
-      {
-        "name": "Press Hombro Máquina",
-        "totalSets": 6
-      },
-      {
-        "name": "Elevaciones Laterales",
-        "totalSets": 6
-      },
-      {
-        "name": "Press Tríceps Sentado",
-        "totalSets": 6
-      },
-      {
-        "name": "Extensión Tríceps Cuerda",
-        "totalSets": 6
-      },
-      {
         "name": "Sentadilla Hack",
         "totalSets": 6
       },
@@ -797,18 +651,42 @@
         "totalSets": 6
       },
       {
-        "name": "Fondos en Paralelas",
-        "totalSets": 5
+        "name": "Press Banca Máquina",
+        "totalSets": 3
+      },
+      {
+        "name": "Press Inclinado Máquina",
+        "totalSets": 3
+      },
+      {
+        "name": "Press Hombro Máquina",
+        "totalSets": 3
+      },
+      {
+        "name": "Elevaciones Laterales",
+        "totalSets": 3
+      },
+      {
+        "name": "Press Tríceps Sentado",
+        "totalSets": 3
+      },
+      {
+        "name": "Extensión Tríceps Cuerda",
+        "totalSets": 3
       },
       {
         "name": "Dominadas (o Jalón)",
+        "totalSets": 3
+      },
+      {
+        "name": "Vuelos Posteriores Máq.",
         "totalSets": 3
       }
     ],
     "monthlyReport": {
       "currentMonth": {
-        "volumeKg": 6426,
-        "totalSets": 21,
+        "volumeKg": 168,
+        "totalSets": 6,
         "workouts": 1
       },
       "previousMonth": {
@@ -818,5 +696,5 @@
       }
     }
   },
-  "lastSync": "2026-06-20T17:10:15.271Z"
+  "lastSync": "2026-06-20T20:53:30.718Z"
 }

@@ -558,7 +558,7 @@
             {
               "weight": 90,
               "reps": 8,
-              "rir": 2,
+              "rir": 1,
               "completed": false,
               "setType": "N"
             },
@@ -816,5 +816,5 @@
       }
     }
   },
-  "lastSync": "2026-06-20T17:09:49.197Z"
+  "lastSync": "2026-06-20T17:09:50.665Z"
 }

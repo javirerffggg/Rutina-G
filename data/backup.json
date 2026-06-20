@@ -655,7 +655,7 @@
               "setType": "N"
             }
           ],
-          "completed": false
+          "completed": true
         },
         {
           "exerciseId": "pull_shrugs",
@@ -679,7 +679,7 @@
               "setType": "N"
             }
           ],
-          "completed": false
+          "completed": true
         },
         {
           "exerciseId": "pull_curl_preach",
@@ -703,7 +703,7 @@
               "setType": "N"
             }
           ],
-          "completed": false
+          "completed": true
         },
         {
           "exerciseId": "pull_hammer",
@@ -727,7 +727,7 @@
               "setType": "N"
             }
           ],
-          "completed": false
+          "completed": true
         }
       ],
       "duration": 105,
@@ -751,7 +751,8 @@
     "rir_0_x3": "2026-06-20T17:09:53.484Z",
     "noctambulo": "2026-06-20T20:53:25.167Z",
     "madrugador": "2026-06-20T22:54:07.017Z",
-    "push_completo": "2026-06-20T23:11:08.630Z"
+    "push_completo": "2026-06-20T23:11:08.630Z",
+    "pull_completo": "2026-06-20T23:35:23.054Z"
   },
   "statistics": {
     "muscleSets": {
@@ -831,5 +832,5 @@
       }
     }
   },
-  "lastSync": "2026-06-20T23:35:20.006Z"
+  "lastSync": "2026-06-20T23:51:43.105Z"
 }

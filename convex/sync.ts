@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { api } from "./_generated/api";
 
 export const getSyncState = query({
   args: { deviceId: v.string() },
@@ -40,5 +41,10 @@ export const pushSyncState = mutation({
         updatedAt: args.updatedAt,
       });
     }
+
+    // Schedule GitHub sync in background
+    await ctx.scheduler.runAfter(0, api.github.syncToGithub, { 
+      deviceId: args.deviceId 
+    });
   },
 });

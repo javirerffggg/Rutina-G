@@ -9,6 +9,7 @@
  */
 
 import type * as aggregations from "../aggregations.js";
+import type * as github from "../github.js";
 import type * as http from "../http.js";
 import type * as sync from "../sync.js";
 
@@ -20,6 +21,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   aggregations: typeof aggregations;
+  github: typeof github;
   http: typeof http;
   sync: typeof sync;
 }>;

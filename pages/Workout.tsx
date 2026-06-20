@@ -582,7 +582,7 @@ const Workout: React.FC = () => {
 
         {/* GRID DE RUTINAS PREDEFINIDAS */}
         {!settings.hideDefaultRoutines && (
-          <div className="px-4 grid grid-cols-2 gap-3">
+          <div className="px-4 grid grid-cols-3 gap-2">
             {ORDERED.map(routine => {
               const meta = ROUTINE_META[routine];
               const isToday = defaultRoutine === routine;
@@ -593,7 +593,7 @@ const Workout: React.FC = () => {
 
               return (
                 <motion.button key={routine} onClick={() => setSelectedRoutine(routine)} whileTap={{ scale: 0.97 }}
-                  className={`relative overflow-hidden rounded-[24px] border text-left transition-all duration-300 active:scale-[0.97] bg-zinc-900/70 backdrop-blur-sm ${isToday ? `${meta.border} ${meta.glow}` : 'border-white/6'}`}>
+                  className={`w-full relative overflow-hidden rounded-[24px] border text-left transition-all duration-300 active:scale-[0.97] bg-zinc-900/70 backdrop-blur-sm ${isToday ? `${meta.border} ${meta.glow}` : 'border-white/6'}`}>
                   <div className={`absolute inset-0 bg-gradient-to-br ${meta.accent} pointer-events-none`} />
                   
                   {/* Franja/Borde destacado para HOY */}
@@ -601,22 +601,22 @@ const Workout: React.FC = () => {
                   {isToday && <div className="absolute top-3 right-3 z-10"><span className={`text-[9px] font-black uppercase tracking-[0.15em] px-2 py-0.5 rounded-full border ${meta.badge}`}>HOY</span></div>}
                   {doneToday && <div className="absolute top-3 left-3 z-10 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.5)]"><Check size={11} strokeWidth={3} className="text-white" /></div>}
                   
-                  <div className="relative z-10 p-4 pt-5">
-                    <span className="text-3xl mb-3 block">{meta.emoji}</span>
-                    <h2 className={`text-xl font-display font-black leading-none tracking-tight mb-1 ${isToday ? 'text-white' : 'text-zinc-300'}`}>{meta.label}</h2>
-                    <p className="text-[10px] font-bold text-zinc-500 leading-snug mb-3">{meta.muscles}</p>
+                  <div className="relative z-10 p-3 pt-4">
+                    <span className="text-2xl mb-2 block">{meta.emoji}</span>
+                    <h2 className={`text-base font-display font-black leading-none tracking-tight mb-1 ${isToday ? 'text-white' : 'text-zinc-300'} truncate`}>{meta.label}</h2>
+                    <p className="text-[9px] font-bold text-zinc-500 leading-snug mb-2 line-clamp-2">{meta.muscles}</p>
                     
                     {stats ? (
-                      <div className="space-y-1.5 mb-3">
-                        <div className="text-[9px] font-bold text-zinc-400 flex items-center gap-1">
-                          <Clock size={10} className="text-zinc-500" /> ~{stats.avgDuration || 50} min
+                      <div className="space-y-1 mb-2">
+                        <div className="text-[8px] font-bold text-zinc-400 flex items-center gap-1">
+                          <Clock size={8} className="text-zinc-500" /> ~{stats.avgDuration || 50}m
                         </div>
-                        <div className="text-[9px] font-bold text-zinc-500">
-                          Última: hace {stats.daysAgo}d · {stats.volume.toLocaleString()} kg
+                        <div className="text-[8px] font-bold text-zinc-500 line-clamp-1">
+                          hace {stats.daysAgo}d
                         </div>
                       </div>
                     ) : (
-                      exList.length > 0 && <div className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 mb-3 rounded-lg border ${meta.badge}`}><Dumbbell size={9} /> {exList.length} ejercicios</div>
+                      exList.length > 0 && <div className={`inline-flex items-center gap-1 text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 mb-2 rounded-lg border ${meta.badge}`}><Dumbbell size={8} /> {exList.length} ej.</div>
                     )}
                   </div>
                 </motion.button>
@@ -677,7 +677,7 @@ const Workout: React.FC = () => {
                ).map(([folderName, routines]) => (
                  <div key={folderName} className="space-y-3">
                    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest pl-1">{folderName}</h3>
-                   <div className="grid grid-cols-2 gap-3">
+                   <div className="grid grid-cols-3 gap-2">
                      {(routines as CustomRoutine[]).map(routine => {
                         const doneToday = !!Object.values(getLogs()).find((l:any) => l.workoutType === routine.id && l.date === today && l.workoutCompleted);
                         const muscles = getCustomMuscles(routine);
@@ -689,16 +689,16 @@ const Workout: React.FC = () => {
                               className={`w-full relative overflow-hidden rounded-[24px] border border-white/6 text-left transition-all duration-300 active:scale-[0.97] bg-zinc-900/70 backdrop-blur-sm`}>
                               <div className={`absolute inset-0 bg-gradient-to-br from-brand-600/10 to-transparent pointer-events-none`} />
                               {doneToday && <div className="absolute top-3 left-3 z-10 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.5)]"><Check size={11} strokeWidth={3} className="text-white" /></div>}
-                              <div className="relative z-10 p-4 pt-5">
-                                <span className="text-3xl mb-3 block">{routine.emoji}</span>
-                                <h2 className={`text-xl font-display font-black leading-none tracking-tight mb-1 text-zinc-200 truncate`}>{routine.name}</h2>
+                              <div className="relative z-10 p-3 pt-4">
+                                <span className="text-2xl mb-2 block">{routine.emoji}</span>
+                                <h2 className={`text-base font-display font-black leading-none tracking-tight mb-1 text-zinc-200 truncate`}>{routine.name}</h2>
                                 {routine.description ? (
-                                  <p className="text-[10px] font-bold text-brand-500/70 leading-snug mb-3 truncate">{routine.description}</p>
+                                  <p className="text-[9px] font-bold text-brand-500/70 leading-snug mb-2 line-clamp-2">{routine.description}</p>
                                 ) : (
-                                  <p className="text-[10px] font-bold text-zinc-500 leading-snug mb-3 truncate">{muscles}</p>
+                                  <p className="text-[9px] font-bold text-zinc-500 leading-snug mb-2 line-clamp-2">{muscles}</p>
                                 )}
-                                <div className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-lg border bg-zinc-800 text-zinc-400 border-white/10`}>
-                                  <Dumbbell size={9} /> {routine.exercises.length} ej.
+                                <div className={`inline-flex items-center gap-1 text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-lg border bg-zinc-800 text-zinc-400 border-white/10`}>
+                                  <Dumbbell size={8} /> {routine.exercises.length} ej.
                                 </div>
                               </div>
                             </motion.button>
@@ -732,7 +732,7 @@ const Workout: React.FC = () => {
                ))
              ) : (
                // FLAT LIST
-               <div className="grid grid-cols-2 gap-3">
+               <div className="grid grid-cols-3 gap-2">
                  {filteredCustomRoutines.map(routine => {
                     const doneToday = !!Object.values(getLogs()).find((l:any) => l.workoutType === routine.id && l.date === today && l.workoutCompleted);
                     const muscles = getCustomMuscles(routine);
@@ -744,16 +744,16 @@ const Workout: React.FC = () => {
                           className={`w-full relative overflow-hidden rounded-[24px] border border-white/6 text-left transition-all duration-300 active:scale-[0.97] bg-zinc-900/70 backdrop-blur-sm`}>
                           <div className={`absolute inset-0 bg-gradient-to-br from-brand-600/10 to-transparent pointer-events-none`} />
                           {doneToday && <div className="absolute top-3 left-3 z-10 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.5)]"><Check size={11} strokeWidth={3} className="text-white" /></div>}
-                          <div className="relative z-10 p-4 pt-5">
-                            <span className="text-3xl mb-3 block">{routine.emoji}</span>
-                            <h2 className={`text-xl font-display font-black leading-none tracking-tight mb-1 text-zinc-200 truncate`}>{routine.name}</h2>
+                          <div className="relative z-10 p-3 pt-4">
+                            <span className="text-2xl mb-2 block">{routine.emoji}</span>
+                            <h2 className={`text-base font-display font-black leading-none tracking-tight mb-1 text-zinc-200 truncate`}>{routine.name}</h2>
                             {routine.description ? (
-                              <p className="text-[10px] font-bold text-brand-500/70 leading-snug mb-3 truncate">{routine.description}</p>
+                              <p className="text-[9px] font-bold text-brand-500/70 leading-snug mb-2 line-clamp-2">{routine.description}</p>
                             ) : (
-                              <p className="text-[10px] font-bold text-zinc-500 leading-snug mb-3 truncate">{muscles}</p>
+                              <p className="text-[9px] font-bold text-zinc-500 leading-snug mb-2 line-clamp-2">{muscles}</p>
                             )}
-                            <div className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-lg border bg-zinc-800 text-zinc-400 border-white/10`}>
-                              <Dumbbell size={9} /> {routine.exercises.length} ej.
+                            <div className={`inline-flex items-center gap-1 text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-lg border bg-zinc-800 text-zinc-400 border-white/10`}>
+                              <Dumbbell size={8} /> {routine.exercises.length} ej.
                             </div>
                           </div>
                         </motion.button>

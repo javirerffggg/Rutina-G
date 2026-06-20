@@ -587,21 +587,21 @@
               "reps": 0,
               "completed": false,
               "setType": "N",
-              "rir": 1
+              "rir": 1.5
             },
             {
               "weight": 0,
               "reps": 0,
               "completed": false,
               "setType": "N",
-              "rir": 1
+              "rir": 1.5
             },
             {
               "weight": 0,
               "reps": 0,
               "completed": false,
               "setType": "N",
-              "rir": 1
+              "rir": 1.5
             }
           ],
           "completed": false
@@ -830,5 +830,5 @@
       }
     }
   },
-  "lastSync": "2026-06-20T23:20:23.316Z"
+  "lastSync": "2026-06-20T23:20:25.795Z"
 }

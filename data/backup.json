@@ -550,65 +550,29 @@
     "2026-06-20": {
       "date": "2026-06-20",
       "workoutCompleted": true,
-      "workoutType": "Push (Pecho/Hombro/Tríceps)",
+      "workoutType": "Pull (Espalda/Bíceps)",
       "exercises": [
         {
-          "exerciseId": "push_bench_mach",
+          "exerciseId": "pull_pullups",
           "sets": [
             {
-              "weight": 27.5,
-              "reps": 15,
-              "setType": "W",
-              "completed": true
-            },
-            {
-              "weight": 55,
-              "reps": 8,
-              "setType": "W",
-              "completed": true
-            },
-            {
-              "weight": 90,
+              "weight": 4.5,
               "reps": 8,
               "rir": 2,
               "completed": true,
               "setType": "N"
             },
             {
-              "weight": 90,
-              "reps": 7,
-              "rir": 1,
-              "completed": true,
-              "setType": "N"
-            },
-            {
-              "weight": 90,
-              "reps": 6,
-              "rir": 1,
-              "completed": true,
-              "setType": "N"
-            }
-          ],
-          "completed": true
-        },
-        {
-          "exerciseId": "push_incline_mach",
-          "sets": [
-            {
-              "weight": 45,
-              "reps": 10,
-              "completed": true,
-              "setType": "N"
-            },
-            {
-              "weight": 45,
-              "reps": 10,
-              "completed": true,
-              "setType": "N"
-            },
-            {
-              "weight": 45,
+              "weight": 4.5,
               "reps": 8,
+              "rir": 1,
+              "completed": true,
+              "setType": "N"
+            },
+            {
+              "weight": 4.5,
+              "reps": 8,
+              "rir": null,
               "completed": true,
               "setType": "N"
             }
@@ -616,7 +580,34 @@
           "completed": true
         },
         {
-          "exerciseId": "push_dips",
+          "exerciseId": "pull_row_div",
+          "sets": [
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N",
+              "rir": 0.5
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N",
+              "rir": 0.5
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N",
+              "rir": 0.5
+            }
+          ],
+          "completed": false
+        },
+        {
+          "exerciseId": "pull_row_low",
           "sets": [
             {
               "weight": 0,
@@ -637,98 +628,101 @@
               "setType": "N"
             }
           ],
-          "completed": true
+          "completed": false
         },
         {
-          "exerciseId": "push_shoulder_mach",
-          "sets": [
-            {
-              "weight": 36,
-              "reps": 6,
-              "completed": false,
-              "setType": "N"
-            },
-            {
-              "weight": 36,
-              "reps": 6,
-              "completed": false,
-              "setType": "N"
-            },
-            {
-              "weight": 36,
-              "reps": 6,
-              "completed": false,
-              "setType": "N"
-            }
-          ],
-          "completed": true
-        },
-        {
-          "exerciseId": "push_lat_raise",
-          "sets": [
-            {
-              "weight": 10,
-              "reps": 13,
-              "completed": false,
-              "setType": "N"
-            },
-            {
-              "weight": 10,
-              "reps": 13,
-              "completed": false,
-              "setType": "N"
-            },
-            {
-              "weight": 10,
-              "reps": 13,
-              "completed": false,
-              "setType": "N"
-            }
-          ],
-          "completed": true
-        },
-        {
-          "exerciseId": "push_tri_seat",
+          "exerciseId": "pull_rear_fly",
           "sets": [
             {
               "weight": 59,
               "reps": 10,
+              "rir": 1,
               "completed": false,
               "setType": "N"
             },
             {
               "weight": 59,
-              "reps": 10,
+              "reps": 8,
+              "rir": 1,
               "completed": false,
               "setType": "N"
             },
             {
               "weight": 59,
-              "reps": 10,
+              "reps": 8,
+              "rir": 1,
               "completed": false,
               "setType": "N"
             }
           ],
-          "completed": true
+          "completed": false
         },
         {
-          "exerciseId": "push_tri_rope",
+          "exerciseId": "pull_shrugs",
           "sets": [
             {
-              "weight": 15.6,
-              "reps": 10,
+              "weight": 0,
+              "reps": 0,
               "completed": false,
               "setType": "N"
             },
             {
-              "weight": 15.6,
-              "reps": 10,
+              "weight": 0,
+              "reps": 0,
               "completed": false,
               "setType": "N"
             },
             {
-              "weight": 15.6,
-              "reps": 10,
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            }
+          ],
+          "completed": false
+        },
+        {
+          "exerciseId": "pull_curl_preach",
+          "sets": [
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            }
+          ],
+          "completed": false
+        },
+        {
+          "exerciseId": "pull_hammer",
+          "sets": [
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
               "completed": false,
               "setType": "N"
             }
@@ -739,7 +733,8 @@
       "duration": 105,
       "energy": 3,
       "sleep": 3,
-      "stress": 3
+      "stress": 3,
+      "warmupCompleted": true
     }
   },
   "achievements": {
@@ -755,26 +750,27 @@
     "rir_0": "2026-06-20T17:09:53.484Z",
     "rir_0_x3": "2026-06-20T17:09:53.484Z",
     "noctambulo": "2026-06-20T20:53:25.167Z",
-    "madrugador": "2026-06-20T22:54:07.017Z"
+    "madrugador": "2026-06-20T22:54:07.017Z",
+    "push_completo": "2026-06-20T23:11:08.630Z"
   },
   "statistics": {
     "muscleSets": {
-      "chest": 19,
-      "triceps": 37,
-      "shoulders": 15,
-      "back": 6,
-      "biceps": 3,
+      "chest": 8,
+      "triceps": 17,
+      "shoulders": 12,
+      "back": 21,
+      "biceps": 18,
       "quads": 12,
       "glutes": 12,
       "calves": 0,
       "abs": 0
     },
     "muscleVolume": {
-      "chest": 7152.5,
-      "triceps": 12924.5,
-      "shoulders": 3610,
-      "back": 1642,
-      "biceps": 108,
+      "chest": 3150,
+      "triceps": 6036,
+      "shoulders": 4106,
+      "back": 3284,
+      "biceps": 216,
       "quads": 0,
       "glutes": 0,
       "calves": 0,
@@ -782,27 +778,11 @@
     },
     "topExercises": [
       {
-        "name": "Press Banca Máquina",
-        "totalSets": 8
-      },
-      {
-        "name": "Press Inclinado Máquina",
+        "name": "Dominadas (o Jalón)",
         "totalSets": 6
       },
       {
-        "name": "Press Hombro Máquina",
-        "totalSets": 6
-      },
-      {
-        "name": "Elevaciones Laterales",
-        "totalSets": 6
-      },
-      {
-        "name": "Press Tríceps Sentado",
-        "totalSets": 6
-      },
-      {
-        "name": "Extensión Tríceps Cuerda",
+        "name": "Vuelos Posteriores Máq.",
         "totalSets": 6
       },
       {
@@ -814,18 +794,34 @@
         "totalSets": 6
       },
       {
-        "name": "Fondos en Paralelas",
-        "totalSets": 5
+        "name": "Press Banca Máquina",
+        "totalSets": 3
       },
       {
-        "name": "Dominadas (o Jalón)",
+        "name": "Press Inclinado Máquina",
+        "totalSets": 3
+      },
+      {
+        "name": "Press Hombro Máquina",
+        "totalSets": 3
+      },
+      {
+        "name": "Elevaciones Laterales",
+        "totalSets": 3
+      },
+      {
+        "name": "Press Tríceps Sentado",
+        "totalSets": 3
+      },
+      {
+        "name": "Extensión Tríceps Cuerda",
         "totalSets": 3
       }
     ],
     "monthlyReport": {
       "currentMonth": {
-        "volumeKg": 7278.5,
-        "totalSets": 23,
+        "volumeKg": 1642,
+        "totalSets": 21,
         "workouts": 1
       },
       "previousMonth": {
@@ -835,5 +831,5 @@
       }
     }
   },
-  "lastSync": "2026-06-20T23:11:07.898Z"
+  "lastSync": "2026-06-20T23:21:51.984Z"
 }

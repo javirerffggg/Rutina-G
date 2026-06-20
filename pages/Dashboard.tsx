@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { getCurrentPhase, getTodayDateString, getGymSchedule } from '../utils';
 import { getLogs, saveLog } from '../services/storage';
 import { DailyLog } from '../types';
-import { Activity, Battery, Moon, Scale, Utensils, CheckCircle2, AlertTriangle, Clock, Flame, ChevronRight } from 'lucide-react';
+import { Activity, Battery, Moon, Scale, Utensils, CheckCircle2, AlertTriangle, Clock, Flame, ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { EXERCISE_MUSCLE_MAP } from '../constants';
 import { BodyHeatmap } from '../components/BodyHeatmap';
 import { useRPGStats } from '../hooks/useRPGStats';
 import { RPGProgressBar } from '../components/dashboard/RPGProgressBar';
 import { LevelUpCelebration } from '../components/dashboard/LevelUpCelebration';
+import { calculate7DayAverage, calculate7DayTrend } from '../utils/bodyComposition';
 
 const getGreeting = () => {
   const h = new Date().getHours();
@@ -26,9 +27,10 @@ const Dashboard: React.FC = () => {
   const [allLogs, setAllLogs] = useState<Record<string, DailyLog>>({});
   const [muscleVolume, setMuscleVolume] = useState<Record<string, number>>({});
   const [muscleSets, setMuscleSets] = useState<Record<string, number>>({});
-  const [isOledMode, setIsOledMode] = useState(() => localStorage.getItem('oledMode') === 'true');
   const [showLevelUpModal, setShowLevelUpModal] = useState(false);
   const [previousLevel, setPreviousLevel] = useState(1);
+  const [weightAvg7d, setWeightAvg7d] = useState<number | undefined>(undefined);
+  const [weightTrend, setWeightTrend] = useState<number | undefined>(undefined);
 
   const specialSchedule = getGymSchedule(today);
 
@@ -36,22 +38,25 @@ const Dashboard: React.FC = () => {
   const rpgStats = useRPGStats(allLogs);
 
   useEffect(() => {
-    if (isOledMode) document.body.classList.add('oled-mode');
-    else document.body.classList.remove('oled-mode');
-  }, [isOledMode]);
-
-  const toggleOledMode = () => {
-    const newValue = !isOledMode;
-    setIsOledMode(newValue);
-    localStorage.setItem('oledMode', newValue.toString());
-  };
-
-  useEffect(() => {
     const saved = getLogs();
     setAllLogs(saved);
     if (saved[today]) {
       setLog(saved[today]);
       if (saved[today].weight) setWeightInput(saved[today].weight.toString());
+    }
+
+    // Calcular media y tendencia de peso 7d
+    const weightValues = Object.keys(saved)
+      .sort()
+      .slice(-7)
+      .map(d => saved[d].weight)
+      .filter((w): w is number => w !== undefined);
+      
+    const avg = calculate7DayAverage(weightValues);
+    setWeightAvg7d(avg);
+    
+    if (saved[today]?.weight && avg) {
+      setWeightTrend(calculate7DayTrend(saved[today].weight!, avg));
     }
 
     // Volumen + series musculares semanales
@@ -98,6 +103,11 @@ const Dashboard: React.FC = () => {
     const updated = { ...log, weight: parseFloat(weightInput) };
     setLog(updated);
     saveLog(updated);
+    
+    // Recalcular tendencia al vuelo
+    if (weightAvg7d) {
+      setWeightTrend(calculate7DayTrend(parseFloat(weightInput), weightAvg7d));
+    }
   };
 
   const updateBiofeedback = (field: 'sleep' | 'energy' | 'stress', value: number) => {
@@ -116,28 +126,23 @@ const Dashboard: React.FC = () => {
     return totalSets > 0 ? Math.round((completedSets / totalSets) * 100) : 0;
   }, [log.exercises]);
 
-  const renderRating = (field: 'sleep' | 'energy' | 'stress', icon: React.ReactNode, colorClass: string, activeColor: string) => (
-    <div className="glass-card p-3 rounded-xl">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2 text-slate-300">
-          {icon}
-          <span className="text-xs font-bold uppercase tracking-wider">
-            {field === 'sleep' ? 'Sueño' : field === 'energy' ? 'Energía' : 'Estrés'}
-          </span>
-        </div>
-        <span className={`text-sm font-bold ${log[field] ? colorClass : 'text-slate-600'}`}>
-          {log[field] || '-'} / 5
+  const renderCompactRating = (field: 'sleep' | 'energy' | 'stress', icon: React.ReactNode, iconColor: string, activeClass: string) => (
+    <div className="flex items-center justify-between gap-3">
+      <div className={`flex items-center gap-2 w-[72px] ${iconColor}`}>
+        {icon}
+        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+          {field === 'sleep' ? 'Sueño' : field === 'energy' ? 'Energía' : 'Estrés'}
         </span>
       </div>
-      <div className="flex justify-between gap-1">
+      <div className="flex flex-1 justify-between gap-1.5">
         {[1, 2, 3, 4, 5].map((val) => (
           <button
             key={val}
             onClick={() => updateBiofeedback(field, val)}
-            className={`h-8 flex-1 rounded-md flex items-center justify-center text-xs font-bold transition-all ${
+            className={`h-8 flex-1 rounded text-[10px] font-bold transition-all border ${
               log[field] === val
-                ? `${activeColor} text-white shadow-lg scale-105`
-                : 'bg-slate-800/50 text-slate-500 hover:bg-slate-700'
+                ? `${activeClass} shadow-md scale-105`
+                : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-500 hover:bg-zinc-700/80 hover:text-zinc-300'
             }`}
           >
             {val}
@@ -147,8 +152,15 @@ const Dashboard: React.FC = () => {
     </div>
   );
 
+  const renderTrendIcon = (trend: number | undefined) => {
+    if (trend === undefined) return <Minus size={12} className="text-zinc-600" />;
+    if (trend < 0) return <TrendingDown size={12} className="text-emerald-400" />;
+    if (trend > 0) return <TrendingUp size={12} className="text-rose-400" />;
+    return <Minus size={12} className="text-zinc-600" />;
+  };
+
   return (
-    <div className="p-6 space-y-6 pb-24">
+    <div className="p-4 sm:p-6 pb-24">
 
       {/* ── MODAL DE LEVEL UP ── */}
       {showLevelUpModal && (
@@ -159,46 +171,31 @@ const Dashboard: React.FC = () => {
         />
       )}
 
-      {/* ── HEADER ── */}
-      <header className="flex justify-between items-start">
+      {/* ── HEADER COMPACTO ── */}
+      <header className="flex justify-between items-end mb-5">
         <div>
           <p className="text-zinc-500 text-[10px] font-bold mb-1 uppercase tracking-[0.2em]">
             {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
           </p>
           <h1 className="text-3xl font-display font-bold text-white tracking-tight">{getGreeting()}</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={toggleOledMode}
-            className={`px-3 py-1.5 rounded-xl border text-[10px] font-bold uppercase tracking-widest transition-all ${
-              isOledMode
-                ? 'bg-brand-500/20 border-brand-500/50 text-brand-400'
-                : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-white'
-            }`}
-          >
-            OLED
-          </button>
-          <div
-            onClick={() => navigate('/plan')}
-            className="bg-zinc-900 px-3 py-1.5 rounded-xl border border-zinc-800 text-[10px] font-bold uppercase tracking-widest text-zinc-400 cursor-pointer flex items-center gap-1 transition-all hover:border-zinc-700"
-          >
-            {phase.name.split(' ')[0]}
-            <ChevronRight size={10} />
-          </div>
+        <div
+          onClick={() => navigate('/plan')}
+          className="bg-zinc-900/80 px-3 py-2 rounded-xl border border-zinc-800 text-[10px] font-bold uppercase tracking-widest text-zinc-400 cursor-pointer flex items-center gap-1 transition-all hover:border-zinc-700 hover:text-white"
+        >
+          {phase.name.split(' ')[0]}
+          <ChevronRight size={12} />
         </div>
       </header>
 
-      {/* ── RPG PROGRESS BAR ── */}
-      <RPGProgressBar stats={rpgStats} />
-
       {/* ── ALERTA HORARIO ESPECIAL ── */}
       {specialSchedule && (
-        <div className={`p-4 rounded-2xl border flex items-center gap-4 animate-in slide-in-from-top-4 ${
+        <div className={`mb-5 p-4 rounded-2xl border flex items-center gap-4 animate-in slide-in-from-top-4 ${
           specialSchedule === 'Cerrado'
             ? 'bg-red-950/30 border-red-500/30'
             : 'bg-amber-950/30 border-amber-500/30'
         }`}>
-          <div className={`p-2.5 rounded-full ${
+          <div className={`p-2.5 rounded-full shrink-0 ${
             specialSchedule === 'Cerrado' ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500'
           }`}>
             {specialSchedule === 'Cerrado' ? <AlertTriangle size={20} /> : <Clock size={20} />}
@@ -207,7 +204,7 @@ const Dashboard: React.FC = () => {
             <p className={`text-[10px] font-bold uppercase tracking-[0.15em] ${
               specialSchedule === 'Cerrado' ? 'text-red-400' : 'text-amber-500'
             }`}>Horario Especial Hoy</p>
-            <p className="text-white font-bold text-xl leading-none mt-0.5">{specialSchedule}</p>
+            <p className="text-white font-bold text-lg leading-none mt-0.5">{specialSchedule}</p>
           </div>
         </div>
       )}
@@ -215,7 +212,7 @@ const Dashboard: React.FC = () => {
       {/* ── CARD PRINCIPAL ENTRENO ── */}
       <div
         onClick={() => navigate('/workout')}
-        className={`relative overflow-hidden p-6 rounded-3xl border transition-all cursor-pointer group shadow-2xl active:scale-[0.98] ${
+        className={`mb-5 relative overflow-hidden p-6 rounded-3xl border transition-all cursor-pointer group shadow-2xl active:scale-[0.98] ${
           log.workoutCompleted
             ? 'bg-zinc-900 border-emerald-500/30'
             : 'bg-brand-600 border-brand-400/50 shadow-brand-900/20'
@@ -237,8 +234,14 @@ const Dashboard: React.FC = () => {
                   ? `${workoutProgress}% completado — toca para continuar`
                   : 'Toca para registrar tu sesión.'}
             </p>
+            {!log.workoutCompleted && log.exercises && log.exercises.length > 0 && (
+              <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-black/20 text-brand-100/90 border border-white/5">
+                <Flame size={12} />
+                <span className="text-[10px] font-bold uppercase tracking-widest">{log.exercises.length} ejercicios pendientes</span>
+              </div>
+            )}
           </div>
-          <div className={`p-3 rounded-full transition-all group-hover:scale-110 ${
+          <div className={`p-3 rounded-full transition-all group-hover:scale-110 shrink-0 ${
             log.workoutCompleted
               ? 'bg-emerald-500/10 text-emerald-400'
               : 'bg-white/20 text-white'
@@ -259,57 +262,67 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* ── GRID PESO + NUTRICIÓN ── */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3 mb-5">
         {/* Peso */}
-        <section className="glass-card p-5 rounded-2xl flex flex-col justify-between">
-          <div className="flex items-center gap-2 mb-3 text-brand-400">
-            <Scale size={16} />
+        <section className="bg-zinc-900/50 border border-zinc-800/50 p-4 rounded-2xl flex flex-col h-full">
+          <div className="flex items-center gap-1.5 mb-2 text-brand-400">
+            <Scale size={14} />
             <span className="text-[10px] font-bold uppercase tracking-widest">Peso Hoy</span>
           </div>
-          <div className="flex items-baseline gap-1">
+          <div className="flex items-baseline gap-1 flex-1">
             <input
               type="number"
               value={weightInput}
               onChange={(e) => setWeightInput(e.target.value)}
               onBlur={handleWeightSave}
               placeholder="00.0"
-              className="w-full bg-transparent text-3xl font-display font-bold text-white placeholder-zinc-800 focus:outline-none tracking-tighter"
+              className="w-full bg-transparent text-2xl font-display font-bold text-white placeholder-zinc-800 focus:outline-none tracking-tighter"
             />
-            <span className="text-xs font-bold text-zinc-500 uppercase">kg</span>
+            <span className="text-[10px] font-bold text-zinc-500 uppercase">kg</span>
           </div>
-          <p className="text-[10px] text-slate-600 mt-2">Guardar al perder foco</p>
+          <div className="mt-2 pt-2 border-t border-zinc-800 flex items-center gap-1.5">
+            {renderTrendIcon(weightTrend)}
+            <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 truncate">
+              Media 7d: <span className="text-zinc-400">{weightAvg7d?.toFixed(1) || '--'}kg</span>
+            </span>
+          </div>
         </section>
 
         {/* Nutrición */}
         <section
-          className="glass-card p-5 rounded-2xl flex flex-col justify-between cursor-pointer active:scale-[0.98] transition-all"
+          className="bg-zinc-900/50 border border-zinc-800/50 p-4 rounded-2xl flex flex-col h-full cursor-pointer active:scale-[0.98] transition-all group hover:bg-zinc-900"
           onClick={() => navigate('/plan')}
         >
-          <div className="flex items-center gap-2 mb-3 text-amber-500">
-            <Utensils size={16} />
+          <div className="flex items-center gap-1.5 mb-2 text-amber-500">
+            <Utensils size={14} />
             <span className="text-[10px] font-bold uppercase tracking-widest">Objetivo</span>
           </div>
-          <p className="text-xs font-medium text-zinc-300 leading-relaxed flex-1">
+          <p className="text-xs font-medium text-zinc-300 leading-relaxed flex-1 line-clamp-2">
             {phase.nutritionGoal.split('.')[0]}.
           </p>
-          <div className="flex items-center gap-1 mt-3 text-[10px] text-zinc-600 font-bold uppercase">
+          <div className="mt-2 pt-2 border-t border-zinc-800 flex items-center justify-between text-[9px] font-bold uppercase tracking-widest text-zinc-500 group-hover:text-amber-500 transition-colors">
             Ver plan <ChevronRight size={10} />
           </div>
         </section>
       </div>
 
-      {/* ── BIOFEEDBACK ── */}
-      <section className="space-y-3">
-        <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] px-1">Biofeedback</h2>
-        <div className="space-y-2.5">
-          {renderRating('energy', <Battery size={16} />, 'text-yellow-400', 'bg-yellow-500')}
-          {renderRating('sleep', <Moon size={16} />, 'text-purple-400', 'bg-purple-500')}
-          {renderRating('stress', <Activity size={16} />, 'text-red-400', 'bg-red-500')}
+      {/* ── BIOFEEDBACK COMPACTO ── */}
+      <section className="mb-5 bg-zinc-900/50 border border-zinc-800/50 rounded-2xl p-4">
+        <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-3">Biofeedback</h2>
+        <div className="space-y-2">
+          {renderCompactRating('energy', <Battery size={14} />, 'text-yellow-400', 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30')}
+          {renderCompactRating('sleep', <Moon size={14} />, 'text-purple-400', 'bg-purple-500/20 text-purple-400 border-purple-500/30')}
+          {renderCompactRating('stress', <Activity size={14} />, 'text-red-400', 'bg-red-500/20 text-red-400 border-red-500/30')}
         </div>
       </section>
 
+      {/* ── RPG PROGRESS BAR ── */}
+      <div className="mb-5">
+        <RPGProgressBar stats={rpgStats} />
+      </div>
+
       {/* ── MAPA DE CALOR MUSCULAR ── */}
-      <section className="glass-panel p-5 rounded-2xl space-y-4">
+      <section className="bg-zinc-900/50 border border-zinc-800/50 p-5 rounded-2xl space-y-4">
         <div className="flex justify-between items-end">
           <div>
             <h2 className="text-base font-display font-bold text-white flex items-center gap-2">

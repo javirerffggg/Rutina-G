@@ -1,8 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { PHASES, SPECIAL_GYM_HOURS } from '../constants';
 import { getCurrentPhase } from '../utils';
-import { Info, Target, Flame, HeartPulse, ChevronRight, Crown, CalendarClock, X, TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Info, Target, Flame, HeartPulse, Crown, CalendarClock, X, TrendingUp, TrendingDown, Minus, Dumbbell, CalendarRange, Clock } from 'lucide-react';
 
 const MONTH_NAMES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -28,19 +27,52 @@ const getReadableDate = (key: string) => {
   return key;
 };
 
-const getPhaseBadge = (phase: any) => {
-  const type = phase.type ?? '';
-  if (type === 'bulk' || type === 'volume')   return { label: 'Volumen',       icon: TrendingUp,   color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/30' };
-  if (type === 'cut'  || type === 'deficit')  return { label: 'D\u00e9ficit',  icon: TrendingDown, color: 'text-red-400',     bg: 'bg-red-500/10 border-red-500/30' };
-  return { label: 'Mantenimiento', icon: Minus, color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/30' };
+const getSemanticColors = (type?: string) => {
+  if (type === 'bulk' || type === 'volume') {
+    return {
+      label: 'Volumen',
+      gradient: 'from-amber-900/80 via-zinc-900 to-black',
+      border: 'border-amber-500/30',
+      shadow: 'shadow-amber-900/20',
+      text: 'text-amber-400',
+      bg: 'bg-amber-500/10',
+      bar: 'bg-amber-400',
+      icon: TrendingUp
+    };
+  }
+  if (type === 'cut' || type === 'deficit') {
+    return {
+      label: 'Déficit',
+      gradient: 'from-red-900/80 via-zinc-900 to-black',
+      border: 'border-red-500/30',
+      shadow: 'shadow-red-900/20',
+      text: 'text-red-400',
+      bg: 'bg-red-500/10',
+      bar: 'bg-red-400',
+      icon: TrendingDown
+    };
+  }
+  return {
+    label: 'Mantenimiento',
+    gradient: 'from-blue-900/80 via-zinc-900 to-black',
+    border: 'border-blue-500/30',
+    shadow: 'shadow-blue-900/20',
+    text: 'text-blue-400',
+    bg: 'bg-blue-500/10',
+    bar: 'bg-blue-400',
+    icon: Minus
+  };
+};
+
+const parseToBullets = (text: string) => {
+  return text.split(/(?:\. |;|\n)/).map(s => s.trim()).filter(s => s.length > 0);
 };
 
 const Plan: React.FC = () => {
   const currentPhase = getCurrentPhase();
-  const navigate = useNavigate();
   const [showSchedule, setShowSchedule] = useState(false);
 
-  const phaseBadge = useMemo(() => getPhaseBadge(currentPhase), [currentPhase]);
+  const colors = useMemo(() => getSemanticColors(currentPhase.type), [currentPhase]);
 
   const phaseProgress = useMemo(() => {
     const start   = new Date(currentPhase.startDate).getTime();
@@ -53,8 +85,20 @@ const Plan: React.FC = () => {
     const elapsedDays = Math.round(elapsed / 86400000);
     const currentWeek = Math.ceil((elapsedDays + 1) / 7);
     const totalWeeks  = Math.ceil(totalDays / 7);
-    return { pct, elapsedDays, totalDays, currentWeek, totalWeeks };
+    const remainingDays = totalDays - elapsedDays;
+    return { pct, elapsedDays, totalDays, currentWeek, totalWeeks, remainingDays };
   }, [currentPhase]);
+
+  const macrocycleProgress = useMemo(() => {
+    if (PHASES.length === 0) return { pct: 0, totalDays: 0, elapsedDays: 0 };
+    const macroStart = new Date(PHASES[0].startDate).getTime();
+    const macroEnd = new Date(PHASES[PHASES.length - 1].endDate).getTime();
+    const now = Date.now();
+    const total = macroEnd - macroStart;
+    const elapsed = Math.min(Math.max(now - macroStart, 0), total);
+    const pct = total > 0 ? Math.round((elapsed / total) * 100) : 0;
+    return { pct, totalDays: Math.round(total / 86400000), elapsedDays: Math.round(elapsed / 86400000) };
+  }, []);
 
   const sortedSchedule = useMemo(
     () => Object.entries(SPECIAL_GYM_HOURS).sort((a, b) => a[0].localeCompare(b[0])),
@@ -62,14 +106,14 @@ const Plan: React.FC = () => {
   );
 
   return (
-    <div className="p-5 space-y-6 pb-24">
+    <div className="p-5 space-y-6 pb-32">
 
       {/* HEADER */}
-      <header className="flex justify-between items-center">
+      <header className="flex justify-between items-start">
         <div>
-          <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Programa</p>
-          <h1 className="text-3xl font-display font-bold text-white tracking-tight">Roadmap</h1>
-          <p className="text-amber-400 text-[10px] font-bold tracking-widest uppercase mt-1 flex items-center gap-1">
+          <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Contexto Diario</p>
+          <h1 className="text-3xl font-display font-bold text-white tracking-tight">Tu Plan</h1>
+          <p className="text-brand-400 text-[10px] font-bold tracking-widest uppercase mt-1 flex items-center gap-1">
             <Crown size={12} /> Elite Definition Program
           </p>
         </div>
@@ -81,102 +125,156 @@ const Plan: React.FC = () => {
         </button>
       </header>
 
-      {/* HERO CARD */}
-      <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-brand-900/20 border border-brand-500/30">
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-900/80 via-zinc-900 to-black z-0" />
-        <div className="absolute top-0 right-0 p-3 opacity-10"><Target size={120} className="text-white" /></div>
-        <div className="relative z-10 p-5 space-y-4">
+      {/* HERO CARD - ACTUAL PHASE */}
+      <div className={`relative rounded-3xl overflow-hidden shadow-2xl ${colors.shadow} border ${colors.border} premium-bisel`}>
+        <div className={`absolute inset-0 bg-gradient-to-br ${colors.gradient} z-0`} />
+        <div className="absolute top-0 right-0 p-3 opacity-10"><Target size={140} className="text-white" /></div>
+        <div className="relative z-10 p-6 space-y-5">
           <div className="flex justify-between items-start">
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full bg-brand-500/20 border border-brand-500/30 text-brand-300 text-[10px] font-bold uppercase tracking-wider">Fase Actual</span>
-              <span className={`flex items-center gap-1 px-2 py-1 rounded-full border text-[10px] font-bold ${phaseBadge.bg} ${phaseBadge.color}`}>
-                <phaseBadge.icon size={10} /> {phaseBadge.label}
-              </span>
+            <div>
+               <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-widest ${colors.bg} ${colors.text} ${colors.border}`}>
+                 <colors.icon size={12} strokeWidth={3} /> {colors.label}
+               </span>
+               <h2 className="text-3xl font-display font-bold text-white leading-tight mt-3">{currentPhase.name}</h2>
             </div>
-            <span className="text-zinc-500 text-[10px] font-mono">
-              {new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
-            </span>
           </div>
 
-          <div>
-            <h2 className="text-2xl font-display font-bold text-white leading-tight">{currentPhase.name}</h2>
-            <p className="text-sm text-zinc-300 mt-1 leading-relaxed opacity-90">{currentPhase.description}</p>
+          <div className="flex items-center gap-4 text-xs font-bold text-zinc-300">
+             <div className="flex items-center gap-1.5"><Clock size={14} className={colors.text}/> {phaseProgress.remainingDays} días restantes</div>
+             <div className="flex items-center gap-1.5"><CalendarRange size={14} className={colors.text}/> Semana {phaseProgress.currentWeek}/{phaseProgress.totalWeeks}</div>
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <div className="flex justify-between text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-              <span>Semana {phaseProgress.currentWeek} de {phaseProgress.totalWeeks}</span>
-              <span>D\u00eda {phaseProgress.elapsedDays} / {phaseProgress.totalDays}</span>
+              <span>Progreso de Fase</span>
+              <span className={colors.text}>{phaseProgress.pct}%</span>
             </div>
-            <div className="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
-              <div className="h-full bg-brand-400 rounded-full transition-all duration-700" style={{ width: `${phaseProgress.pct}%` }} />
-            </div>
-            <div className="text-right text-[10px] font-bold text-brand-400">{phaseProgress.pct}% completado</div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            <div className="glass-card p-2 rounded-lg text-center">
-              <Flame size={14} className="text-orange-500 mx-auto mb-1" />
-              <p className="text-[10px] text-zinc-400 uppercase font-bold">Dieta</p>
-              <p className="text-[10px] text-white leading-tight mt-1 line-clamp-2">{currentPhase.nutritionGoal.split('(')[0].trim()}</p>
-            </div>
-            <div className="glass-card p-2 rounded-lg text-center">
-              <HeartPulse size={14} className="text-red-500 mx-auto mb-1" />
-              <p className="text-[10px] text-zinc-400 uppercase font-bold">Cardio</p>
-              <p className="text-[10px] text-white leading-tight mt-1 line-clamp-2">{currentPhase.cardio.split('.')[0]}</p>
-            </div>
-            <div className="glass-card p-2 rounded-lg text-center border-brand-500/30 bg-brand-500/10">
-              <Target size={14} className="text-brand-400 mx-auto mb-1" />
-              <p className="text-[10px] text-brand-300 uppercase font-bold">Entreno</p>
-              <p className="text-[10px] text-white leading-tight mt-1 line-clamp-2">{currentPhase.trainingFocus.split(',')[0]}</p>
+            <div className="w-full h-2 bg-black/60 rounded-full overflow-hidden border border-white/5">
+              <div className={`h-full ${colors.bar} rounded-full transition-all duration-700`} style={{ width: `${phaseProgress.pct}%` }} />
             </div>
           </div>
-
-          <button
-            onClick={() => navigate('/today')}
-            className="w-full py-2.5 bg-white text-zinc-900 font-bold text-sm rounded-xl hover:bg-zinc-100 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
-          >
-            Ver Resumen Diario <ChevronRight size={16} />
-          </button>
         </div>
       </div>
 
+      {/* HOY EN ESTA FASE */}
+      <section className="space-y-4">
+         <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] px-1">Hoy en esta fase</h3>
+         
+         <div className="grid grid-cols-1 gap-3">
+            {/* DIETA */}
+            <div className={`p-4 rounded-2xl bg-zinc-900/60 border border-white/5 hover:border-orange-500/30 transition-all`}>
+               <div className="flex items-center gap-2 mb-3">
+                  <div className="p-1.5 rounded-lg bg-orange-500/10 text-orange-400"><Flame size={16}/></div>
+                  <h4 className="font-bold text-sm text-white">Nutrición</h4>
+               </div>
+               <ul className="space-y-2">
+                  {parseToBullets(currentPhase.nutritionGoal).map((bullet, idx) => (
+                     <li key={idx} className="flex items-start gap-2 text-xs text-zinc-400 font-medium">
+                        <div className="w-1.5 h-1.5 rounded-full bg-orange-500/50 mt-1.5 shrink-0"/>
+                        <span className="leading-relaxed">{bullet}</span>
+                     </li>
+                  ))}
+               </ul>
+            </div>
+
+            {/* ENTRENO */}
+            <div className={`p-4 rounded-2xl bg-zinc-900/60 border border-white/5 hover:border-brand-500/30 transition-all`}>
+               <div className="flex items-center gap-2 mb-3">
+                  <div className="p-1.5 rounded-lg bg-brand-500/10 text-brand-400"><Dumbbell size={16}/></div>
+                  <h4 className="font-bold text-sm text-white">Entrenamiento</h4>
+               </div>
+               <ul className="space-y-2">
+                  {parseToBullets(currentPhase.trainingFocus).map((bullet, idx) => (
+                     <li key={idx} className="flex items-start gap-2 text-xs text-zinc-400 font-medium">
+                        <div className="w-1.5 h-1.5 rounded-full bg-brand-500/50 mt-1.5 shrink-0"/>
+                        <span className="leading-relaxed">{bullet}</span>
+                     </li>
+                  ))}
+               </ul>
+            </div>
+
+            {/* CARDIO */}
+            <div className={`p-4 rounded-2xl bg-zinc-900/60 border border-white/5 hover:border-rose-500/30 transition-all`}>
+               <div className="flex items-center gap-2 mb-3">
+                  <div className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400"><HeartPulse size={16}/></div>
+                  <h4 className="font-bold text-sm text-white">Cardio</h4>
+               </div>
+               <ul className="space-y-2">
+                  {parseToBullets(currentPhase.cardio).map((bullet, idx) => (
+                     <li key={idx} className="flex items-start gap-2 text-xs text-zinc-400 font-medium">
+                        <div className="w-1.5 h-1.5 rounded-full bg-rose-500/50 mt-1.5 shrink-0"/>
+                        <span className="leading-relaxed">{bullet}</span>
+                     </li>
+                  ))}
+               </ul>
+            </div>
+         </div>
+      </section>
+
       {/* TIMELINE */}
       <section>
-        <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-4 px-1">L\u00ednea de Tiempo</h3>
-        <div className="relative border-l border-zinc-800 ml-2 pl-6">
+        <div className="flex justify-between items-end mb-4 px-1">
+           <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">Macrociclo Anual</h3>
+           <span className="text-[10px] font-bold text-zinc-400">{macrocycleProgress.pct}%</span>
+        </div>
+        <div className="w-full h-1 bg-zinc-900 rounded-full mb-6 overflow-hidden">
+           <div className="h-full bg-zinc-500 rounded-full" style={{ width: `${macrocycleProgress.pct}%` }} />
+        </div>
+
+        <div className="relative border-l-2 border-zinc-800 ml-3 pl-6 space-y-4">
           {PHASES.map((phase, idx) => {
             const isCurrent = phase.name === currentPhase.name;
             const isPast    = phase.endDate < today;
+            const isFuture  = phase.startDate > today;
+            
             const showYear  = new Date(phase.startDate).getFullYear() !== new Date().getFullYear();
             const dateOpts: Intl.DateTimeFormatOptions = { month: 'short', ...(showYear ? { year: '2-digit' } : {}) };
             const dateLabel = `${new Date(phase.startDate).toLocaleDateString('es-ES', dateOpts)} \u2014 ${new Date(phase.endDate).toLocaleDateString('es-ES', dateOpts)}`;
             const totalWeeks = Math.ceil((new Date(phase.endDate).getTime() - new Date(phase.startDate).getTime()) / (86400000 * 7));
-            const badge = getPhaseBadge(phase);
+            const badge = getSemanticColors(phase.type);
+            
+            // PAST PHASES
+            if (isPast) {
+               return (
+                 <div key={idx} className="relative py-1 opacity-40">
+                   <div className="absolute -left-[31px] top-2.5 w-3 h-3 rounded-full bg-zinc-800 border-2 border-zinc-900 z-10" />
+                   <div className="flex justify-between items-center bg-zinc-900/30 px-4 py-2 rounded-xl border border-transparent">
+                      <span className="text-xs font-bold text-zinc-500 line-through">{phase.name}</span>
+                      <span className="text-[9px] text-zinc-600 font-mono tracking-tighter">{dateLabel}</span>
+                   </div>
+                 </div>
+               );
+            }
+
+            // FUTURE PHASES
+            if (isFuture) {
+               return (
+                 <div key={idx} className="relative py-1 opacity-60">
+                   <div className="absolute -left-[31px] top-2.5 w-3 h-3 rounded-full bg-zinc-900 border-2 border-zinc-800 z-10" />
+                   <div className="flex justify-between items-center bg-zinc-900/30 px-4 py-2 rounded-xl border border-zinc-800/50">
+                      <div className="flex items-center gap-2">
+                         <span className="text-xs font-bold text-zinc-300">{phase.name}</span>
+                         <span className={`text-[8px] font-bold uppercase ${badge.text}`}><badge.icon size={8} className="inline mr-0.5" />{badge.label}</span>
+                      </div>
+                      <span className="text-[9px] text-zinc-500 font-mono tracking-tighter">{dateLabel}</span>
+                   </div>
+                 </div>
+               );
+            }
+
+            // CURRENT PHASE
             return (
-              <div key={idx} className={`relative py-3 transition-opacity ${ isCurrent ? 'opacity-100' : isPast ? 'opacity-40' : 'opacity-60 hover:opacity-80' }`}>
-                <div className={`absolute -left-[29px] top-4 w-3 h-3 rounded-full border-2 z-10 transition-all ${
-                  isCurrent ? 'bg-brand-500 border-brand-500 shadow-[0_0_10px_rgba(14,165,233,0.5)] scale-125'
-                  : isPast   ? 'bg-zinc-700 border-zinc-600'
-                  : 'bg-zinc-900 border-zinc-700'
-                }`} />
-                <div className={`rounded-xl p-3 border transition-all ${
-                  isCurrent ? 'bg-gradient-to-r from-zinc-900 to-transparent border-zinc-700 translate-x-1' : 'border-transparent hover:border-zinc-800'
-                }`}>
-                  <div className="flex justify-between items-start mb-0.5">
+              <div key={idx} className={`relative py-2 opacity-100`}>
+                <div className={`absolute -left-[33px] top-4 w-4 h-4 rounded-full border-4 z-10 ${colors.bg} ${colors.border}`} />
+                <div className={`rounded-2xl p-4 border ${colors.border} ${colors.bg} shadow-lg ${colors.shadow}`}>
+                  <div className="flex justify-between items-start mb-1">
                     <div className="flex items-center gap-2">
-                      <h4 className={`text-sm font-bold ${ isCurrent ? 'text-brand-400' : 'text-zinc-200' }`}>{phase.name}</h4>
-                      {isCurrent && <span className="text-[9px] font-bold uppercase tracking-widest bg-brand-500/20 text-brand-400 px-2 py-0.5 rounded-full border border-brand-500/30">Ahora</span>}
+                      <h4 className={`text-base font-bold text-white leading-tight`}>{phase.name}</h4>
+                      <span className={`text-[9px] font-bold uppercase tracking-widest ${colors.bg} ${colors.text} px-2 py-0.5 rounded-full border ${colors.border}`}>Activa</span>
                     </div>
-                    <span className="text-[10px] text-zinc-500 font-mono tracking-tighter shrink-0 ml-2">{dateLabel}</span>
                   </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className={`text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 ${badge.color}`}>
-                      <badge.icon size={9} /> {badge.label}
-                    </span>
-                    <span className="text-[9px] text-zinc-600 font-bold">&middot; {totalWeeks} sem.</span>
-                  </div>
-                  <p className="text-xs text-zinc-500 mt-1 line-clamp-2">{phase.description}</p>
+                  <span className={`text-[10px] ${colors.text} font-mono tracking-tighter block mb-2 opacity-80`}>{dateLabel} &middot; {totalWeeks} semanas</span>
+                  <p className="text-xs text-zinc-300 leading-relaxed mt-2">{phase.description}</p>
                 </div>
               </div>
             );
@@ -184,32 +282,23 @@ const Plan: React.FC = () => {
         </div>
       </section>
 
-      {/* PHILOSOPHY */}
-      <div className="glass-panel p-4 rounded-xl flex items-start gap-3">
-        <Info size={18} className="text-amber-500 mt-0.5 shrink-0" />
-        <div>
-          <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-1">Filosof\u00eda Elite</h3>
-          <p className="text-xs text-zinc-300 leading-relaxed">La intensidad y el d\u00e9ficit cal\u00f3rico son las herramientas. La paciencia es el camino. Mant\u00e9n la fuerza para preservar el m\u00fasculo.</p>
-        </div>
-      </div>
-
       {/* SPECIAL HOURS MODAL */}
       {showSchedule && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 animate-in fade-in duration-200">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowSchedule(false)} />
-          <div className="relative w-full max-w-sm bg-zinc-950/95 backdrop-blur-md border border-zinc-700 rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 max-h-[80vh] flex flex-col">
-            <div className="p-4 border-b border-white/5 flex justify-between items-center">
+          <div className="relative w-full max-w-sm bg-zinc-950/95 backdrop-blur-md border border-zinc-700 rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 max-h-[80vh] flex flex-col premium-bisel">
+            <div className="p-5 border-b border-white/5 flex justify-between items-center">
               <div className="flex items-center gap-2 text-amber-400">
                 <CalendarClock size={18} />
                 <span className="font-bold text-sm uppercase tracking-widest">Horarios Festivos</span>
               </div>
               <button onClick={() => setShowSchedule(false)} className="text-zinc-500 hover:text-white"><X size={20} /></button>
             </div>
-            <div className="overflow-y-auto p-4 space-y-2">
+            <div className="overflow-y-auto p-5 space-y-3 custom-scrollbar">
               {sortedSchedule.map(([key, value]) => (
-                <div key={key} className="flex justify-between items-center p-3 rounded-xl bg-white/5 border border-white/5">
-                  <span className="text-zinc-300 font-medium text-sm">{getReadableDate(key)}</span>
-                  <span className={`text-xs font-bold px-2 py-1 rounded-lg ${ value === 'Cerrado' ? 'bg-red-500/20 text-red-400' : 'bg-brand-500/20 text-brand-400' }`}>{value}</span>
+                <div key={key} className="flex justify-between items-center p-3.5 rounded-2xl bg-white/5 border border-white/5">
+                  <span className="text-zinc-200 font-bold text-sm">{getReadableDate(key)}</span>
+                  <span className={`text-[10px] font-bold px-2 py-1 uppercase tracking-widest rounded-lg ${ value === 'Cerrado' ? 'bg-red-500/20 text-red-400' : 'bg-brand-500/20 text-brand-400' }`}>{value}</span>
                 </div>
               ))}
               {sortedSchedule.length === 0 && (

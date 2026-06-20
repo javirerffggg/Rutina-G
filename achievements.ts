@@ -2,6 +2,7 @@ import { DailyLog, RoutineType } from './types';
 import { calculateOneRM, getGymSchedule } from './utils';
 
 export type AchievementTier = 'BRONZE' | 'SILVER' | 'GOLD' | 'DIAMOND' | 'ELITE';
+export type AchievementCategory = 'CONSISTENCIA' | 'RENDIMIENTO' | 'COMPOSICION' | 'EXPLORACION' | 'EPICO';
 
 export interface AchievementDef {
   id: string;
@@ -11,6 +12,8 @@ export interface AchievementDef {
   icon: string;
   tier: AchievementTier;
   condition: (logs: Record<string, DailyLog>, todayStr: string) => boolean;
+    category: AchievementCategory;
+    progress?: (logs: Record<string, DailyLog>, today: string) => { current: number; max: number; label?: string };
 }
 
 export const ACHIEVEMENTS: AchievementDef[] = [
@@ -29,8 +32,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        if (!benchLog || benchLog.sets.length === 0) return false;
        const max1RM = Math.max(...benchLog.sets.map(s => calculateOneRM(s.weight, s.reps)));
        return max1RM >= 100;
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: 'espalda_plata',
     title: 'Espalda de Plata',
@@ -45,8 +49,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        if (!backLog || backLog.sets.length === 0) return false;
        const max1RM = Math.max(...backLog.sets.map(s => calculateOneRM(s.weight, s.reps)));
        return max1RM >= 140;
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: 'fuerza_terrestre',
     title: 'Fuerza Terrestre',
@@ -61,8 +66,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        if (!legLog || legLog.sets.length === 0) return false;
        const max1RM = Math.max(...legLog.sets.map(s => calculateOneRM(s.weight, s.reps)));
        return max1RM >= 180;
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: 'maestro_lastre',
     title: 'Maestro del Lastre',
@@ -77,8 +83,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        if (!bwLog || bwLog.sets.length === 0) return false;
        const maxWeight = Math.max(...bwLog.sets.map(s => s.weight));
        return maxWeight >= 40;
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: 'leyenda_fuerza',
     title: 'Leyenda de la Fuerza',
@@ -93,8 +100,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        if (!legLog || legLog.sets.length === 0) return false;
        const maxWeight = Math.max(...legLog.sets.map(s => s.weight));
        return maxWeight >= (todayLog.weight * 2);
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   // --- Categoría B: Disciplina y Constancia ---
   {
     id: 'semana_perfecta',
@@ -110,8 +118,17 @@ export const ACHIEVEMENTS: AchievementDef[] = [
          if (logs[dates[i]].workoutCompleted) count++;
        }
        return count >= 6;
-    }
-  },
+    },
+      category: 'CONSISTENCIA',
+      progress: (logs) => {
+                          const dates = Object.keys(logs).sort().reverse();
+                          let count = 0;
+                          for (let i = 0; i < Math.min(7, dates.length); i++) {
+                              if (logs[dates[i]].workoutCompleted) count++;
+                          }
+                          return { current: count, max: 6, label: 'días' };
+                      }
+},
   {
     id: 'racha_titanio',
     title: 'Racha de Titanio',
@@ -126,8 +143,17 @@ export const ACHIEVEMENTS: AchievementDef[] = [
          if (logs[dates[i]].workoutCompleted) count++;
        }
        return count >= 18;
-    }
-  },
+    },
+      category: 'CONSISTENCIA',
+      progress: (logs) => {
+                          const dates = Object.keys(logs).sort().reverse();
+                          let count = 0;
+                          for (let i = 0; i < Math.min(21, dates.length); i++) {
+                              if (logs[dates[i]].workoutCompleted) count++;
+                          }
+                          return { current: count, max: 18, label: 'días' };
+                      }
+},
   {
     id: 'madrugador',
     title: 'Madrugador',
@@ -140,8 +166,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        if (!todayLog || !todayLog.workoutCompleted) return false;
        const hour = new Date().getHours();
        return hour < 7;
-    }
-  },
+    },
+      category: 'CONSISTENCIA'
+},
   {
     id: 'noctambulo',
     title: 'Noctámbulo',
@@ -154,8 +181,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        if (!todayLog || !todayLog.workoutCompleted) return false;
        const hour = new Date().getHours();
        return hour >= 22;
-    }
-  },
+    },
+      category: 'CONSISTENCIA'
+},
   // --- Categoría C: Capacidad de Trabajo ---
   {
     id: 'maquina_carga',
@@ -174,8 +202,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
          });
        });
        return totalVolume >= 10000;
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: 'volumen_elite',
     title: 'Volumen de Élite',
@@ -197,8 +226,18 @@ export const ACHIEVEMENTS: AchievementDef[] = [
          }
        }
        return totalVolume >= 50000;
-    }
-  },
+    },
+      category: 'RENDIMIENTO',
+      progress: (logs) => {
+                          const dates = Object.keys(logs).sort().reverse();
+                          let vol = 0;
+                          for (let i = 0; i < Math.min(7, dates.length); i++) {
+                              const log = logs[dates[i]];
+                              if (log.exercises) log.exercises.forEach(ex => ex.sets.forEach(s => vol += s.weight * s.reps));
+                          }
+                          return { current: vol, max: 50000, label: 'kg' };
+                      }
+},
   {
     id: 'el_millon',
     title: 'El Millón',
@@ -218,8 +257,16 @@ export const ACHIEVEMENTS: AchievementDef[] = [
          }
        });
        return totalVolume >= 1000000;
-    }
-  },
+    },
+      category: 'RENDIMIENTO',
+      progress: (logs) => {
+                          let vol = 0;
+                          Object.values(logs).forEach(log => {
+                              if (log.exercises) log.exercises.forEach(ex => ex.sets.forEach(s => vol += s.weight * s.reps));
+                          });
+                          return { current: vol, max: 1000000, label: 'kg' };
+                      }
+},
   // --- Categoría D: Composición y Biofeedback ---
   {
     id: 'metabolismo_calculado',
@@ -235,8 +282,17 @@ export const ACHIEVEMENTS: AchievementDef[] = [
          if (logs[dates[i]].weight) count++;
        }
        return count >= 14;
-    }
-  },
+    },
+      category: 'COMPOSICION',
+      progress: (logs) => {
+                          const dates = Object.keys(logs).sort().reverse();
+                          let count = 0;
+                          for (let i = 0; i < Math.min(14, dates.length); i++) {
+                              if (logs[dates[i]].weight) count++;
+                          }
+                          return { current: count, max: 14, label: 'días' };
+                      }
+},
   {
     id: 'vtaper_perfecto',
     title: 'V-Taper Perfecto',
@@ -248,8 +304,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        const todayLog = logs[today];
        if (!todayLog || !todayLog.waist || !todayLog.chest) return false;
        return (todayLog.waist / todayLog.chest) < 0.70;
-    }
-  },
+    },
+      category: 'COMPOSICION'
+},
   {
     id: 'recuperacion_optima',
     title: 'Recuperación Óptima',
@@ -265,8 +322,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
          if (log.sleep === 5 && log.energy === 5) count++;
        }
        return count >= 3;
-    }
-  },
+    },
+      category: 'COMPOSICION'
+},
   // --- Categoría E: Eventos Especiales ---
   {
     id: 'psicopata_hierro',
@@ -279,8 +337,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        const todayLog = logs[today];
        if (!todayLog || !todayLog.workoutCompleted) return false;
        return getGymSchedule(today) === 'Cerrado';
-    }
-  },
+    },
+      category: 'EPICO'
+},
   {
     id: 'resurreccion',
     title: 'Resurrección',
@@ -297,8 +356,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        if (!yesterdayLog || !yesterdayLog.isRefeed) return false;
 
        return true;
-    }
-  },
+    },
+      category: 'EPICO'
+},
   {
     id: 'dia_bestia',
     title: 'El Día de la Bestia',
@@ -310,8 +370,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        const todayLog = logs[today];
        if (!todayLog || !todayLog.exercises) return false;
        return todayLog.exercises.some(e => e.sets.length > 6);
-    }
-  },
+    },
+      category: 'EPICO'
+},
   // --- 💪 Fuerza Bruta (Nuevos) ---
   {
     id: 'club_120',
@@ -326,8 +387,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        const bench = todayLog.exercises.find(e => e.exerciseId === 'push_bench_mach');
        if (!bench || bench.sets.length === 0) return false;
        return Math.max(...bench.sets.map(s => calculateOneRM(s.weight, s.reps))) >= 120;
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: 'club_60_ohp',
     title: 'Overhead Elite',
@@ -341,8 +403,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        const ohp = todayLog.exercises.find(e => e.exerciseId === 'push_shoulder_mach');
        if (!ohp || ohp.sets.length === 0) return false;
        return Math.max(...ohp.sets.map(s => calculateOneRM(s.weight, s.reps))) >= 60;
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: 'curl_monstruo',
     title: 'Bíceps de Acero',
@@ -356,8 +419,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        const curl = todayLog.exercises.find(e => ['pull_curl_preach', 'upp_curl_pre'].includes(e.exerciseId));
        if (!curl || curl.sets.length === 0) return false;
        return Math.max(...curl.sets.map(s => calculateOneRM(s.weight, s.reps))) >= 25;
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: 'press_inclinado_90',
     title: 'Ángulo Perfecto',
@@ -371,8 +435,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        const incline = todayLog.exercises.find(e => ['push_incline_mach', 'upp_inc_db'].includes(e.exerciseId));
        if (!incline || incline.sets.length === 0) return false;
        return Math.max(...incline.sets.map(s => calculateOneRM(s.weight, s.reps))) >= 90;
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: 'fondos_lastre_60',
     title: 'Gravitón Inverso',
@@ -386,8 +451,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        const dips = todayLog.exercises.find(e => ['push_dips', 'upp_dips'].includes(e.exerciseId));
        if (!dips || dips.sets.length === 0) return false;
        return Math.max(...dips.sets.map(s => s.weight)) >= 60;
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: 'dominadas_lastre_50',
     title: 'El Colgante',
@@ -401,8 +467,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        const pullups = todayLog.exercises.find(e => e.exerciseId === 'pull_pullups');
        if (!pullups || pullups.sets.length === 0) return false;
        return Math.max(...pullups.sets.map(s => s.weight)) >= 50;
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: 'triceps_100',
     title: 'Tríceps de Titanio',
@@ -416,8 +483,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        const triceps = todayLog.exercises.find(e => ['push_tri_seat', 'push_tri_rope', 'upp_tri_mach'].includes(e.exerciseId));
        if (!triceps || triceps.sets.length === 0) return false;
        return Math.max(...triceps.sets.map(s => calculateOneRM(s.weight, s.reps))) >= 100;
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: 'peso_igual_banca',
     title: 'Tu Propio Peso',
@@ -431,8 +499,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        const bench = todayLog.exercises.find(e => e.exerciseId === 'push_bench_mach');
        if (!bench || bench.sets.length === 0) return false;
        return Math.max(...bench.sets.map(s => calculateOneRM(s.weight, s.reps))) >= todayLog.weight;
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: 'doble_banca',
     title: 'El Doble',
@@ -446,8 +515,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        const bench = todayLog.exercises.find(e => e.exerciseId === 'push_bench_mach');
        if (!bench || bench.sets.length === 0) return false;
        return Math.max(...bench.sets.map(s => calculateOneRM(s.weight, s.reps))) >= (todayLog.weight * 2);
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: 'symmetry',
     title: 'Simetría Perfecta',
@@ -464,8 +534,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        const benchPR = Math.max(...bench.sets.map(s => calculateOneRM(s.weight, s.reps)));
        const inclinePR = Math.max(...incline.sets.map(s => calculateOneRM(s.weight, s.reps)));
        return Math.abs(benchPR - inclinePR) / benchPR <= 0.05;
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: 'upper_pr_day',
     title: 'Día Histórico',
@@ -497,8 +568,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
          if (isNewPR) prCount++;
        });
        return prCount >= 3;
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: 'fuerza_bruta_total',
     title: 'La Santísima Trinidad',
@@ -517,8 +589,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        const latPR = Math.max(...lat.sets.map(s => calculateOneRM(s.weight, s.reps)));
        const hackPR = Math.max(...hack.sets.map(s => calculateOneRM(s.weight, s.reps)));
        return (benchPR + latPR + hackPR) >= 400;
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   // --- 📅 Consistencia (Nuevos) ---
   {
     id: 'primer_entreno',
@@ -527,8 +600,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     hint: 'El viaje de mil millas comienza con un solo paso.',
     icon: 'Play',
     tier: 'BRONZE',
-    condition: (logs) => Object.values(logs).filter(l => l.workoutCompleted).length >= 1
-  },
+    condition: (logs) => Object.values(logs).filter(l => l.workoutCompleted).length >= 1,
+      category: 'CONSISTENCIA'
+},
   {
     id: '10_entrenos',
     title: 'Primer Escalón',
@@ -536,8 +610,10 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     hint: 'Ya no eres un principiante.',
     icon: 'TrendingUp',
     tier: 'BRONZE',
-    condition: (logs) => Object.values(logs).filter(l => l.workoutCompleted).length >= 10
-  },
+    condition: (logs) => Object.values(logs).filter(l => l.workoutCompleted).length >= 10,
+      category: 'CONSISTENCIA',
+      progress: (logs) => ({ current: Object.values(logs).filter(l => l.workoutCompleted).length, max: 10, label: 'sesiones' })
+},
   {
     id: '25_entrenos',
     title: 'Cuarto de Año',
@@ -545,8 +621,10 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     hint: 'La disciplina empieza a dar sus frutos.',
     icon: 'Award',
     tier: 'SILVER',
-    condition: (logs) => Object.values(logs).filter(l => l.workoutCompleted).length >= 25
-  },
+    condition: (logs) => Object.values(logs).filter(l => l.workoutCompleted).length >= 25,
+      category: 'CONSISTENCIA',
+      progress: (logs) => ({ current: Object.values(logs).filter(l => l.workoutCompleted).length, max: 25, label: 'sesiones' })
+},
   {
     id: '50_entrenos',
     title: 'Medio Centenar',
@@ -554,8 +632,10 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     hint: 'Un hábito forjado en hierro.',
     icon: 'Shield',
     tier: 'SILVER',
-    condition: (logs) => Object.values(logs).filter(l => l.workoutCompleted).length >= 50
-  },
+    condition: (logs) => Object.values(logs).filter(l => l.workoutCompleted).length >= 50,
+      category: 'CONSISTENCIA',
+      progress: (logs) => ({ current: Object.values(logs).filter(l => l.workoutCompleted).length, max: 50, label: 'sesiones' })
+},
   {
     id: '100_entrenos',
     title: 'El Centenario',
@@ -563,8 +643,10 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     hint: 'Eres parte de la élite de la constancia.',
     icon: 'Trophy',
     tier: 'GOLD',
-    condition: (logs) => Object.values(logs).filter(l => l.workoutCompleted).length >= 100
-  },
+    condition: (logs) => Object.values(logs).filter(l => l.workoutCompleted).length >= 100,
+      category: 'CONSISTENCIA',
+      progress: (logs) => ({ current: Object.values(logs).filter(l => l.workoutCompleted).length, max: 100, label: 'sesiones' })
+},
   {
     id: '200_entrenos',
     title: 'Maestro del Gym',
@@ -572,8 +654,10 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     hint: 'El gimnasio es tu segundo hogar.',
     icon: 'Crown',
     tier: 'DIAMOND',
-    condition: (logs) => Object.values(logs).filter(l => l.workoutCompleted).length >= 200
-  },
+    condition: (logs) => Object.values(logs).filter(l => l.workoutCompleted).length >= 200,
+      category: 'CONSISTENCIA',
+      progress: (logs) => ({ current: Object.values(logs).filter(l => l.workoutCompleted).length, max: 200, label: 'sesiones' })
+},
   {
     id: 'lunes_guerrero',
     title: 'Lunes Guerrero',
@@ -593,8 +677,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
          d.setDate(d.getDate() + 7);
        }
        return mondays.every(m => logs[m] && logs[m].workoutCompleted);
-    }
-  },
+    },
+      category: 'CONSISTENCIA'
+},
   {
     id: 'sin_excusas_lluvia',
     title: 'Sin Excusas',
@@ -611,8 +696,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
          if (hasWeekend && allCompleted) return true;
        }
        return false;
-    }
-  },
+    },
+      category: 'CONSISTENCIA'
+},
   {
     id: 'mes_perfecto',
     title: 'Mes Perfecto',
@@ -633,8 +719,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
          if (!isRestDay && (!logs[dateStr] || !logs[dateStr].workoutCompleted)) return false;
        }
        return true;
-    }
-  },
+    },
+      category: 'CONSISTENCIA'
+},
   {
     id: 'ano_consistente',
     title: 'Año de Hierro',
@@ -645,8 +732,14 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     condition: (logs, today) => {
        const year = new Date(today).getFullYear();
        return Object.values(logs).filter(l => new Date(l.date).getFullYear() === year && l.workoutCompleted).length >= 200;
-    }
-  },
+    },
+      category: 'CONSISTENCIA',
+      progress: (logs, today) => {
+                          const year = new Date(today).getFullYear();
+                          const count = Object.values(logs).filter(l => new Date(l.date).getFullYear() === year && l.workoutCompleted).length;
+                          return { current: count, max: 200, label: 'sesiones este año' };
+                      }
+},
   // --- 🏋️ Volumen y Trabajo (Nuevos) ---
   {
     id: '5000_sesion',
@@ -661,8 +754,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        let vol = 0;
        todayLog.exercises.forEach(ex => ex.sets.forEach(s => vol += s.weight * s.reps));
        return vol >= 5000;
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: '20000_sesion',
     title: 'Locomotora',
@@ -676,8 +770,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        let vol = 0;
        todayLog.exercises.forEach(ex => ex.sets.forEach(s => vol += s.weight * s.reps));
        return vol >= 20000;
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: '100k_semana',
     title: 'La Semana del Caos',
@@ -693,8 +788,18 @@ export const ACHIEVEMENTS: AchievementDef[] = [
          if (log.exercises) log.exercises.forEach(ex => ex.sets.forEach(s => vol += s.weight * s.reps));
        }
        return vol >= 100000;
-    }
-  },
+    },
+      category: 'RENDIMIENTO',
+      progress: (logs) => {
+                          const dates = Object.keys(logs).sort().reverse();
+                          let vol = 0;
+                          for (let i = 0; i < Math.min(7, dates.length); i++) {
+                              const log = logs[dates[i]];
+                              if (log.exercises) log.exercises.forEach(ex => ex.sets.forEach(s => vol += s.weight * s.reps));
+                          }
+                          return { current: vol, max: 100000, label: 'kg' };
+                      }
+},
   {
     id: '500k_historico',
     title: 'Medio Millón',
@@ -708,8 +813,16 @@ export const ACHIEVEMENTS: AchievementDef[] = [
          if (log.exercises) log.exercises.forEach(ex => ex.sets.forEach(s => vol += s.weight * s.reps));
        });
        return vol >= 500000;
-    }
-  },
+    },
+      category: 'RENDIMIENTO',
+      progress: (logs) => {
+                          let vol = 0;
+                          Object.values(logs).forEach(log => {
+                              if (log.exercises) log.exercises.forEach(ex => ex.sets.forEach(s => vol += s.weight * s.reps));
+                          });
+                          return { current: vol, max: 500000, label: 'kg' };
+                      }
+},
   {
     id: '2m_historico',
     title: 'Dos Millones',
@@ -723,8 +836,16 @@ export const ACHIEVEMENTS: AchievementDef[] = [
          if (log.exercises) log.exercises.forEach(ex => ex.sets.forEach(s => vol += s.weight * s.reps));
        });
        return vol >= 2000000;
-    }
-  },
+    },
+      category: 'RENDIMIENTO',
+      progress: (logs) => {
+                          let vol = 0;
+                          Object.values(logs).forEach(log => {
+                              if (log.exercises) log.exercises.forEach(ex => ex.sets.forEach(s => vol += s.weight * s.reps));
+                          });
+                          return { current: vol, max: 2000000, label: 'kg' };
+                      }
+},
   {
     id: '50_series_dia',
     title: 'Máquina Sin Parar',
@@ -738,8 +859,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        let sets = 0;
        todayLog.exercises.forEach(ex => sets += ex.sets.length);
        return sets >= 50;
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: 'push_completo',
     title: 'Push Perfecto',
@@ -751,8 +873,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        const todayLog = logs[today];
        if (!todayLog || !todayLog.exercises || todayLog.workoutType !== RoutineType.PUSH) return false;
        return todayLog.exercises.every(ex => ex.completed);
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: 'pull_completo',
     title: 'Pull Perfecto',
@@ -764,8 +887,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        const todayLog = logs[today];
        if (!todayLog || !todayLog.exercises || todayLog.workoutType !== RoutineType.PULL) return false;
        return todayLog.exercises.every(ex => ex.completed);
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: 'legs_completo',
     title: 'Legs Perfecto',
@@ -777,8 +901,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        const todayLog = logs[today];
        if (!todayLog || !todayLog.exercises || todayLog.workoutType !== RoutineType.LEGS) return false;
        return todayLog.exercises.every(ex => ex.completed);
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: 'full_split',
     title: 'Split Completo',
@@ -794,8 +919,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
          if (log.workoutCompleted) types.add(log.workoutType);
        }
        return types.has(RoutineType.PUSH) && types.has(RoutineType.PULL) && types.has(RoutineType.LEGS);
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   // --- 🧬 Biofeedback y Composición (Nuevos) ---
   {
     id: 'primer_peso',
@@ -804,8 +930,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     hint: 'Empieza a medir tu progreso.',
     icon: 'Scale',
     tier: 'BRONZE',
-    condition: (logs) => Object.values(logs).some(l => l.weight)
-  },
+    condition: (logs) => Object.values(logs).some(l => l.weight),
+      category: 'COMPOSICION'
+},
   {
     id: '30_dias_peso',
     title: 'Científico del Cuerpo',
@@ -820,8 +947,17 @@ export const ACHIEVEMENTS: AchievementDef[] = [
          if (logs[dates[i]].weight) count++;
        }
        return count >= 30;
-    }
-  },
+    },
+      category: 'COMPOSICION',
+      progress: (logs) => {
+                          const dates = Object.keys(logs).sort().reverse();
+                          let count = 0;
+                          for (let i = 0; i < Math.min(30, dates.length); i++) {
+                              if (logs[dates[i]].weight) count++;
+                          }
+                          return { current: count, max: 30, label: 'días' };
+                      }
+},
   {
     id: 'estres_zen',
     title: 'Modo Zen',
@@ -836,8 +972,17 @@ export const ACHIEVEMENTS: AchievementDef[] = [
          if (logs[dates[i]].stress === 1) count++;
        }
        return count >= 5;
-    }
-  },
+    },
+      category: 'COMPOSICION',
+      progress: (logs) => {
+                          const dates = Object.keys(logs).sort().reverse();
+                          let count = 0;
+                          for (let i = 0; i < Math.min(5, dates.length); i++) {
+                              if (logs[dates[i]].stress === 1) count++;
+                          }
+                          return { current: count, max: 5, label: 'días' };
+                      }
+},
   {
     id: 'biofeedback_completo',
     title: 'Autoconocimiento',
@@ -853,8 +998,18 @@ export const ACHIEVEMENTS: AchievementDef[] = [
          if (l.sleep && l.energy && l.stress) count++;
        }
        return count >= 7;
-    }
-  },
+    },
+      category: 'COMPOSICION',
+      progress: (logs) => {
+                          const dates = Object.keys(logs).sort().reverse();
+                          let count = 0;
+                          for (let i = 0; i < Math.min(7, dates.length); i++) {
+                              const l = logs[dates[i]];
+                              if (l && l.sleep && l.energy && l.stress) count++;
+                          }
+                          return { current: count, max: 7, label: 'días' };
+                      }
+},
   {
     id: 'cintura_meta',
     title: 'Cintura de Avispa',
@@ -865,8 +1020,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     condition: (logs, today) => {
        const todayLog = logs[today];
        return todayLog && todayLog.waist ? todayLog.waist <= 80 : false;
-    }
-  },
+    },
+      category: 'COMPOSICION'
+},
   {
     id: 'refeed_maestro',
     title: 'Maestro del Refeed',
@@ -874,8 +1030,10 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     hint: 'Carga estratégica de energía.',
     icon: 'Milk',
     tier: 'SILVER',
-    condition: (logs) => Object.values(logs).filter(l => l.isRefeed).length >= 4
-  },
+    condition: (logs) => Object.values(logs).filter(l => l.isRefeed).length >= 4,
+      category: 'COMPOSICION',
+      progress: (logs) => ({ current: Object.values(logs).filter(l => l.isRefeed).length, max: 4, label: 'días' })
+},
   {
     id: 'peso_stable',
     title: 'Homeostasis',
@@ -894,8 +1052,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        const max = Math.max(...weights);
        const min = Math.min(...weights);
        return (max - min) <= 0.5;
-    }
-  },
+    },
+      category: 'COMPOSICION'
+},
   {
     id: 'composicion_total',
     title: 'Datos Completos',
@@ -906,8 +1065,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     condition: (logs, today) => {
        const l = logs[today];
        return !!(l && l.waist && l.chest && l.arm && l.thigh);
-    }
-  },
+    },
+      category: 'COMPOSICION'
+},
   // --- 🎭 Easter Eggs y Eventos (Nuevos) ---
   {
     id: 'entreno_navidad',
@@ -919,8 +1079,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     condition: (logs, today) => {
        const d = new Date(today);
        return d.getMonth() === 11 && d.getDate() === 25 && logs[today].workoutCompleted;
-    }
-  },
+    },
+      category: 'EPICO'
+},
   {
     id: 'entreno_ano_nuevo',
     title: 'Año Nuevo, Hierro Nuevo',
@@ -931,8 +1092,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     condition: (logs, today) => {
        const d = new Date(today);
        return d.getMonth() === 0 && d.getDate() === 1 && logs[today].workoutCompleted;
-    }
-  },
+    },
+      category: 'EPICO'
+},
   {
     id: 'entreno_noche_vieja',
     title: 'La Última Rep del Año',
@@ -943,8 +1105,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     condition: (logs, today) => {
        const d = new Date(today);
        return d.getMonth() === 11 && d.getDate() === 31 && logs[today].workoutCompleted;
-    }
-  },
+    },
+      category: 'EPICO'
+},
   {
     id: 'lunes_manana',
     title: 'El Lunes Mítico',
@@ -955,8 +1118,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     condition: (logs, today) => {
        const d = new Date();
        return d.getDay() === 1 && d.getHours() === 8 && logs[today].workoutCompleted;
-    }
-  },
+    },
+      category: 'CONSISTENCIA'
+},
   {
     id: 'rir_0',
     title: 'Al Límite',
@@ -968,8 +1132,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        const l = logs[today];
        if (!l || !l.exercises) return false;
        return l.exercises.some(ex => ex.sets.some(s => s.rir === 0));
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: 'rir_0_x3',
     title: 'Sin Piedad',
@@ -983,8 +1148,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        let count = 0;
        l.exercises.forEach(ex => ex.sets.forEach(s => { if (s.rir === 0) count++; }));
        return count >= 3;
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: 'sesion_rapida',
     title: 'Relámpago',
@@ -995,8 +1161,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     condition: (logs, today) => {
        const l = logs[today];
        return !!(l && l.workoutCompleted && l.duration && l.duration < 30);
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: 'sesion_larga',
     title: 'Monje del Hierro',
@@ -1007,8 +1174,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     condition: (logs, today) => {
        const l = logs[today];
        return !!(l && l.workoutCompleted && l.duration && l.duration > 90);
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: 'todo_verde',
     title: 'Perfección Absoluta',
@@ -1020,8 +1188,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        const l = logs[today];
        if (!l || !l.exercises || !l.workoutCompleted) return false;
        return l.exercises.every(ex => ex.completed && ex.sets.every(s => s.completed));
-    }
-  },
+    },
+      category: 'RENDIMIENTO'
+},
   {
     id: 'vuelta_tras_descanso',
     title: 'El Regreso',
@@ -1036,6 +1205,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
        const lastDate = new Date(dates[todayIdx - 1]);
        const diff = (new Date(today).getTime() - lastDate.getTime()) / 86400000;
        return diff >= 7 && logs[today].workoutCompleted;
-    }
-  }
+    },
+      category: 'CONSISTENCIA'
+}
 ];

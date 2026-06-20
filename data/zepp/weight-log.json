@@ -1,0 +1,40 @@
+{
+  "description": "Registro de mediciones corporales exportadas desde Zepp Life. Cada entrada corresponde a una medición de la báscula inteligente.",
+  "unidades": {
+    "peso": "kg",
+    "musculo": "kg",
+    "masa_osea": "kg",
+    "grasa_corporal": "%",
+    "agua": "%",
+    "proteina": "%",
+    "metabolismo_basal": "kcal",
+    "grasa_visceral": "índice numérico",
+    "IMC": "índice"
+  },
+  "mediciones": [
+    {
+      "fecha": "2026-05-13",
+      "hora": "11:25",
+      "peso": 69.60,
+      "tipo_cuerpo": "Equilibrado",
+      "puntuacion_corporal": 95,
+      "progreso_respecto_anterior": "+1.00kg",
+      "IMC": 22.0,
+      "estado_IMC": "Normal",
+      "grasa_corporal": 17.1,
+      "estado_grasa": "Normal",
+      "musculo": 54.72,
+      "estado_musculo": "Normal",
+      "agua": 56.8,
+      "estado_agua": "Normal",
+      "proteina": 21.7,
+      "estado_proteina": "Genial",
+      "grasa_visceral": 7,
+      "estado_grasa_visceral": "Normal",
+      "masa_osea": 2.93,
+      "estado_masa_osea": "Normal",
+      "metabolismo_basal": 1571,
+      "estado_metabolismo": "No consiguió objetivos"
+    }
+  ]
+}

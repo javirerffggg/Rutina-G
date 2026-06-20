@@ -1,0 +1,852 @@
+{
+  "logs": {
+    "2025-12-30": {
+      "date": "2025-12-30",
+      "workoutCompleted": true,
+      "workoutType": "Empuje (Pecho/Hombro/Tríceps)",
+      "exercises": [
+        {
+          "exerciseId": "p_bench_machine",
+          "sets": [],
+          "completed": false
+        },
+        {
+          "exerciseId": "p_incline_machine",
+          "sets": [],
+          "completed": false
+        },
+        {
+          "exerciseId": "p_dips",
+          "sets": [],
+          "completed": false
+        },
+        {
+          "exerciseId": "p_shoulder_machine",
+          "sets": [],
+          "completed": false
+        },
+        {
+          "exerciseId": "p_lat_raise",
+          "sets": [],
+          "completed": false
+        },
+        {
+          "exerciseId": "p_tri_press",
+          "sets": [],
+          "completed": false
+        },
+        {
+          "exerciseId": "p_tri_ext",
+          "sets": [],
+          "completed": false
+        }
+      ],
+      "energy": 5,
+      "sleep": 5,
+      "stress": 5
+    },
+    "2026-01-05": {
+      "date": "2026-01-05",
+      "workoutCompleted": true,
+      "workoutType": "Empuje (Pecho/Hombro/Tríceps)",
+      "exercises": [
+        {
+          "exerciseId": "p_bench_machine",
+          "sets": [],
+          "completed": true
+        },
+        {
+          "exerciseId": "p_incline_machine",
+          "sets": [],
+          "completed": true
+        },
+        {
+          "exerciseId": "p_dips",
+          "sets": [],
+          "completed": true
+        },
+        {
+          "exerciseId": "p_shoulder_machine",
+          "sets": [],
+          "completed": true
+        },
+        {
+          "exerciseId": "p_lat_raise",
+          "sets": [],
+          "completed": true
+        },
+        {
+          "exerciseId": "p_tri_press",
+          "sets": [],
+          "completed": true
+        },
+        {
+          "exerciseId": "p_tri_ext",
+          "sets": [],
+          "completed": true
+        }
+      ]
+    },
+    "2026-01-07": {
+      "date": "2026-01-07",
+      "workoutCompleted": true,
+      "workoutType": "Tirón (Espalda/Bíceps)",
+      "exercises": [
+        {
+          "exerciseId": "pu_pullups",
+          "sets": [],
+          "completed": true
+        },
+        {
+          "exerciseId": "pu_row_machine",
+          "sets": [],
+          "completed": true
+        },
+        {
+          "exerciseId": "pu_row_cable",
+          "sets": [],
+          "completed": true
+        },
+        {
+          "exerciseId": "pu_rear_delt",
+          "sets": [],
+          "completed": true
+        },
+        {
+          "exerciseId": "pu_shrugs",
+          "sets": [],
+          "completed": true
+        },
+        {
+          "exerciseId": "pu_curl_machine",
+          "sets": [],
+          "completed": true
+        },
+        {
+          "exerciseId": "pu_curl_hammer",
+          "sets": [
+            {
+              "weight": 0,
+              "reps": 0
+            }
+          ],
+          "completed": true
+        }
+      ]
+    },
+    "2026-01-08": {
+      "date": "2026-01-08",
+      "workoutCompleted": true,
+      "workoutType": "Pierna",
+      "exercises": [
+        {
+          "exerciseId": "l_hack",
+          "sets": [],
+          "completed": true
+        },
+        {
+          "exerciseId": "l_press",
+          "sets": [],
+          "completed": false
+        },
+        {
+          "exerciseId": "l_curl",
+          "sets": [],
+          "completed": true
+        },
+        {
+          "exerciseId": "l_goblet",
+          "sets": [],
+          "completed": true
+        },
+        {
+          "exerciseId": "l_ext",
+          "sets": [],
+          "completed": false
+        },
+        {
+          "exerciseId": "l_hip",
+          "sets": [],
+          "completed": true
+        },
+        {
+          "exerciseId": "l_calves",
+          "sets": [],
+          "completed": true
+        },
+        {
+          "exerciseId": "l_abs",
+          "sets": [],
+          "completed": true
+        }
+      ]
+    },
+    "2026-01-12": {
+      "date": "2026-01-12",
+      "workoutCompleted": true,
+      "workoutType": "Push (Pecho/Hombro/Tríceps)",
+      "exercises": [
+        {
+          "exerciseId": "push_bench_mach",
+          "sets": [],
+          "completed": true
+        },
+        {
+          "exerciseId": "push_incline_mach",
+          "sets": [],
+          "completed": true
+        },
+        {
+          "exerciseId": "push_shoulder_mach",
+          "sets": [],
+          "completed": true
+        },
+        {
+          "exerciseId": "push_lat_raise",
+          "sets": [],
+          "completed": true
+        },
+        {
+          "exerciseId": "push_tri_ext",
+          "sets": [],
+          "completed": true
+        }
+      ]
+    },
+    "2026-03-02": {
+      "date": "2026-03-02",
+      "workoutCompleted": true,
+      "workoutType": "Push (Pecho/Hombro/Tríceps)",
+      "exercises": [
+        {
+          "exerciseId": "push_bench_mach",
+          "sets": [
+            {
+              "weight": 90,
+              "reps": 8,
+              "rir": 2
+            },
+            {
+              "weight": 90,
+              "reps": 7,
+              "rir": 1
+            },
+            {
+              "weight": 90,
+              "reps": 6,
+              "rir": 1
+            }
+          ],
+          "completed": true
+        },
+        {
+          "exerciseId": "push_incline_mach",
+          "sets": [
+            {
+              "weight": 45,
+              "reps": 10
+            },
+            {
+              "weight": 45,
+              "reps": 10
+            },
+            {
+              "weight": 45,
+              "reps": 8
+            }
+          ],
+          "completed": true
+        },
+        {
+          "exerciseId": "push_dips",
+          "sets": [
+            {
+              "weight": 0,
+              "reps": 0
+            },
+            {
+              "weight": 0,
+              "reps": 0
+            }
+          ],
+          "completed": true
+        },
+        {
+          "exerciseId": "push_shoulder_mach",
+          "sets": [
+            {
+              "weight": 36,
+              "reps": 6
+            },
+            {
+              "weight": 36,
+              "reps": 6
+            },
+            {
+              "weight": 36,
+              "reps": 6
+            }
+          ],
+          "completed": true
+        },
+        {
+          "exerciseId": "push_lat_raise",
+          "sets": [
+            {
+              "weight": 10,
+              "reps": 13
+            },
+            {
+              "weight": 10,
+              "reps": 13
+            },
+            {
+              "weight": 10,
+              "reps": 13
+            }
+          ],
+          "completed": true
+        },
+        {
+          "exerciseId": "push_tri_seat",
+          "sets": [
+            {
+              "weight": 59,
+              "reps": 10
+            },
+            {
+              "weight": 59,
+              "reps": 10
+            },
+            {
+              "weight": 59,
+              "reps": 10
+            }
+          ],
+          "completed": true
+        },
+        {
+          "exerciseId": "push_tri_rope",
+          "sets": [
+            {
+              "weight": 15.6,
+              "reps": 10
+            },
+            {
+              "weight": 15.6,
+              "reps": 10
+            },
+            {
+              "weight": 15.6,
+              "reps": 10
+            }
+          ],
+          "completed": true
+        }
+      ]
+    },
+    "2026-03-03": {
+      "date": "2026-03-03",
+      "workoutCompleted": true,
+      "workoutType": "Pull (Espalda/Bíceps)",
+      "exercises": [
+        {
+          "exerciseId": "pull_pullups",
+          "sets": [
+            {
+              "weight": 4.5,
+              "reps": 8,
+              "rir": 2
+            },
+            {
+              "weight": 4.5,
+              "reps": 8,
+              "rir": 1
+            },
+            {
+              "weight": 4.5,
+              "reps": 8,
+              "rir": null
+            }
+          ],
+          "completed": true
+        },
+        {
+          "exerciseId": "pull_row_div",
+          "sets": [],
+          "completed": false
+        },
+        {
+          "exerciseId": "pull_row_low",
+          "sets": [],
+          "completed": false
+        },
+        {
+          "exerciseId": "pull_rear_fly",
+          "sets": [
+            {
+              "weight": 59,
+              "reps": 10,
+              "rir": 1
+            },
+            {
+              "weight": 59,
+              "reps": 8,
+              "rir": 1
+            },
+            {
+              "weight": 59,
+              "reps": 8,
+              "rir": 1
+            }
+          ],
+          "completed": true
+        },
+        {
+          "exerciseId": "pull_shrugs",
+          "sets": [],
+          "completed": true
+        },
+        {
+          "exerciseId": "pull_curl_preach",
+          "sets": [],
+          "completed": true
+        },
+        {
+          "exerciseId": "pull_hammer",
+          "sets": [],
+          "completed": false
+        }
+      ]
+    },
+    "2026-03-11": {
+      "date": "2026-03-11",
+      "workoutType": "Legs (Cuádriceps)",
+      "exercises": [
+        {
+          "exerciseId": "legs_hack",
+          "sets": [
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": true
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": true
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": true
+            }
+          ],
+          "completed": true
+        },
+        {
+          "exerciseId": "legs_press",
+          "sets": [
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": true
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": true
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false
+            }
+          ],
+          "completed": false
+        },
+        {
+          "exerciseId": "legs_ext",
+          "sets": [],
+          "completed": false
+        },
+        {
+          "exerciseId": "legs_calves",
+          "sets": [],
+          "completed": false
+        },
+        {
+          "exerciseId": "legs_abs_vkr",
+          "sets": [],
+          "completed": false
+        }
+      ],
+      "workoutCompleted": false,
+      "duration": 180
+    },
+    "2026-03-12": {
+      "date": "2026-03-12",
+      "workoutType": "Legs (Cuádriceps)",
+      "exercises": [
+        {
+          "exerciseId": "legs_hack",
+          "sets": [
+            {
+              "weight": null,
+              "reps": 0,
+              "completed": false
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false
+            }
+          ],
+          "completed": false
+        },
+        {
+          "exerciseId": "legs_press",
+          "sets": [
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false
+            }
+          ],
+          "completed": false
+        },
+        {
+          "exerciseId": "legs_ext",
+          "sets": [],
+          "completed": false
+        },
+        {
+          "exerciseId": "legs_calves",
+          "sets": [],
+          "completed": false
+        },
+        {
+          "exerciseId": "legs_abs_vkr",
+          "sets": [],
+          "completed": false
+        }
+      ]
+    },
+    "2026-06-20": {
+      "date": "2026-06-20",
+      "workoutCompleted": false,
+      "workoutType": "Lower (Glúteo/Femoral)",
+      "exercises": [
+        {
+          "exerciseId": "low_hip",
+          "sets": [
+            {
+              "weight": 23,
+              "reps": 12,
+              "completed": true,
+              "setType": "N",
+              "rir": 2
+            },
+            {
+              "weight": 23,
+              "reps": 12,
+              "completed": true,
+              "setType": "N",
+              "rir": 2
+            },
+            {
+              "weight": 23,
+              "reps": 12,
+              "completed": true,
+              "setType": "N",
+              "rir": 2
+            },
+            {
+              "weight": 23,
+              "reps": 12,
+              "completed": true,
+              "setType": "N",
+              "rir": 2
+            }
+          ],
+          "completed": true
+        },
+        {
+          "exerciseId": "low_rdl",
+          "sets": [
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            }
+          ],
+          "completed": false
+        },
+        {
+          "exerciseId": "low_curl",
+          "sets": [
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            }
+          ],
+          "completed": false
+        },
+        {
+          "exerciseId": "low_press_high",
+          "sets": [
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            }
+          ],
+          "completed": false
+        },
+        {
+          "exerciseId": "low_goblet",
+          "sets": [
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            }
+          ],
+          "completed": false
+        },
+        {
+          "exerciseId": "low_calves",
+          "sets": [
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            }
+          ],
+          "completed": false
+        },
+        {
+          "exerciseId": "low_crunch",
+          "sets": [
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            }
+          ],
+          "completed": false
+        }
+      ],
+      "duration": 22
+    }
+  },
+  "achievements": {
+    "semana_perfecta": "2026-03-02T09:01:05.471Z",
+    "club_100": "2026-03-02T16:37:42.382Z",
+    "upper_pr_day": "2026-03-11T17:24:27.561Z",
+    "primer_entreno": "2026-03-11T17:24:27.561Z",
+    "full_split": "2026-03-11T20:26:28.011Z",
+    "sesion_larga": "2026-03-11T20:26:28.011Z",
+    "vuelta_tras_descanso": "2026-03-11T20:26:28.013Z",
+    "sesion_rapida": "2026-06-20T10:56:20.935Z"
+  },
+  "statistics": {
+    "muscleSets": {
+      "chest": 8,
+      "triceps": 17,
+      "shoulders": 9,
+      "back": 6,
+      "biceps": 3,
+      "quads": 15,
+      "glutes": 23,
+      "calves": 4,
+      "abs": 4,
+      "hamstrings": 15
+    },
+    "muscleVolume": {
+      "chest": 3150,
+      "triceps": 6036,
+      "shoulders": 2572,
+      "back": 1642,
+      "biceps": 108,
+      "quads": 0,
+      "glutes": 1104,
+      "calves": 0,
+      "abs": 0,
+      "hamstrings": 1104
+    },
+    "topExercises": [
+      {
+        "name": "Sentadilla Hack",
+        "totalSets": 6
+      },
+      {
+        "name": "Prensa de Piernas",
+        "totalSets": 6
+      },
+      {
+        "name": "Hip Thrust Máquina",
+        "totalSets": 4
+      },
+      {
+        "name": "Peso Muerto Rumano",
+        "totalSets": 4
+      },
+      {
+        "name": "Curl Femoral",
+        "totalSets": 4
+      },
+      {
+        "name": "Elevación Talones",
+        "totalSets": 4
+      },
+      {
+        "name": "Crunch Abdominal Máq.",
+        "totalSets": 4
+      },
+      {
+        "name": "Press Banca Máquina",
+        "totalSets": 3
+      },
+      {
+        "name": "Press Inclinado Máquina",
+        "totalSets": 3
+      },
+      {
+        "name": "Press Hombro Máquina",
+        "totalSets": 3
+      }
+    ],
+    "monthlyReport": {
+      "currentMonth": {
+        "volumeKg": 1104,
+        "totalSets": 26,
+        "workouts": 1
+      },
+      "previousMonth": {
+        "volumeKg": 0,
+        "totalSets": 0,
+        "workouts": 0
+      }
+    }
+  },
+  "lastSync": "2026-06-20T11:39:37.319Z"
+}

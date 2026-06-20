@@ -100,6 +100,11 @@ const TrophyRoom: React.FC = () => {
     return enrichedAchievements.filter(a => a.category === activeTab);
   }, [enrichedAchievements, activeTab]);
 
+  const sortedCollection = useMemo(() => [
+    ...filteredCollection.filter(a => a.isUnlocked),
+    ...filteredCollection.filter(a => !a.isUnlocked),
+  ], [filteredCollection]);
+
   return (
     <div className="p-4 sm:p-6 space-y-8 pb-24 max-w-2xl mx-auto">
       
@@ -125,6 +130,17 @@ const TrophyRoom: React.FC = () => {
               style={{ width: `${globalProgress}%` }}
             />
           </div>
+          <div className="flex gap-3 mt-2 w-full justify-between sm:justify-end">
+            {TIERS.map(tier => {
+              const count = enrichedAchievements.filter(a => a.isUnlocked && a.tier === tier).length;
+              const meta = TIER_META[tier];
+              return (
+                <span key={tier} className={`text-[10px] font-bold ${meta.text}`}>
+                  {meta.emoji} {count}
+                </span>
+              );
+            })}
+          </div>
         </div>
       </header>
 
@@ -140,7 +156,10 @@ const TrophyRoom: React.FC = () => {
           <div className="flex-1">
             <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-brand-400 mb-0.5">Objetivo Recomendado</p>
             <h3 className="text-sm font-bold text-white mb-1">Hoy puedes avanzar en "{actionableAchievement.title}"</h3>
-            <p className="text-xs text-zinc-400 mb-3 line-clamp-1">{actionableAchievement.hint}</p>
+            <p className="text-xs text-zinc-400 mb-2 line-clamp-1">{actionableAchievement.hint}</p>
+            <p className="text-xs text-brand-300 font-bold mb-3">
+              Faltan solo {actionableAchievement.prog!.max - actionableAchievement.prog!.current} {actionableAchievement.prog!.label || 'más'}
+            </p>
             
             {actionableAchievement.prog && (
               <div className="space-y-1.5">
@@ -174,8 +193,11 @@ const TrophyRoom: React.FC = () => {
                   onClick={() => setSelected(ach)}
                   className={`shrink-0 w-[240px] snap-center p-4 rounded-2xl border cursor-pointer flex flex-col justify-between transition-all active:scale-[0.98] ${meta.border} ${meta.bg}`}
                 >
-                  <div className="flex justify-between items-start mb-4">
+                  <div className="flex justify-between items-start mb-4 relative">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${meta.bg} ${meta.glow}`}>
+                      {unlocked[ach.id]?.startsWith(today) && (
+                        <span className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-brand-400 rounded-full animate-pulse" />
+                      )}
                       <IconComponent size={20} className={meta.text} />
                     </div>
                     <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border ${meta.border} ${meta.text}`}>
@@ -267,8 +289,21 @@ const TrophyRoom: React.FC = () => {
         </div>
 
         {/* GRID DE CATEGORÍA */}
+        {(() => {
+          const catStats = filteredCollection.reduce((acc, a) => {
+            if (a.isUnlocked) acc.unlocked++;
+            acc.total++;
+            return acc;
+          }, { unlocked: 0, total: 0 });
+          return (
+            <p className="text-xs text-zinc-500 mb-3">
+              {catStats.unlocked} de {catStats.total} desbloqueados
+              {catStats.unlocked === catStats.total && ' · ✅ Completado'}
+            </p>
+          );
+        })()}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {filteredCollection.map((ach) => {
+          {sortedCollection.map((ach) => {
             const isHidden = ach.category === 'EPICO' && !ach.isUnlocked;
             const meta = ach.isUnlocked ? TIER_META[ach.tier] : LOCKED_STYLES;
             const IconComponent = (Icons as any)[ach.icon] || Icons.Trophy;

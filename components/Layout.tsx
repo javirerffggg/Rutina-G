@@ -201,12 +201,12 @@ const Layout: React.FC = () => {
       >
         <div className="glass-panel rounded-[24px] shadow-[0_8px_40px_rgba(0,0,0,0.7)] border border-white/10 px-5 pt-2 pb-2 w-fit max-w-[95vw]">
           <div className="flex items-center h-14 gap-5 sm:gap-8">
-            <NavLink to="/plan" className={({ isActive }) =>
-              `flex flex-col items-center gap-1.5 transition-all ${ isActive ? 'text-amber-500 scale-110' : 'text-zinc-500 hover:text-zinc-300' }`
+            <NavLink to="/history" className={({ isActive }) =>
+              `flex flex-col items-center gap-1.5 transition-all ${ isActive ? 'text-blue-400 scale-110' : 'text-zinc-500 hover:text-zinc-300' }`
             }>
               {({ isActive }) => (<>
-                <CalendarRange size={22} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[9px] font-bold tracking-[0.1em] uppercase">Plan</span>
+                <Icons.BookOpen size={22} strokeWidth={isActive ? 2.5 : 2} />
+                <span className="text-[9px] font-bold tracking-[0.1em] uppercase">Historial</span>
               </>)}
             </NavLink>
 

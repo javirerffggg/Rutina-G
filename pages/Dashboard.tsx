@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { getCurrentPhase, getTodayDateString, getGymSchedule } from '../utils';
 import { getLogs, saveLog } from '../services/storage';
 import { DailyLog } from '../types';
-import { Activity, Battery, Moon, Scale, Utensils, CheckCircle2, AlertTriangle, Clock, Flame, ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import { EXERCISE_MUSCLE_MAP } from '../constants';
+import { Activity, Battery, Moon, Scale, Utensils, CheckCircle2, AlertTriangle, Clock, Flame, ChevronRight, TrendingUp, TrendingDown, Minus, HeartPulse, CalendarRange, Dumbbell, Target, Crown } from 'lucide-react';
+import { EXERCISE_MUSCLE_MAP, PHASES } from '../constants';
 import { BodyHeatmap } from '../components/BodyHeatmap';
 import { calculate7DayAverage, calculate7DayTrend } from '../utils/bodyComposition';
 import { useProgression } from '../hooks/useProgression';
@@ -15,6 +15,47 @@ const getGreeting = () => {
   if (h < 13) return 'Buenos días';
   if (h < 21) return 'Buenas tardes';
   return 'Buenas noches';
+};
+
+const getSemanticColors = (type?: string) => {
+  if (type === 'bulk' || type === 'volume') {
+    return {
+      label: 'Volumen',
+      gradient: 'from-amber-900/80 via-zinc-900 to-black',
+      border: 'border-amber-500/30',
+      shadow: 'shadow-amber-900/20',
+      text: 'text-amber-400',
+      bg: 'bg-amber-500/10',
+      bar: 'bg-amber-400',
+      icon: TrendingUp
+    };
+  }
+  if (type === 'cut' || type === 'deficit') {
+    return {
+      label: 'Déficit',
+      gradient: 'from-red-900/80 via-zinc-900 to-black',
+      border: 'border-red-500/30',
+      shadow: 'shadow-red-900/20',
+      text: 'text-red-400',
+      bg: 'bg-red-500/10',
+      bar: 'bg-red-400',
+      icon: TrendingDown
+    };
+  }
+  return {
+    label: 'Mantenimiento',
+    gradient: 'from-blue-900/80 via-zinc-900 to-black',
+    border: 'border-blue-500/30',
+    shadow: 'shadow-blue-900/20',
+    text: 'text-blue-400',
+    bg: 'bg-blue-500/10',
+    bar: 'bg-blue-400',
+    icon: Minus
+  };
+};
+
+const parseToBullets = (text: string) => {
+  return text.split(/(?:\. |;|\n)/).map(s => s.trim()).filter(s => s.length > 0);
 };
 
 const Dashboard: React.FC = () => {
@@ -33,6 +74,23 @@ const Dashboard: React.FC = () => {
 
   // Hook del nuevo sistema de progresión RPG
   const { rankInfo, addXP } = useProgression();
+
+  // Plan logic
+  const colors = useMemo(() => getSemanticColors(phase.type), [phase]);
+  const phaseProgress = useMemo(() => {
+    const start   = new Date(phase.startDate).getTime();
+    const end     = new Date(phase.endDate).getTime();
+    const now     = Date.now();
+    const total   = end - start;
+    const elapsed = Math.min(Math.max(now - start, 0), total);
+    const pct        = total > 0 ? Math.round((elapsed / total) * 100) : 0;
+    const totalDays   = Math.round(total / 86400000);
+    const elapsedDays = Math.round(elapsed / 86400000);
+    const currentWeek = Math.ceil((elapsedDays + 1) / 7);
+    const totalWeeks  = Math.ceil(totalDays / 7);
+    const remainingDays = totalDays - elapsedDays;
+    return { pct, elapsedDays, totalDays, currentWeek, totalWeeks, remainingDays };
+  }, [phase]);
 
   useEffect(() => {
     const saved = getLogs();
@@ -162,14 +220,79 @@ const Dashboard: React.FC = () => {
           </p>
           <h1 className="text-3xl font-display font-bold text-white tracking-tight">{getGreeting()}</h1>
         </div>
-        <div
-          onClick={() => navigate('/plan')}
-          className="bg-zinc-900/80 px-3 py-2 rounded-xl border border-zinc-800 text-[10px] font-bold uppercase tracking-widest text-zinc-400 cursor-pointer flex items-center gap-1 transition-all hover:border-zinc-700 hover:text-white"
-        >
-          {phase.name.split(' ')[0]}
-          <ChevronRight size={12} />
-        </div>
+        <p className="text-brand-400 text-[10px] font-bold tracking-widest uppercase mt-1 flex items-center gap-1">
+          <Crown size={12} /> EDP
+        </p>
       </header>
+
+      {/* ── HERO CARD - ACTUAL PHASE ── */}
+      <div className={`mb-5 relative rounded-3xl overflow-hidden shadow-2xl ${colors.shadow} border ${colors.border} premium-bisel`}>
+        <div className={`absolute inset-0 bg-gradient-to-br ${colors.gradient} z-0`} />
+        <div className="absolute top-0 right-0 p-3 opacity-10"><Target size={140} className="text-white" /></div>
+        <div className="relative z-10 p-6 space-y-5">
+          <div className="flex justify-between items-start">
+            <div>
+               <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-widest ${colors.bg} ${colors.text} ${colors.border}`}>
+                 <colors.icon size={12} strokeWidth={3} /> {colors.label}
+               </span>
+               <h2 className="text-3xl font-display font-bold text-white leading-tight mt-3">{phase.name}</h2>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 text-xs font-bold text-zinc-300">
+             <div className="flex items-center gap-1.5"><Clock size={14} className={colors.text}/> {phaseProgress.remainingDays} días restantes</div>
+             <div className="flex items-center gap-1.5"><CalendarRange size={14} className={colors.text}/> Semana {phaseProgress.currentWeek}/{phaseProgress.totalWeeks}</div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex justify-between text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              <span>Progreso de Fase</span>
+              <span className={colors.text}>{phaseProgress.pct}%</span>
+            </div>
+            <div className="w-full h-2 bg-black/60 rounded-full overflow-hidden border border-white/5">
+              <div className={`h-full ${colors.bar} rounded-full transition-all duration-700`} style={{ width: `${phaseProgress.pct}%` }} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── HOY EN ESTA FASE ── */}
+      <section className="mb-5 space-y-4">
+         <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] px-1">Foco Actual</h3>
+         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* DIETA */}
+            <div className={`p-4 rounded-2xl bg-zinc-900/60 border border-white/5 hover:border-orange-500/30 transition-all`}>
+               <div className="flex items-center gap-2 mb-3">
+                  <div className="p-1.5 rounded-lg bg-orange-500/10 text-orange-400"><Flame size={16}/></div>
+                  <h4 className="font-bold text-sm text-white">Nutrición</h4>
+               </div>
+               <ul className="space-y-2">
+                  {parseToBullets(phase.nutritionGoal).map((bullet, idx) => (
+                     <li key={idx} className="flex items-start gap-2 text-xs text-zinc-400 font-medium">
+                        <div className="w-1.5 h-1.5 rounded-full bg-orange-500/50 mt-1.5 shrink-0"/>
+                        <span className="leading-relaxed">{bullet}</span>
+                     </li>
+                  ))}
+               </ul>
+            </div>
+
+            {/* ENTRENO */}
+            <div className={`p-4 rounded-2xl bg-zinc-900/60 border border-white/5 hover:border-brand-500/30 transition-all`}>
+               <div className="flex items-center gap-2 mb-3">
+                  <div className="p-1.5 rounded-lg bg-brand-500/10 text-brand-400"><Dumbbell size={16}/></div>
+                  <h4 className="font-bold text-sm text-white">Entrenamiento</h4>
+               </div>
+               <ul className="space-y-2">
+                  {parseToBullets(phase.trainingFocus).map((bullet, idx) => (
+                     <li key={idx} className="flex items-start gap-2 text-xs text-zinc-400 font-medium">
+                        <div className="w-1.5 h-1.5 rounded-full bg-brand-500/50 mt-1.5 shrink-0"/>
+                        <span className="leading-relaxed">{bullet}</span>
+                     </li>
+                  ))}
+               </ul>
+            </div>
+         </div>
+      </section>
 
       {/* ── ALERTA HORARIO ESPECIAL ── */}
       {specialSchedule && (

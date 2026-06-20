@@ -4,7 +4,7 @@ import Layout from './components/Layout';
 
 const Dashboard  = lazy(() => import('./pages/Dashboard'));
 const Workout    = lazy(() => import('./pages/Workout'));
-const Plan       = lazy(() => import('./pages/Plan'));
+const History    = lazy(() => import('./pages/History'));
 const Stats      = lazy(() => import('./pages/Stats'));
 const TrophyRoom = lazy(() => import('./pages/TrophyRoom'));
 
@@ -21,7 +21,7 @@ const App: React.FC = () => (
         <Route path="/" element={<Layout />}>
           <Route index element={<Workout />} />
           <Route path="today"    element={<Dashboard />} />
-          <Route path="plan"     element={<Plan />} />
+          <Route path="history"  element={<History />} />
           <Route path="stats"    element={<Stats />} />
           <Route path="trophies" element={<TrophyRoom />} />
           <Route path="*" element={<Navigate to="/today" replace />} />

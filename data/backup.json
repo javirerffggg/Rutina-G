@@ -573,11 +573,11 @@
               "weight": 4.5,
               "reps": 8,
               "rir": null,
-              "completed": false,
+              "completed": true,
               "setType": "N"
             }
           ],
-          "completed": false
+          "completed": true
         },
         {
           "exerciseId": "pull_row_div",
@@ -827,5 +827,5 @@
       }
     }
   },
-  "lastSync": "2026-06-20T23:15:07.928Z"
+  "lastSync": "2026-06-20T23:18:40.078Z"
 }

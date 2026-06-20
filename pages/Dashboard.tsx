@@ -6,10 +6,9 @@ import { DailyLog } from '../types';
 import { Activity, Battery, Moon, Scale, Utensils, CheckCircle2, AlertTriangle, Clock, Flame, ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { EXERCISE_MUSCLE_MAP } from '../constants';
 import { BodyHeatmap } from '../components/BodyHeatmap';
-import { useRPGStats } from '../hooks/useRPGStats';
-import { RPGProgressBar } from '../components/dashboard/RPGProgressBar';
-import { LevelUpCelebration } from '../components/dashboard/LevelUpCelebration';
 import { calculate7DayAverage, calculate7DayTrend } from '../utils/bodyComposition';
+import { useProgression } from '../hooks/useProgression';
+import { RankBadge } from '../components/RankBadge';
 
 const getGreeting = () => {
   const h = new Date().getHours();
@@ -27,15 +26,13 @@ const Dashboard: React.FC = () => {
   const [allLogs, setAllLogs] = useState<Record<string, DailyLog>>({});
   const [muscleVolume, setMuscleVolume] = useState<Record<string, number>>({});
   const [muscleSets, setMuscleSets] = useState<Record<string, number>>({});
-  const [showLevelUpModal, setShowLevelUpModal] = useState(false);
-  const [previousLevel, setPreviousLevel] = useState(1);
   const [weightAvg7d, setWeightAvg7d] = useState<number | undefined>(undefined);
   const [weightTrend, setWeightTrend] = useState<number | undefined>(undefined);
 
   const specialSchedule = getGymSchedule(today);
 
-  // Calcular estadísticas RPG usando el hook optimizado
-  const rpgStats = useRPGStats(allLogs);
+  // Hook del nuevo sistema de progresión RPG
+  const { rankInfo, addXP } = useProgression();
 
   useEffect(() => {
     const saved = getLogs();
@@ -86,24 +83,14 @@ const Dashboard: React.FC = () => {
     setMuscleSets(setsData);
   }, [today]);
 
-  // Detectar level-up y mostrar celebración
-  useEffect(() => {
-    const lastSeenLevel = parseInt(localStorage.getItem('rpg_last_seen_level') ?? '1', 10);
-    
-    if (rpgStats.level > lastSeenLevel) {
-      // Nuevo nivel alcanzado
-      setPreviousLevel(lastSeenLevel);
-      setShowLevelUpModal(true);
-      localStorage.setItem('rpg_last_seen_level', rpgStats.level.toString());
-    }
-  }, [rpgStats.level]);
-
   const handleWeightSave = () => {
     if (!weightInput) return;
     const updated = { ...log, weight: parseFloat(weightInput) };
     setLog(updated);
     saveLog(updated);
     
+    addXP(5, 'WEIGHT_LOGGED');
+
     // Recalcular tendencia al vuelo
     if (weightAvg7d) {
       setWeightTrend(calculate7DayTrend(parseFloat(weightInput), weightAvg7d));
@@ -111,9 +98,14 @@ const Dashboard: React.FC = () => {
   };
 
   const updateBiofeedback = (field: 'sleep' | 'energy' | 'stress', value: number) => {
+    const isNew = log[field] === undefined;
     const updated = { ...log, [field]: value };
     setLog(updated);
     saveLog(updated);
+    
+    if (isNew) {
+      addXP(5, 'BIOFEEDBACK_LOGGED');
+    }
   };
 
   // Progreso real del entreno de hoy
@@ -161,15 +153,6 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 pb-24">
-
-      {/* ── MODAL DE LEVEL UP ── */}
-      {showLevelUpModal && (
-        <LevelUpCelebration
-          stats={rpgStats}
-          previousLevel={previousLevel}
-          onClose={() => setShowLevelUpModal(false)}
-        />
-      )}
 
       {/* ── HEADER COMPACTO ── */}
       <header className="flex justify-between items-end mb-5">
@@ -316,9 +299,9 @@ const Dashboard: React.FC = () => {
         </div>
       </section>
 
-      {/* ── RPG PROGRESS BAR ── */}
-      <div className="mb-5">
-        <RPGProgressBar stats={rpgStats} />
+      {/* ── RPG RANK BADGE ── */}
+      <div className="mb-5 bg-zinc-900/50 border border-zinc-800/50 rounded-2xl p-4 flex flex-col items-center">
+        <RankBadge rankInfo={rankInfo} size="lg" showLabel showProgress animated />
       </div>
 
       {/* ── MAPA DE CALOR MUSCULAR ── */}

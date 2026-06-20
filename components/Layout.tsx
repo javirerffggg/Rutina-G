@@ -5,6 +5,8 @@ import { ACHIEVEMENTS, AchievementDef } from '../achievements';
 import * as Icons from 'lucide-react';
 import { useLiveActivity } from '../hooks/useLiveActivity';
 import { LiveActivityPill } from './LiveActivityPill';
+import { useProgression } from '../hooks/useProgression';
+import { LevelUpModal } from './LevelUpModal';
 
 const TIER_META: Record<string, { border: string; bg: string; text: string }> = {
   BRONZE:  { border: 'border-orange-700/50',                                       bg: 'bg-orange-900/20',  text: 'text-orange-500' },
@@ -28,6 +30,7 @@ const Layout: React.FC = () => {
   const toastAchievement = toastQueue[0] ?? null;
   const liveActivity = useLiveActivity();
   const [forceHideNav, setForceHideNav] = useState(false);
+  const { levelUpData, clearLevelUp } = useProgression();
 
   const handleDismissRest = useCallback(() => {
     window.dispatchEvent(new CustomEvent('live-activity-dismiss-rest'));
@@ -171,6 +174,16 @@ const Layout: React.FC = () => {
           <Outlet />
         </div>
       </main>
+
+      {/* Global Modals / Overlays */}
+      {levelUpData && (
+        <LevelUpModal
+          previousRank={levelUpData.previousRank}
+          newRank={levelUpData.newRank}
+          levelsGained={levelUpData.levelsGained}
+          onClose={clearLevelUp}
+        />
+      )}
 
       {/* Live Activity Pill */}
       <LiveActivityPill

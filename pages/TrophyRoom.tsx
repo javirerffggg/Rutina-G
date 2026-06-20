@@ -3,7 +3,8 @@ import { ACHIEVEMENTS, AchievementDef, AchievementTier, AchievementCategory } fr
 import { getUnlockedAchievements, getLogs } from '../services/storage';
 import { getTodayDateString } from '../utils';
 import * as Icons from 'lucide-react';
-import { useRPGStats } from '../hooks/useRPGStats';
+import { useProgression } from '../hooks/useProgression';
+import { RankBadge } from '../components/RankBadge';
 import { DailyLog } from '../types';
 
 const TIERS: AchievementTier[] = ['BRONZE', 'SILVER', 'GOLD', 'DIAMOND', 'ELITE'];
@@ -42,7 +43,7 @@ const TrophyRoom: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AchievementCategory>('CONSISTENCIA');
 
   const today = getTodayDateString();
-  const rpgStats = useRPGStats(logs);
+  const { rankInfo } = useProgression();
 
   const loadData = useCallback(() => {
     setUnlocked(getUnlockedAchievements());
@@ -105,9 +106,8 @@ const TrophyRoom: React.FC = () => {
       {/* ── HERO ── */}
       <header className="flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="flex items-center gap-4 w-full md:w-auto">
-          <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col items-center justify-center shrink-0">
-            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Nivel</span>
-            <span className="text-2xl font-display font-bold text-brand-400">{rpgStats.level}</span>
+          <div className="shrink-0 bg-zinc-900/50 p-2 rounded-2xl border border-zinc-800/50">
+             <RankBadge rankInfo={rankInfo} size="md" />
           </div>
           <div>
             <h1 className="text-3xl font-display font-bold text-white tracking-tight">Sala de Trofeos</h1>

@@ -20,6 +20,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { dispatchLiveActivity } from '../hooks/useLiveActivity';
 import { CustomRoutineBuilder } from '../components/CustomRoutineBuilder';
 import { MUSCLE_NAMES_ES, EQUIPMENT_ES } from '../data/translations.es';
+import { useProgression } from '../hooks/useProgression';
 
 const COMPOUND_EXERCISES = new Set([
   'squat','deadlift','bench_press','overhead_press','barbell_row',
@@ -88,6 +89,8 @@ const Workout: React.FC = () => {
   const [showAlternativeFor, setShowAlternativeFor] = useState<string | null>(null);
   const [showTechFor, setShowTechFor] = useState<string | null>(null);
   const [techExerciseDb, setTechExerciseDb] = useState<ExerciseDBEntry | null>(null);
+
+  const { addXP } = useProgression();
 
   useEffect(() => {
     if (!showTechFor) {
@@ -328,7 +331,11 @@ const Workout: React.FC = () => {
     setLogs(newLogs);
     saveWorkoutWithLogs(newLogs, false);
     const justCompleted = newLogs.find(l=>l.exerciseId===exerciseId)?.sets[setIndex].completed;
-    if (justCompleted) { const ex = exercises.find(e=>e.id===exerciseId); startRestTimer(exerciseId, ex?.name ?? exerciseId); }
+    if (justCompleted) { 
+      const ex = exercises.find(e=>e.id===exerciseId); 
+      startRestTimer(exerciseId, ex?.name ?? exerciseId); 
+      addXP(2, 'SET_COMPLETED');
+    }
     
     const tl = newLogs.find(l=>l.exerciseId===exerciseId);
     if (tl?.completed) {
@@ -442,6 +449,7 @@ const Workout: React.FC = () => {
       setRestTimer(null);
       dispatchLiveActivity({ sessionState: 'finished', restTimer: null, elapsedSeconds });
       navigator.serviceWorker?.controller?.postMessage({ type: 'CANCEL_REST_TIMER' });
+      addXP(50, 'WORKOUT_COMPLETED');
     }
   };
 

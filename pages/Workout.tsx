@@ -32,10 +32,7 @@ const ISOLATION_EXERCISES = new Set([
   'leg_extension','leg_curl','face_pull','rear_delt'
 ]);
 const getRestSeconds = (id: string) => {
-  const l = id.toLowerCase();
-  if ([...COMPOUND_EXERCISES].some(k => l.includes(k))) return 150;
-  if ([...ISOLATION_EXERCISES].some(k => l.includes(k))) return  60;
-  return 90;
+  return 120; // 2 minutos para todos según preferencia del usuario
 };
 
 // ---------------------------------------------------------------------------
@@ -258,6 +255,22 @@ const Workout: React.FC = () => {
       setRestTimer(null);
       dispatchLiveActivity({ restTimer: null });
       if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+      
+      // Reproducir sonido en primer plano
+      try {
+        const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // Nota La agudo
+        oscillator.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.5);
+      } catch(e) { console.warn("AudioContext no soportado", e); }
     }
     return () => clearInterval(iv);
   }, [restTimer]);
@@ -316,9 +329,19 @@ const Workout: React.FC = () => {
     } else {
       initialLogs = list.map(ex => {
         const prev = getPreviousWorkoutLog(ex.id, today);
-        const preloaded = prev?.sets.length > 0
-          ? prev.sets.map((s: any) => ({ weight: s.weight, reps: s.reps, rir: s.rir, completed: false, setType: s.setType || 'N' }))
-          : [];
+        const targetCount = parseInt(ex.targetSets.split('-')[0]) || 0;
+        const setCount = Math.max(targetCount, prev?.sets.length || 0);
+        
+        const preloaded = [];
+        for (let i = 0; i < setCount; i++) {
+          if (prev?.sets[i]) {
+            preloaded.push({ ...prev.sets[i], completed: false, setType: prev.sets[i].setType || 'N' });
+          } else if (prev?.sets.length > 0) {
+            preloaded.push({ ...prev.sets[prev.sets.length - 1], completed: false, setType: 'N' });
+          } else {
+            preloaded.push({ weight: 0, reps: 0, completed: false, setType: 'N' });
+          }
+        }
         return { exerciseId: ex.id, sets: preloaded, completed: false };
       });
     }
@@ -389,12 +412,26 @@ const Workout: React.FC = () => {
 
   const toggleSetComplete = (exerciseId: string, setIndex: number) => {
     if (sessionState === 'idle') startWorkout();
+    const prevGymLog = getPreviousWorkoutLog(exerciseId, today);
+    
     const newLogs = logs.map(log => {
       if (log.exerciseId !== exerciseId) return log;
       const sets = [...log.sets];
       const was = sets[setIndex].completed;
-      sets[setIndex] = { ...sets[setIndex], completed: !was };
-      if (!was && setIndex < sets.length-1 && !sets[setIndex+1].weight) sets[setIndex+1] = { ...sets[setIndex+1], weight: sets[setIndex].weight };
+      
+      // Auto-fill from previous session if input is empty/0
+      let w = sets[setIndex].weight;
+      let r = sets[setIndex].reps;
+      if (!was) {
+        if (!w && prevGymLog?.sets[setIndex]?.weight) w = prevGymLog.sets[setIndex].weight;
+        if (!r && prevGymLog?.sets[setIndex]?.reps) r = prevGymLog.sets[setIndex].reps;
+      }
+      
+      sets[setIndex] = { ...sets[setIndex], weight: w, reps: r, completed: !was };
+      
+      if (!was && setIndex < sets.length-1 && !sets[setIndex+1].weight) {
+        sets[setIndex+1] = { ...sets[setIndex+1], weight: sets[setIndex].weight };
+      }
       return { ...log, sets, completed: sets.length>0 && sets.every(s=>s.completed) };
     });
     setLogs(newLogs);

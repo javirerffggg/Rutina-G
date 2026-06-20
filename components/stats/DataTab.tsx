@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { clearAllData, importFromHevyCSV, HevyImportResult } from '../../services/storage';
-import { Trash2, Upload, AlertTriangle, CheckCircle2, XCircle, FileUp, ShieldAlert, Info } from 'lucide-react';
+import { Trash2, Upload, AlertTriangle, CheckCircle2, XCircle, FileUp, ShieldAlert, Info, Share2, Link as LinkIcon } from 'lucide-react';
+import { getDeviceId } from '../SyncManager';
 import { motion, AnimatePresence } from 'motion/react';
 
 // ---------------------------------------------------------------------------
@@ -133,6 +134,84 @@ export const DataTab: React.FC = () => {
               </motion.div>
             )}
           </AnimatePresence>
+        </div>
+      </section>
+
+      {/* ─── EXPORT AI SECTION ─── */}
+      <section className="rounded-3xl border border-white/8 bg-zinc-900/50 overflow-hidden">
+        <div className="p-5 border-b border-white/5 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-violet-500/10 flex items-center justify-center">
+            <Share2 size={18} className="text-violet-400" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-white">Exportación para IA</h3>
+            <p className="text-[10px] text-zinc-500 font-medium">Enlace JSON público (Perplexity, ChatGPT)</p>
+          </div>
+        </div>
+        <div className="p-5 space-y-4">
+          <div className="flex items-start gap-3 p-4 rounded-2xl bg-violet-500/5 border border-violet-500/15">
+            <Info size={15} className="text-violet-400 mt-0.5 shrink-0" />
+            <div className="text-[11px] text-zinc-400 leading-relaxed space-y-1">
+              <p className="font-bold text-violet-300 mb-1">Analiza tus datos con IA:</p>
+              <p>Copia este enlace y pégaselo a una IA pidiéndole que lea tus estadísticas de entrenamiento.</p>
+              <p>Nota: Requiere que hayas configurado el servidor Convex.</p>
+            </div>
+          </div>
+          
+          <div className="flex flex-col gap-2">
+            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Enlace de acceso a datos (JSON)</label>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-zinc-400 font-mono truncate select-all">
+                {(() => {
+                  const url = import.meta.env.VITE_CONVEX_URL;
+                  return url ? url.replace('.convex.cloud', '.convex.site') + `/export?token=${getDeviceId()}` : 'Configura Convex primero para generar tu enlace';
+                })()}
+              </div>
+              <button 
+                onClick={() => {
+                  const url = import.meta.env.VITE_CONVEX_URL;
+                  if (url) {
+                    navigator.clipboard.writeText(url.replace('.convex.cloud', '.convex.site') + `/export?token=${getDeviceId()}`);
+                    alert('Enlace copiado al portapapeles');
+                  }
+                }}
+                className="w-12 h-12 shrink-0 rounded-xl bg-violet-500/20 hover:bg-violet-500/30 text-violet-400 flex items-center justify-center transition-all"
+              >
+                <LinkIcon size={18} />
+              </button>
+            </div>
+          </div>
+          
+          <div className="flex flex-col gap-2 pt-4 border-t border-white/5">
+            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Vincular otro dispositivo</label>
+            <p className="text-[10px] text-zinc-400 pl-1 mb-1">Tu ID actual es: <strong className="text-white select-all">{getDeviceId()}</strong></p>
+            <div className="flex items-center gap-2">
+              <input 
+                type="text" 
+                id="linkDeviceInput"
+                placeholder="Pega el ID de tu otro dispositivo"
+                className="flex-1 bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-white placeholder-zinc-600 outline-none focus:border-violet-500/50"
+              />
+              <button 
+                onClick={() => {
+                  const input = document.getElementById('linkDeviceInput') as HTMLInputElement;
+                  if (input && input.value.trim().length > 5) {
+                    if (confirm('¿Estás seguro? Esto reemplazará tus datos locales con los del dispositivo vinculado la próxima vez que se sincronice.')) {
+                      localStorage.setItem('ot_device_id', input.value.trim());
+                      localStorage.setItem('ot_last_update', '0'); // force pull
+                      alert('Dispositivo vinculado. Recarga la página para sincronizar.');
+                      window.location.reload();
+                    }
+                  } else {
+                    alert('Por favor, ingresa un ID válido.');
+                  }
+                }}
+                className="px-4 py-3 shrink-0 rounded-xl bg-violet-500 hover:bg-violet-400 text-white font-bold text-xs transition-all shadow-lg shadow-violet-500/20"
+              >
+                Vincular
+              </button>
+            </div>
+          </div>
         </div>
       </section>
 

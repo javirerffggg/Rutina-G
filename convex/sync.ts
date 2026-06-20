@@ -1,0 +1,44 @@
+import { mutation, query } from "./_generated/server";
+import { v } from "convex/values";
+
+export const getSyncState = query({
+  args: { deviceId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("userState")
+      .withIndex("by_device", (q) => q.eq("deviceId", args.deviceId))
+      .first();
+  },
+});
+
+export const pushSyncState = mutation({
+  args: {
+    deviceId: v.string(),
+    logs: v.string(),
+    achievements: v.string(),
+    updatedAt: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("userState")
+      .withIndex("by_device", (q) => q.eq("deviceId", args.deviceId))
+      .first();
+      
+    if (existing) {
+      if (args.updatedAt > existing.updatedAt) {
+        await ctx.db.patch(existing._id, {
+          logs: args.logs,
+          achievements: args.achievements,
+          updatedAt: args.updatedAt,
+        });
+      }
+    } else {
+      await ctx.db.insert("userState", {
+        deviceId: args.deviceId,
+        logs: args.logs,
+        achievements: args.achievements,
+        updatedAt: args.updatedAt,
+      });
+    }
+  },
+});

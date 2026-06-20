@@ -627,19 +627,19 @@
             },
             {
               "weight": 29,
-              "reps": 0,
+              "reps": 10,
               "completed": false,
               "setType": "N"
             },
             {
               "weight": 29,
-              "reps": 0,
+              "reps": 10,
               "completed": false,
               "setType": "N"
             },
             {
               "weight": 29,
-              "reps": 0,
+              "reps": 10,
               "completed": false,
               "setType": "N"
             }
@@ -791,7 +791,7 @@
       "glutes": 1104,
       "calves": 0,
       "abs": 0,
-      "hamstrings": 1104
+      "hamstrings": 1974
     },
     "topExercises": [
       {
@@ -837,7 +837,7 @@
     ],
     "monthlyReport": {
       "currentMonth": {
-        "volumeKg": 1104,
+        "volumeKg": 1974,
         "totalSets": 26,
         "workouts": 1
       },
@@ -848,5 +848,5 @@
       }
     }
   },
-  "lastSync": "2026-06-20T16:52:38.455Z"
+  "lastSync": "2026-06-20T16:52:41.323Z"
 }

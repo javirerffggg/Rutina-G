@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, Search, Plus, Trash2, Dumbbell, Activity, Target } from 'lucide-react';
 import { CustomRoutine, Exercise, ExerciseDBEntry } from '../types';
+import { MUSCLE_NAMES_ES } from '../data/translations.es';
 
 interface CustomRoutineBuilderProps {
   onClose: () => void;
@@ -29,10 +30,11 @@ export const CustomRoutineBuilder: React.FC<CustomRoutineBuilderProps> = ({ onCl
   const filteredDb = useMemo(() => {
     if (!search) return db.slice(0, 20); // show some by default
     const lower = search.toLowerCase();
-    return db.filter(e => 
-      e.name.toLowerCase().includes(lower) || 
-      e.primaryMuscles.some(m => m.toLowerCase().includes(lower))
-    ).slice(0, 50); // limit to 50 for perf
+    return db.filter(e => {
+      const translatedMuscles = e.primaryMuscles.map(m => MUSCLE_NAMES_ES[m] || m);
+      return e.name.toLowerCase().includes(lower) || 
+             translatedMuscles.some(m => m.toLowerCase().includes(lower));
+    }).slice(0, 50); // limit to 50 for perf
   }, [db, search]);
 
   const addExercise = (entry: ExerciseDBEntry) => {
@@ -193,7 +195,9 @@ export const CustomRoutineBuilder: React.FC<CustomRoutineBuilderProps> = ({ onCl
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-white truncate">{entry.name}</p>
-                    <p className="text-[10px] text-brand-400 font-bold uppercase tracking-widest truncate mt-0.5">{entry.primaryMuscles.join(', ')}</p>
+                    <p className="text-[10px] text-brand-400 font-bold uppercase tracking-widest truncate mt-0.5">
+                      {entry.primaryMuscles.map(m => MUSCLE_NAMES_ES[m] || m).join(', ')}
+                    </p>
                   </div>
                   <Plus size={16} className="text-zinc-500 shrink-0"/>
                 </button>

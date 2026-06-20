@@ -19,6 +19,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { dispatchLiveActivity } from '../hooks/useLiveActivity';
 import { CustomRoutineBuilder } from '../components/CustomRoutineBuilder';
+import { MUSCLE_NAMES_ES, EQUIPMENT_ES } from '../data/translations.es';
 
 const COMPOUND_EXERCISES = new Set([
   'squat','deadlift','bench_press','overhead_press','barbell_row',
@@ -845,10 +846,14 @@ const Workout: React.FC = () => {
 
                   <div className="flex flex-wrap gap-2">
                     {techExerciseDb.primaryMuscles.map(m => (
-                       <span key={m} className="text-[10px] bg-brand-500/20 text-brand-400 border border-brand-500/30 font-bold uppercase tracking-widest px-2 py-1 rounded-md">{m}</span>
+                       <span key={m} className="text-[10px] bg-brand-500/20 text-brand-400 border border-brand-500/30 font-bold uppercase tracking-widest px-2 py-1 rounded-md">
+                         {MUSCLE_NAMES_ES[m] || m}
+                       </span>
                     ))}
                     {techExerciseDb.equipment && (
-                       <span className="text-[10px] bg-zinc-800 text-zinc-400 border border-zinc-700 font-bold uppercase tracking-widest px-2 py-1 rounded-md">{techExerciseDb.equipment}</span>
+                       <span className="text-[10px] bg-zinc-800 text-zinc-400 border border-zinc-700 font-bold uppercase tracking-widest px-2 py-1 rounded-md">
+                         {EQUIPMENT_ES[techExerciseDb.equipment] || techExerciseDb.equipment}
+                       </span>
                     )}
                   </div>
 

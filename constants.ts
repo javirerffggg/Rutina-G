@@ -50,24 +50,24 @@ export const EXERCISES_LEGS: Exercise[] = [
 ];
 
 export const EXERCISES_UPPER: Exercise[] = [
-  { id: 'upp_inc_db', name: 'Press Inclinado Manc.', targetSets: '3-4', targetReps: '10', notes: 'Estabilidad.' },
+  { id: 'upp_bench_plate', name: 'Press Pecho Tumbado (Discos)', targetSets: '3-4', targetReps: '10', notes: 'Control excéntrico.' },
   { id: 'upp_lat_pull', name: 'Jalón al Pecho Prono', targetSets: '3-4', targetReps: '8-10', notes: 'V-Taper.' },
   { id: 'upp_dips', name: 'Fondos en Paralelas', targetSets: '3-4', targetReps: '10-12', notes: 'Potencia.' },
   { id: 'upp_low_row', name: 'Remo Polea Baja', targetSets: '3-4', targetReps: '10-12', notes: 'Agarre ancho. Grosor.' },
   { id: 'upp_peck', name: 'Peck Deck (Aperturas)', targetSets: '3-4', targetReps: '12-15', notes: 'Aislamiento.' },
-  { id: 'upp_pullover', name: 'Pullover Polea Alta', targetSets: '3', targetReps: '15', notes: 'Expansión / Serratos.' },
+  { id: 'upp_tri_rope', name: 'Jalón Cuerda Tríceps', targetSets: '3', targetReps: '12-15', notes: 'Aislamiento final.' },
   { id: 'upp_tri_mach', name: 'Press Tríceps Sentado', targetSets: '3-4', targetReps: '10-12', notes: 'Aislamiento.' },
   { id: 'upp_curl_pre', name: 'Curl Predicador Máq.', targetSets: '3-4', targetReps: '10-12', notes: 'Aislamiento.' },
 ];
 
 export const EXERCISES_LOWER: Exercise[] = [
-  { id: 'low_hip', name: 'Hip Thrust Máquina', targetSets: '4', targetReps: '10-12', notes: 'Glúteo/Isquio. Bloquea arriba.' },
-  { id: 'low_rdl', name: 'Peso Muerto Rumano', targetSets: '4', targetReps: '10-12', notes: 'Mancuernas. Isquios.' },
-  { id: 'low_curl', name: 'Curl Femoral', targetSets: '4', targetReps: '12-15', notes: 'Sentado o acostado.' },
-  { id: 'low_press_high', name: 'Prensa Pies Altos', targetSets: '3-4', targetReps: '12', notes: 'Énfasis Glúteo.' },
-  { id: 'low_goblet', name: 'Sentadilla Goblet', targetSets: '3', targetReps: '12-15', notes: 'Bombeo final.' },
-  { id: 'low_calves', name: 'Elevación Talones', targetSets: '4', targetReps: '15-20', notes: 'De pie o sentado.' },
-  { id: 'low_crunch', name: 'Crunch Abdominal Máq.', targetSets: '4-6', targetReps: '15', notes: 'Flexión tronco.' },
+  { id: 'low_press', name: 'Press de Piernas', targetSets: '3-4', targetReps: '10-12', notes: 'Carga pesada controlada.' },
+  { id: 'low_hip', name: 'Hip Thrust', targetSets: '4', targetReps: '10-12', notes: 'Bloqueo pélvico arriba.' },
+  { id: 'low_goblet', name: 'Sentadilla Goblet', targetSets: '3', targetReps: '12-15', notes: 'Enfoque cuádriceps.' },
+  { id: 'low_back_ext', name: 'Extensión de Espalda', targetSets: '3', targetReps: '12-15', notes: 'Control lumbar e isquios.' },
+  { id: 'low_curl_ly', name: 'Curl Piernas Acostado', targetSets: '4', targetReps: '12-15', notes: 'Aislamiento femoral.' },
+  { id: 'low_calves', name: 'Elevación de Gemelos', targetSets: '4', targetReps: '15-20', notes: 'Rango completo.' },
+  { id: 'low_crunch', name: 'Abdominal Máquina', targetSets: '4-6', targetReps: '15', notes: 'Flexión de tronco.' },
 ];
 
 export const EXERCISE_MUSCLE_MAP: Record<string, string[]> = {
@@ -94,20 +94,20 @@ export const EXERCISE_MUSCLE_MAP: Record<string, string[]> = {
   'legs_calves': ['calves'],
   'legs_abs_vkr': ['abs'],
   // UPPER
-  'upp_inc_db': ['chest', 'triceps'],
+  'upp_bench_plate': ['chest', 'shoulders'],
   'upp_lat_pull': ['back', 'biceps'],
   'upp_dips': ['chest', 'triceps'],
   'upp_low_row': ['back', 'biceps'],
   'upp_peck': ['chest'],
-  'upp_pullover': ['back'],
+  'upp_tri_rope': ['triceps'],
   'upp_tri_mach': ['triceps'],
   'upp_curl_pre': ['biceps'],
   // LOWER
+  'low_press': ['quads', 'glutes'],
   'low_hip': ['glutes', 'hamstrings'],
-  'low_rdl': ['hamstrings', 'glutes'],
-  'low_curl': ['hamstrings'],
-  'low_press_high': ['glutes', 'hamstrings'],
   'low_goblet': ['quads'],
+  'low_back_ext': ['lower back', 'hamstrings'],
+  'low_curl_ly': ['hamstrings'],
   'low_calves': ['calves'],
   'low_crunch': ['abs'],
 };

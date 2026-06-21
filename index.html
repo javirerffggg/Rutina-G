@@ -98,6 +98,15 @@
         overflow: hidden;
       }
       
+      .glass-panel,
+      [data-framer-component-type] {
+        will-change: transform, opacity;
+        transform: translateZ(0);
+      }
+      
+      .glass-panel:not(:hover):not([data-animating]) {
+        will-change: auto;
+      }
       .glass-panel::before {
         content: "";
         position: absolute;

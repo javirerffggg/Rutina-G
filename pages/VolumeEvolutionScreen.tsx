@@ -4,6 +4,52 @@ import { ArrowLeft, TrendingUp, AlertTriangle, Activity, BarChart2, Calendar } f
 import { ResponsiveContainer, ComposedChart, Area, Line, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceDot, BarChart, Bar, Cell } from 'recharts';
 import { DailyLog, WorkoutLogEntry } from '../types';
 
+const MemoMainChart = React.memo(({ chartData, metric, maxPoint, CustomTooltip }: any) => (
+  <ResponsiveContainer width="100%" height="100%">
+    <ComposedChart data={chartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+       <defs>
+         <linearGradient id="colorMain" x1="0" y1="0" x2="0" y2="1">
+           <stop offset="5%" stopColor={metric === 'sets' ? '#10b981' : metric === 'intensity' ? '#8b5cf6' : '#d97706'} stopOpacity={0.4}/>
+           <stop offset="95%" stopColor={metric === 'sets' ? '#10b981' : metric === 'intensity' ? '#8b5cf6' : '#d97706'} stopOpacity={0}/>
+         </linearGradient>
+       </defs>
+       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+       <XAxis dataKey="date" tick={{fontSize: 9, fill: '#71717a'}} axisLine={false} tickLine={false} tickMargin={10} minTickGap={20} />
+       <YAxis 
+          tick={{fontSize: 9, fill: '#71717a'}} 
+          axisLine={false} 
+          tickLine={false} 
+          domain={['auto', 'auto']}
+          tickFormatter={(v: any) => metric === 'sets' || metric === 'intensity' ? v : `${(v/1000).toFixed(0)}t`}
+       />
+       <Tooltip content={<CustomTooltip />} />
+       <Area type="monotone" dataKey="value" stroke={metric === 'sets' ? '#10b981' : metric === 'intensity' ? '#8b5cf6' : '#d97706'} fill="url(#colorMain)" strokeWidth={2} />
+       <Line type="monotone" dataKey="ma" stroke="#38bdf8" strokeWidth={2} dot={false} strokeDasharray="4 4" />
+       {maxPoint && <ReferenceDot x={maxPoint.date} y={maxPoint.value} r={6} fill="#fbbf24" stroke="#b45309" strokeWidth={2} />}
+    </ComposedChart>
+  </ResponsiveContainer>
+));
+MemoMainChart.displayName = 'MemoMainChart';
+
+const MemoStackedChart = React.memo(({ stackedData, COLORS, StackedTooltip }: any) => (
+  <ResponsiveContainer width="100%" height="100%">
+    <BarChart data={stackedData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+       <XAxis dataKey="date" tick={{fontSize: 9, fill: '#71717a'}} axisLine={false} tickLine={false} tickMargin={10} />
+       <YAxis tick={{fontSize: 9, fill: '#71717a'}} axisLine={false} tickLine={false} tickFormatter={(v: any) => `${(v/1000).toFixed(0)}t`} />
+       <Tooltip content={<StackedTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+       <Bar dataKey="Push" stackId="a" fill={COLORS.Push} />
+       <Bar dataKey="Pull" stackId="a" fill={COLORS.Pull} />
+       <Bar dataKey="Legs" stackId="a" fill={COLORS.Legs} />
+       <Bar dataKey="Upper" stackId="a" fill={COLORS.Upper} />
+       <Bar dataKey="Lower" stackId="a" fill={COLORS.Lower} />
+       <Bar dataKey="FullBody" stackId="a" fill={COLORS.FullBody} />
+       <Bar dataKey="Otro" stackId="a" fill={COLORS.Otro} radius={[4, 4, 0, 0]} />
+    </BarChart>
+  </ResponsiveContainer>
+));
+MemoStackedChart.displayName = 'MemoStackedChart';
+
 type Period = '1M' | '3M' | '6M' | 'ALL';
 type Metric = 'volume' | 'tonnageWeekly' | 'sets' | 'intensity';
 
@@ -327,54 +373,7 @@ export default function VolumeEvolutionScreen() {
         <div className="bg-zinc-900/50 border border-white/5 rounded-3xl p-5">
            <div className="h-64 w-full relative">
               {chartData.length > 0 ? (
-                 <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={chartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-                       <defs>
-                         <linearGradient id="colorMain" x1="0" y1="0" x2="0" y2="1">
-                           <stop offset="5%" stopColor={metric === 'sets' ? '#10b981' : metric === 'intensity' ? '#8b5cf6' : '#d97706'} stopOpacity={0.4}/>
-                           <stop offset="95%" stopColor={metric === 'sets' ? '#10b981' : metric === 'intensity' ? '#8b5cf6' : '#d97706'} stopOpacity={0}/>
-                         </linearGradient>
-                       </defs>
-                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                       <XAxis dataKey="date" tick={{fontSize: 9, fill: '#71717a'}} axisLine={false} tickLine={false} tickMargin={10} minTickGap={20} />
-                       <YAxis 
-                          tick={{fontSize: 9, fill: '#71717a'}} 
-                          axisLine={false} 
-                          tickLine={false} 
-                          domain={['auto', 'auto']}
-                          tickFormatter={(v) => metric === 'sets' || metric === 'intensity' ? v : `${(v/1000).toFixed(0)}t`}
-                       />
-                       <Tooltip content={<CustomTooltip />} />
-                       
-                       <Area 
-                          type="monotone" 
-                          dataKey="value" 
-                          stroke={metric === 'sets' ? '#10b981' : metric === 'intensity' ? '#8b5cf6' : '#d97706'} 
-                          fill="url(#colorMain)" 
-                          strokeWidth={2} 
-                       />
-                       
-                       <Line 
-                          type="monotone" 
-                          dataKey="ma" 
-                          stroke="#38bdf8" 
-                          strokeWidth={2} 
-                          dot={false} 
-                          strokeDasharray="4 4" 
-                       />
-
-                       {maxPoint && (
-                          <ReferenceDot 
-                             x={maxPoint.date} 
-                             y={maxPoint.value} 
-                             r={6} 
-                             fill="#fbbf24" 
-                             stroke="#b45309" 
-                             strokeWidth={2} 
-                          />
-                       )}
-                    </ComposedChart>
-                 </ResponsiveContainer>
+                 <MemoMainChart chartData={chartData} metric={metric} maxPoint={maxPoint} CustomTooltip={CustomTooltip} />
               ) : (
                  <div className="absolute inset-0 flex items-center justify-center text-sm font-medium text-zinc-500">
                     No hay datos en este período
@@ -423,26 +422,7 @@ export default function VolumeEvolutionScreen() {
            </h3>
            <div className="h-64 w-full">
               {stackedData.length > 0 ? (
-                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={stackedData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                       <XAxis dataKey="date" tick={{fontSize: 9, fill: '#71717a'}} axisLine={false} tickLine={false} tickMargin={10} />
-                       <YAxis 
-                          tick={{fontSize: 9, fill: '#71717a'}} 
-                          axisLine={false} 
-                          tickLine={false} 
-                          tickFormatter={(v) => `${(v/1000).toFixed(0)}t`}
-                       />
-                       <Tooltip content={<StackedTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
-                       <Bar dataKey="Push" stackId="a" fill={COLORS.Push} />
-                       <Bar dataKey="Pull" stackId="a" fill={COLORS.Pull} />
-                       <Bar dataKey="Legs" stackId="a" fill={COLORS.Legs} />
-                       <Bar dataKey="Upper" stackId="a" fill={COLORS.Upper} />
-                       <Bar dataKey="Lower" stackId="a" fill={COLORS.Lower} />
-                       <Bar dataKey="FullBody" stackId="a" fill={COLORS.FullBody} />
-                       <Bar dataKey="Otro" stackId="a" fill={COLORS.Otro} radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                 </ResponsiveContainer>
+                 <MemoStackedChart stackedData={stackedData} COLORS={COLORS} StackedTooltip={StackedTooltip} />
               ) : (
                  <div className="flex h-full items-center justify-center text-sm font-medium text-zinc-500">
                     No hay suficientes datos clasificados

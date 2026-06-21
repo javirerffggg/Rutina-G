@@ -296,7 +296,7 @@ const Workout: React.FC = () => {
         }
         return log;
       }));
-      saveWorkoutWithLogs(logs.map(log => log.exerciseId === firstExId ? { ...log, sets: [...warmupSets, ...log.sets] } : log), false);
+      saveWorkoutDebounced(logs.map(log => log.exerciseId === firstExId ? { ...log, sets: [...warmupSets, ...log.sets] } : log), false);
     }
   };
 
@@ -375,7 +375,7 @@ const Workout: React.FC = () => {
       return { ...log, sets, completed: sets.length>0 && sets.every(s=>s.completed) };
     });
     setLogs(newLogs);
-    saveWorkoutWithLogs(newLogs, false);
+    saveWorkoutDebounced(newLogs, false);
     const justCompleted = newLogs.find(l=>l.exerciseId===exerciseId)?.sets[setIndex].completed;
     if (justCompleted) { 
       const ex = exercises.find(e=>e.id===exerciseId); 
@@ -412,7 +412,7 @@ const Workout: React.FC = () => {
     e.stopPropagation();
     const nl = logs.map(l => l.exerciseId !== exerciseId ? l : { ...l, completed: !l.completed });
     setLogs(nl);
-    saveWorkoutWithLogs(nl);
+    saveWorkoutDebounced(nl);
     const nowComplete = nl.find(l=>l.exerciseId===exerciseId)?.completed;
     if (nowComplete) {
       const nextUncomp = nl.find(l=>!l.completed)?.exerciseId;
@@ -471,6 +471,8 @@ const Workout: React.FC = () => {
     return { tonnage, tonnageDiff: diff, prs };
   };
 
+  const saveDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const saveWorkoutWithLogs = (currentLogs = logs, finish = false) => {
     if (selectedRoutine === null) return;
     const existing = allLogs[today] || { date: today };
@@ -496,7 +498,18 @@ const Workout: React.FC = () => {
     }
   };
 
-  const saveWorkout = (finish = false) => saveWorkoutWithLogs(logs, finish);
+  const saveWorkoutDebounced = (currentLogs = logs, finish = false) => {
+    if (finish) {
+      saveWorkoutWithLogs(currentLogs, true);
+      return;
+    }
+    if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
+    saveDebounceRef.current = setTimeout(() => {
+      saveWorkoutWithLogs(currentLogs, false);
+    }, 300);
+  };
+
+  const saveWorkout = (finish = false) => saveWorkoutDebounced(logs, finish);
 
   const handleDiscard = () => {
     setSessionState('idle');
@@ -515,22 +528,35 @@ const Workout: React.FC = () => {
   const setsCompletedCount = logs.reduce((a,l) => a + l.sets.filter(s=>s.completed).length, 0);
   const setsTotalCount = logs.reduce((a,l) => a + l.sets.length, 0);
 
-  if (selectedRoutine === null) {
-    const ORDERED: RoutineType[] = [RoutineType.PUSH, RoutineType.PULL, RoutineType.LEGS, RoutineType.UPPER, RoutineType.LOWER, RoutineType.REST];
-    const allLogsList = Object.values(getLogs()).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    const recentHistory = allLogsList.filter((l: any) => l.workoutCompleted && l.exercises?.length).slice(0, 3);
-    const activeSession = localStorage.getItem(`workoutSessionState_${today}`) === 'active';
-    const defaultMeta = ROUTINE_META[defaultRoutine as RoutineType];
+  const allLogsList = useMemo(() => {
+    return Object.values(allLogs).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [allLogs]);
 
-    const getRoutineStats = (routineId: string) => {
+  const allRoutineStats = useMemo(() => {
+    const stats: Record<string, any> = {};
+    const ORDERED = [RoutineType.PUSH, RoutineType.PULL, RoutineType.LEGS, RoutineType.UPPER, RoutineType.LOWER];
+    ORDERED.forEach(routineId => {
       const routineLogs = allLogsList.filter((l: any) => l.workoutType === routineId && l.workoutCompleted && l.date !== today);
-      if (routineLogs.length === 0) return null;
+      if (routineLogs.length === 0) {
+        stats[routineId] = null;
+        return;
+      }
       const last = routineLogs[0];
       const daysAgo = Math.floor((new Date(today).getTime() - new Date(last.date).getTime()) / 86400000);
       const volume = last.exercises?.reduce((sum: number, ex: any) => sum + ex.sets.reduce((s: number, set: any) => s + ((set.weight || 0) * (set.reps || 0)), 0), 0) || 0;
       const avgDuration = Math.round(routineLogs.reduce((sum: number, l: any) => sum + (l.duration || 0), 0) / routineLogs.length);
-      return { daysAgo, volume, avgDuration };
-    };
+      stats[routineId] = { daysAgo, volume, avgDuration };
+    });
+    return stats;
+  }, [allLogsList, today]);
+
+  if (selectedRoutine === null) {
+    const ORDERED: RoutineType[] = [RoutineType.PUSH, RoutineType.PULL, RoutineType.LEGS, RoutineType.UPPER, RoutineType.LOWER, RoutineType.REST];
+    const recentHistory = allLogsList.filter((l: any) => l.workoutCompleted && l.exercises?.length).slice(0, 3);
+    const activeSession = localStorage.getItem(`workoutSessionState_${today}`) === 'active';
+    const defaultMeta = ROUTINE_META[defaultRoutine as RoutineType];
+
+    const getRoutineStats = (routineId: string) => allRoutineStats[routineId] || null;
 
     const getCustomMuscles = (routine: any) => {
       const musclesCount: Record<string, number> = {};

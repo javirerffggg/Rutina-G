@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { ACHIEVEMENTS, AchievementDef, AchievementTier, AchievementCategory, TIER_XP } from '../achievements';
+import { AchievementDef, AchievementTier, AchievementCategory, TIER_XP } from '../achievements';
 import { getUnlockedAchievements, getLogs } from '../services/storage';
 import { getTodayDateString } from '../utils';
 import * as Icons from 'lucide-react';
@@ -47,6 +47,12 @@ const TrophyRoom: React.FC = () => {
   const today = getTodayDateString();
   const { rankInfo } = useProgression();
 
+  const [achievementsData, setAchievementsData] = useState<AchievementDef[]>([]);
+
+  useEffect(() => {
+    import('../achievements').then(m => setAchievementsData(m.ACHIEVEMENTS));
+  }, []);
+
   const loadData = useCallback(() => {
     setUnlocked(getUnlockedAchievements());
     setLogs(getLogs());
@@ -60,7 +66,7 @@ const TrophyRoom: React.FC = () => {
 
   // Derived state with progress
   const enrichedAchievements = useMemo(() => {
-    return ACHIEVEMENTS.map(ach => {
+    return achievementsData.map(ach => {
       const isUnlocked = !!unlocked[ach.id];
       let prog = null;
       if (ach.progress) {
@@ -76,7 +82,7 @@ const TrophyRoom: React.FC = () => {
 
   // Global stats
   const unlockedCount = Object.keys(unlocked).length;
-  const totalCount = ACHIEVEMENTS.length;
+  const totalCount = achievementsData.length;
   const globalProgress = totalCount > 0 ? Math.round((unlockedCount / totalCount) * 100) : 0;
 
   // Recently unlocked

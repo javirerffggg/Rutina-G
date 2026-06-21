@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { LayoutDashboard, Dumbbell, CalendarRange, Scale, Trophy, Settings } from 'lucide-react';
-import { ACHIEVEMENTS, AchievementDef } from '../achievements';
+import { AchievementDef } from '../achievements';
 import { getUnlockedAchievements } from '../services/storage';
 import * as Icons from 'lucide-react';
 import { useLiveActivity } from '../hooks/useLiveActivity';
@@ -60,16 +60,18 @@ const Layout: React.FC = () => {
   const handleUnlock = useCallback((e: Event) => {
     const ids = (e as CustomEvent<string[]>).detail;
     if (!ids?.length) return;
-    const newAchs = ids
-      .map(id => ACHIEVEMENTS.find(a => a.id === id))
-      .filter(Boolean) as AchievementDef[];
-    if (newAchs.length === 0) return;
-    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-    setToastQueue(prev => [...prev, ...newAchs]);
-    newAchs.forEach((_, i) => {
-      setTimeout(() => {
-        setToastQueue(prev => prev.slice(1));
-      }, 5000 * (i + 1));
+    import('../achievements').then(m => {
+      const newAchs = ids
+        .map(id => m.ACHIEVEMENTS.find(a => a.id === id))
+        .filter(Boolean) as AchievementDef[];
+      if (newAchs.length === 0) return;
+      if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+      setToastQueue(prev => [...prev, ...newAchs]);
+      newAchs.forEach((_, i) => {
+        setTimeout(() => {
+          setToastQueue(prev => prev.slice(1));
+        }, 5000 * (i + 1));
+      });
     });
   }, []);
 

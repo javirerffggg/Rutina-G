@@ -7,9 +7,60 @@ import { EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS, EXERCISES_UPPER, EXERCI
 import { calculateOneRM, getWeeklyMuscleVolume } from '../../utils';
 import { BodyHeatmap } from '../BodyHeatmap';
 
-interface PerformanceTabProps {
-  logs: Record<string, DailyLog>;
-}
+const MemoMuscleChart = React.memo(({ activeChartData }: any) => (
+  <ResponsiveContainer width="100%" height="100%">
+    <BarChart data={activeChartData} layout="vertical" margin={{ top: 0, right: 0, left: 20, bottom: 0 }}>
+      <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="rgba(255,255,255,0.05)" />
+      <XAxis type="number" hide />
+      <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8'}} width={60} />
+      <Tooltip cursor={{fill: 'rgba(255,255,255,0.05)'}} contentStyle={{backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '12px'}} />
+      <Bar dataKey="sets" name="Series" radius={[0, 4, 4, 0]}>
+        {activeChartData.map((_: any, idx: number) => (
+          <Cell key={`cell-${idx}`} fill={['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#14b8a6', '#f43f5e', '#84cc16'][idx % 8]} />
+        ))}
+      </Bar>
+    </BarChart>
+  </ResponsiveContainer>
+));
+MemoMuscleChart.displayName = 'MemoMuscleChart';
+
+const MemoEvoChart = React.memo(({ exerciseLogs }: any) => (
+  <ResponsiveContainer width="100%" height="100%">
+    <ComposedChart data={exerciseLogs}>
+      <defs>
+        <linearGradient id="color1RM" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+          <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+        </linearGradient>
+      </defs>
+      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+      <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 8, fill: '#64748b'}} interval="preserveStartEnd" minTickGap={20} />
+      <YAxis yAxisId="left"  domain={['auto', 'auto']} orientation="left"  tick={{fontSize: 9, fill: '#10b981'}} axisLine={false} width={30} />
+      <YAxis yAxisId="right" domain={['auto', 'auto']} orientation="right" tick={{fontSize: 9, fill: '#8b5cf6'}} tickFormatter={(v: any) => v >= 1000 ? `${(v/1000).toFixed(1)}t` : v} axisLine={false} width={40} />
+      <Tooltip contentStyle={{backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '12px'}} itemStyle={{padding: 0}} labelStyle={{color: '#94a3b8', marginBottom: '4px'}} />
+      <Area yAxisId="left"  type="monotone" dataKey="oneRM"  name="1RM Est. (kg)"  stroke="#10b981" fill="url(#color1RM)" strokeWidth={2} />
+      <Line yAxisId="right" type="monotone" dataKey="volume" name="Tonelaje (kg)" stroke="#8b5cf6" dot={false} strokeWidth={2} />
+    </ComposedChart>
+  </ResponsiveContainer>
+));
+MemoEvoChart.displayName = 'MemoEvoChart';
+
+const MemoRirChart = React.memo(({ data }: any) => (
+  <ResponsiveContainer width="100%" height="100%">
+    <BarChart data={data}>
+      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+      <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 8, fill: '#64748b'}} interval="preserveStartEnd" minTickGap={20} />
+      <YAxis domain={[0, 10]} orientation="right" tick={{fontSize: 9, fill: '#64748b'}} axisLine={false} width={30} />
+      <Tooltip contentStyle={{backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '12px'}} itemStyle={{padding: 0}} labelStyle={{color: '#94a3b8', marginBottom: '4px'}} />
+      <Bar dataKey="rir" name="RIR Promedio" radius={[4, 4, 0, 0]}>
+        {data.map((entry: any, idx: number) => (
+          <Cell key={`cell-${idx}`} fill={entry.rir! > 2 ? '#10b981' : entry.rir! > 0 ? '#fb923c' : '#ef4444'} />
+        ))}
+      </Bar>
+    </BarChart>
+  </ResponsiveContainer>
+));
+MemoRirChart.displayName = 'MemoRirChart';
 
 export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => {
   const navigate = useNavigate();
@@ -380,19 +431,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
               <div className="mt-8">
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Evolucion del RIR</h3>
                 <div style={{ width: '100%', height: 160 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={exerciseLogs.filter(l => l.rir !== null)}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                      <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 8, fill: '#64748b'}} interval="preserveStartEnd" minTickGap={20} />
-                      <YAxis domain={[0, 10]} orientation="right" tick={{fontSize: 9, fill: '#64748b'}} axisLine={false} width={30} />
-                      <Tooltip contentStyle={{backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '12px'}} itemStyle={{padding: 0}} labelStyle={{color: '#94a3b8', marginBottom: '4px'}} />
-                      <Bar dataKey="rir" name="RIR Promedio" radius={[4, 4, 0, 0]}>
-                        {exerciseLogs.filter(l => l.rir !== null).map((entry, idx) => (
-                          <Cell key={`cell-${idx}`} fill={entry.rir! > 2 ? '#10b981' : entry.rir! > 0 ? '#fb923c' : '#ef4444'} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <MemoRirChart data={exerciseLogs.filter(l => l.rir !== null)} />
                 </div>
                 <p className="text-[10px] text-slate-500 mt-2 text-center italic">
                   Un RIR creciente con la misma carga indica una mejor recuperacion y adaptacion.

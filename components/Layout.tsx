@@ -216,50 +216,50 @@ const Layout: React.FC = () => {
         <div className="glass-panel rounded-[24px] shadow-[0_8px_40px_rgba(0,0,0,0.7)] border border-white/10 px-4 pt-1.5 pb-1.5 w-fit max-w-[95vw]">
           <div className="flex items-center h-12 gap-2 sm:gap-4">
             <NavLink to="/history" className={({ isActive }) =>
-              `flex flex-col items-center gap-1 transition-all ${ isActive ? 'text-blue-400 scale-110' : 'text-zinc-500 hover:text-zinc-300' }`
+              `flex flex-col justify-center items-center transition-all duration-300 px-2 ${ isActive ? 'text-blue-400 scale-110' : 'text-zinc-500 hover:text-zinc-300' }`
             }>
               {({ isActive }) => (<>
-                <Icons.BookOpen size={20} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[9px] font-bold tracking-[0.05em] uppercase">Historial</span>
+                <Icons.BookOpen size={20} strokeWidth={isActive ? 2.5 : 2} className="shrink-0" />
+                <span className={`text-[9px] font-bold tracking-[0.05em] uppercase overflow-hidden transition-all duration-300 ${isActive ? 'max-h-4 opacity-100 mt-1' : 'max-h-0 opacity-0 mt-0'}`}>Historial</span>
               </>)}
             </NavLink>
 
             <NavLink to="/stats" className={({ isActive }) =>
-              `flex flex-col items-center gap-1 transition-all ${ isActive ? 'text-purple-400 scale-110' : 'text-zinc-500 hover:text-zinc-300' }`
+              `flex flex-col justify-center items-center transition-all duration-300 px-2 ${ isActive ? 'text-purple-400 scale-110' : 'text-zinc-500 hover:text-zinc-300' }`
             }>
               {({ isActive }) => (<>
-                <Scale size={20} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[9px] font-bold tracking-[0.05em] uppercase">Stats</span>
+                <Scale size={20} strokeWidth={isActive ? 2.5 : 2} className="shrink-0" />
+                <span className={`text-[9px] font-bold tracking-[0.05em] uppercase overflow-hidden transition-all duration-300 ${isActive ? 'max-h-4 opacity-100 mt-1' : 'max-h-0 opacity-0 mt-0'}`}>Stats</span>
               </>)}
             </NavLink>
 
             <NavLink to="/" end className={({ isActive }) =>
-              `flex flex-col items-center gap-1 transition-all ${ isActive ? 'text-emerald-400 scale-110' : 'text-zinc-500 hover:text-zinc-300' }`
+              `flex flex-col justify-center items-center transition-all duration-300 px-2 ${ isActive ? 'text-emerald-400 scale-110' : 'text-zinc-500 hover:text-zinc-300' }`
             }>
               {({ isActive }) => (<>
-                <Dumbbell size={20} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[9px] font-bold tracking-[0.05em] uppercase">Entreno</span>
+                <Dumbbell size={20} strokeWidth={isActive ? 2.5 : 2} className="shrink-0" />
+                <span className={`text-[9px] font-bold tracking-[0.05em] uppercase overflow-hidden transition-all duration-300 ${isActive ? 'max-h-4 opacity-100 mt-1' : 'max-h-0 opacity-0 mt-0'}`}>Entreno</span>
               </>)}
             </NavLink>
 
             <NavLink to="/trophies" className={({ isActive }) =>
-              `relative flex flex-col items-center gap-1 transition-all ${ isActive ? 'text-amber-500 scale-110' : 'text-zinc-500 hover:text-zinc-300' }`
+              `relative flex flex-col justify-center items-center transition-all duration-300 px-2 ${ isActive ? 'text-amber-500 scale-110' : 'text-zinc-500 hover:text-zinc-300' }`
             }>
               {({ isActive }) => (<>
                 {unseenTrophies > 0 && (
                   <span className="absolute -top-0.5 right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse border-2 border-zinc-950" />
                 )}
-                <Trophy size={20} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[9px] font-bold tracking-[0.05em] uppercase">Logros</span>
+                <Trophy size={20} strokeWidth={isActive ? 2.5 : 2} className="shrink-0" />
+                <span className={`text-[9px] font-bold tracking-[0.05em] uppercase overflow-hidden transition-all duration-300 ${isActive ? 'max-h-4 opacity-100 mt-1' : 'max-h-0 opacity-0 mt-0'}`}>Logros</span>
               </>)}
             </NavLink>
             
             <NavLink to="/settings" className={({ isActive }) =>
-              `flex flex-col items-center gap-1 transition-all ${ isActive ? 'text-zinc-200 scale-110' : 'text-zinc-500 hover:text-zinc-300' }`
+              `flex flex-col justify-center items-center transition-all duration-300 px-2 ${ isActive ? 'text-zinc-200 scale-110' : 'text-zinc-500 hover:text-zinc-300' }`
             }>
               {({ isActive }) => (<>
-                <Settings size={20} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[9px] font-bold tracking-[0.05em] uppercase">Ajustes</span>
+                <Settings size={20} strokeWidth={isActive ? 2.5 : 2} className="shrink-0" />
+                <span className={`text-[9px] font-bold tracking-[0.05em] uppercase overflow-hidden transition-all duration-300 ${isActive ? 'max-h-4 opacity-100 mt-1' : 'max-h-0 opacity-0 mt-0'}`}>Ajustes</span>
               </>)}
             </NavLink>
           </div>

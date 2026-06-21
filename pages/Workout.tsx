@@ -927,20 +927,20 @@ const Workout: React.FC = () => {
 
             // FULLY EXPANDED CURRENT EXERCISE ROW
             return (
-              <div key={exercise.id} className="glass-panel rounded-3xl p-5 shadow-[0_20px_60px_rgba(0,0,0,0.6)] border-brand-500/30 premium-bisel transition-all relative overflow-hidden">
+              <div key={exercise.id} className="glass-panel rounded-3xl p-4 shadow-[0_20px_60px_rgba(0,0,0,0.6)] border-brand-500/30 premium-bisel transition-all relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-500 to-amber-500" />
-                <div className="flex justify-between items-start mb-6">
+                <div className="flex justify-between items-start mb-4">
                   <div className="flex-1 pr-4">
-                    <p className="text-brand-400 font-bold text-[10px] uppercase tracking-[0.2em] mb-1.5 flex items-center gap-1"><PlaySquare size={12} fill="currentColor"/> Ejercicio Actual</p>
-                    <h2 className="text-2xl font-display font-bold text-white leading-tight tracking-tight">{exercise.name}</h2>
-                    <button onClick={() => setShowTechFor(exercise.id)} className="text-brand-400 flex items-center gap-1 text-[10px] uppercase tracking-widest font-bold mt-2 bg-brand-500/10 hover:bg-brand-500/20 px-2 py-1.5 rounded-md w-fit transition-all"><ImageIcon size={12}/> Ver Técnica</button>
+                    <p className="text-brand-400 font-bold text-[9px] uppercase tracking-[0.2em] mb-1 flex items-center gap-1"><PlaySquare size={10} fill="currentColor"/> Ejercicio Actual</p>
+                    <h2 className="text-xl font-display font-bold text-white leading-tight tracking-tight">{exercise.name}</h2>
+                    <button onClick={() => setShowTechFor(exercise.id)} className="text-brand-400 flex items-center gap-1 text-[9px] uppercase tracking-widest font-bold mt-1.5 bg-brand-500/10 hover:bg-brand-500/20 px-2 py-1 rounded-md w-fit transition-all"><ImageIcon size={10}/> Ver Técnica</button>
                   </div>
-                  <button onClick={e=>toggleExerciseComplete(exercise.id,e)} className="w-10 h-10 rounded-full border-2 border-zinc-700 hover:border-zinc-500 flex items-center justify-center shrink-0">
-                     <Check size={16} className="text-zinc-500" />
+                  <button onClick={e=>toggleExerciseComplete(exercise.id,e)} className="w-8 h-8 rounded-full border-2 border-zinc-700 hover:border-zinc-500 flex items-center justify-center shrink-0">
+                     <Check size={14} className="text-zinc-500" />
                   </button>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {log.sets.map((set, idx) => {
                      const isCurrentSet = idx === currentSetIndex;
                      const ps = prevLog?.sets[idx] ?? null;
@@ -948,64 +948,64 @@ const Workout: React.FC = () => {
                      
                      if (set.completed) {
                        return (
-                         <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10 mb-2">
-                           <div className="flex items-center gap-3">
-                             <span className="text-[10px] font-bold text-emerald-500/50 w-4">{idx+1}</span>
-                             <span className="text-sm font-bold text-emerald-400 line-through">{set.weight}kg × {set.reps}{set.rir != null ? ` @ RPE ${10 - set.rir}` : ''}</span>
+                         <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/10 mb-1.5">
+                           <div className="flex items-center gap-2">
+                             <span className="text-[9px] font-bold text-emerald-500/50 w-3">{idx+1}</span>
+                             <span className="text-xs font-bold text-emerald-400 line-through">{set.weight}kg × {set.reps}{set.rir != null ? ` @ RPE ${10 - set.rir}` : ''}</span>
                            </div>
-                           <button onClick={() => toggleSetComplete(exercise.id, idx)} className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest px-2 py-1 rounded bg-black/20 hover:text-white">Deshacer</button>
+                           <button onClick={() => toggleSetComplete(exercise.id, idx)} className="text-[9px] text-zinc-500 uppercase font-bold tracking-widest px-2 py-1 rounded bg-black/20 hover:text-white">Deshacer</button>
                          </div>
                        );
                      }
 
                      if (!isCurrentSet) {
                        return (
-                         <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-black/20 border border-white/5 opacity-60 mb-2">
-                           <div className="flex items-center gap-3">
-                             <span className="text-[10px] font-bold text-zinc-600 w-4">{idx+1}</span>
-                             <span className="text-sm font-bold text-zinc-500">{ps ? `Objetivo: ${ps.weight}kg × ${ps.reps}` : 'Próxima serie'}</span>
+                         <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-black/20 border border-white/5 opacity-60 mb-1.5">
+                           <div className="flex items-center gap-2">
+                             <span className="text-[9px] font-bold text-zinc-600 w-3">{idx+1}</span>
+                             <span className="text-xs font-bold text-zinc-500">{ps ? `Objetivo: ${ps.weight}kg × ${ps.reps}` : 'Próxima serie'}</span>
                            </div>
-                           <button onClick={() => removeSet(exercise.id, idx)} className="text-[10px] text-zinc-600 hover:text-red-400 uppercase font-bold tracking-widest px-2 py-1">Quitar</button>
+                           <button onClick={() => removeSet(exercise.id, idx)} className="text-[9px] text-zinc-600 hover:text-red-400 uppercase font-bold tracking-widest px-2 py-1">Quitar</button>
                          </div>
                        );
                      }
 
                      return (
-                       <div key={idx} className={`p-4 rounded-2xl border transition-all mb-2 bg-black/40 border-brand-500/50 shadow-lg`}>
-                          <div className="flex justify-between items-center mb-3">
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-brand-400">Set {idx+1}</span>
+                       <div key={idx} className={`p-3 rounded-2xl border transition-all mb-1.5 bg-black/40 border-brand-500/50 shadow-lg`}>
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-[9px] font-bold uppercase tracking-widest text-brand-400">Set {idx+1}</span>
                             <div className="flex gap-2">
-                               <button onClick={() => cycleSetType(exercise.id, idx)} className={`w-8 h-6 rounded border text-[9px] font-bold flex items-center justify-center ${
+                               <button onClick={() => cycleSetType(exercise.id, idx)} className={`w-8 h-5 rounded border text-[8px] font-bold flex items-center justify-center ${
                                   setType === 'W' ? 'bg-zinc-700/50 text-zinc-400 border-zinc-600/50' :
                                   setType === 'N' ? 'bg-brand-500/20 text-brand-400 border-brand-500/30' :
                                   setType === 'D' ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' :
                                   'bg-red-500/20 text-red-400 border-red-500/30'
                                }`}>{setType}</button>
-                               <button onClick={() => removeSet(exercise.id, idx)} className="text-[10px] text-zinc-500 uppercase tracking-widest hover:text-red-400">Quitar</button>
+                               <button onClick={() => removeSet(exercise.id, idx)} className="text-[9px] text-zinc-500 uppercase tracking-widest hover:text-red-400">Quitar</button>
                             </div>
                           </div>
                           
-                          <div className="grid grid-cols-2 gap-3 mb-3">
+                          <div className="grid grid-cols-2 gap-2 mb-2">
                             {/* PESO */}
-                            <div className="bg-zinc-900/80 rounded-xl p-3 border border-white/5 relative">
-                               <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-widest text-center mb-1">Peso (kg)</p>
+                            <div className="bg-zinc-900/80 rounded-xl p-2 border border-white/5 relative">
+                               <p className="text-zinc-500 text-[8px] font-bold uppercase tracking-widest text-center mb-0.5">Peso (kg)</p>
                                <input type="number" inputMode="decimal" placeholder={ps?`${ps.weight}`:'0'} value={set.weight||''} onChange={e=>updateSet(exercise.id,idx,'weight',parseFloat(e.target.value))} onBlur={()=>saveWorkout()}
-                                 className="w-full bg-transparent text-center font-display font-bold text-3xl focus:outline-none text-white"/>
-                               {ps && <p className="text-[9px] text-center text-zinc-600 mt-1">ant: {ps.weight}</p>}
+                                 className="w-full bg-transparent text-center font-display font-bold text-2xl focus:outline-none text-white"/>
+                               {ps && <p className="text-[8px] text-center text-zinc-600 mt-0.5">ant: {ps.weight}</p>}
                             </div>
                             {/* REPS */}
-                            <div className="bg-zinc-900/80 rounded-xl p-3 border border-white/5 relative">
-                               <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-widest text-center mb-1">Reps</p>
+                            <div className="bg-zinc-900/80 rounded-xl p-2 border border-white/5 relative">
+                               <p className="text-zinc-500 text-[8px] font-bold uppercase tracking-widest text-center mb-0.5">Reps</p>
                                <input type="number" inputMode="decimal" placeholder={ps?`${ps.reps}`:'0'} value={set.reps||''} onChange={e=>updateSet(exercise.id,idx,'reps',parseFloat(e.target.value))} onBlur={()=>saveWorkout()}
-                                 className="w-full bg-transparent text-center font-display font-bold text-3xl focus:outline-none text-white"/>
-                               {ps && <p className="text-[9px] text-center text-zinc-600 mt-1">ant: {ps.reps}</p>}
+                                 className="w-full bg-transparent text-center font-display font-bold text-2xl focus:outline-none text-white"/>
+                               {ps && <p className="text-[8px] text-center text-zinc-600 mt-0.5">ant: {ps.reps}</p>}
                             </div>
                           </div>
 
                           {/* RPE BUTTONS */}
-                          <div className="mb-4">
-                            <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 mb-2 text-center">Esfuerzo (RPE)</p>
-                            <div className="flex justify-between gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                          <div className="mb-3">
+                            <p className="text-[8px] font-bold uppercase tracking-widest text-zinc-500 mb-1 text-center">Esfuerzo (RPE)</p>
+                            <div className="flex justify-between gap-1 overflow-x-auto no-scrollbar pb-1">
                                {[7.5, 8, 8.5, 9, 9.5, 10].map(rpe => {
                                   const rir = 10 - rpe;
                                   const isSelected = set.rir === rir;
@@ -1018,7 +1018,7 @@ const Workout: React.FC = () => {
                                   }
                                   return (
                                      <button key={rpe} onClick={() => { updateSet(exercise.id, idx, 'rir', rir); saveWorkout(); }}
-                                        className={`shrink-0 min-w-[3.5rem] py-2 rounded-lg border font-display font-bold text-sm transition-all active:scale-95 ${colorClass}`}>
+                                        className={`shrink-0 min-w-[2.75rem] py-1.5 rounded-lg border font-display font-bold text-xs transition-all active:scale-95 ${colorClass}`}>
                                         {rpe}
                                      </button>
                                   );
@@ -1026,16 +1026,16 @@ const Workout: React.FC = () => {
                             </div>
                           </div>
                           
-                          <button onClick={() => toggleSetComplete(exercise.id, idx)} className="w-full py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold uppercase tracking-[0.15em] text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-emerald-900/40">
-                            <Check size={18} strokeWidth={3}/> Completar
+                          <button onClick={() => toggleSetComplete(exercise.id, idx)} className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold uppercase tracking-[0.15em] text-xs flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-emerald-900/40">
+                            <Check size={16} strokeWidth={3}/> Completar
                           </button>
                        </div>
                      );
                   })}
                 </div>
                 
-                <button onClick={() => addSet(exercise.id)} className="w-full mt-3 py-3 rounded-xl border border-dashed border-zinc-800 text-zinc-500 hover:text-brand-400 transition-all flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest">
-                  <Plus size={14}/> Añadir Serie
+                <button onClick={() => addSet(exercise.id)} className="w-full mt-2 py-2.5 rounded-xl border border-dashed border-zinc-800 text-zinc-500 hover:text-brand-400 transition-all flex items-center justify-center gap-2 text-[9px] font-bold uppercase tracking-widest">
+                  <Plus size={12}/> Añadir Serie
                 </button>
               </div>
             );

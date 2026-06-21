@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ResponsiveContainer, ComposedChart, Line, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, Cell } from 'recharts';
 import { DailyLog } from '../../types';
-import { Dumbbell, Trophy, TrendingUp, Flame, Activity, Clock, Calendar as CalendarIcon, Target } from 'lucide-react';
+import { Dumbbell, Trophy, TrendingUp, Flame, Activity, Clock, Calendar as CalendarIcon, Target, ChevronRight } from 'lucide-react';
 import { EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS, EXERCISES_UPPER, EXERCISES_LOWER, EXERCISE_MUSCLE_MAP, MUSCLE_VOLUME_RECOMMENDATIONS } from '../../constants';
 import { calculateOneRM, getWeeklyMuscleVolume } from '../../utils';
 import { BodyHeatmap } from '../BodyHeatmap';
@@ -11,6 +12,7 @@ interface PerformanceTabProps {
 }
 
 export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => {
+  const navigate = useNavigate();
   const allExercises = useMemo(
     () => [...EXERCISES_PUSH, ...EXERCISES_PULL, ...EXERCISES_LEGS, ...EXERCISES_UPPER, ...EXERCISES_LOWER],
     []
@@ -165,25 +167,40 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
           <div className="text-xl font-bold text-white">{avgDuration} <span className="text-xs text-slate-500">min</span></div>
         </div>
 
-        <div className="glass-panel p-4 rounded-xl">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-            <CalendarIcon size={14} /> Consistencia (Ultimos 28 dias)
+        <button
+          className="glass-panel p-4 rounded-xl w-full text-left active:scale-[0.98] transition-all group cursor-pointer block"
+          onClick={() => navigate('/consistency', { state: { logs } })}
+        >
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2"><CalendarIcon size={14} /> Consistencia (Ultimos 28 dias)</div>
+            <ChevronRight size={14} className="text-slate-500 group-hover:text-white transition-colors" />
           </h3>
-          <div className="flex flex-wrap gap-1.5 justify-center">
+          <div className="flex flex-wrap gap-1.5 justify-center mt-3">
             {calendarDays.map((day, i) => (
               <div
                 key={i}
-                className={`w-6 h-6 rounded-md ${day.hasWorkout ? 'bg-brand-500 shadow-[0_0_8px_rgba(14,165,233,0.5)]' : 'bg-slate-800/50 border border-white/5'}`}
+                className={`w-6 h-6 rounded-md ${day.hasWorkout ? 'bg-brand-500 shadow-[0_0_8px_rgba(217,119,6,0.5)]' : 'bg-slate-800/50 border border-white/5'}`}
                 title={day.dateStr}
               />
             ))}
           </div>
-        </div>
+          <p className="text-center text-[9px] text-slate-600 font-bold uppercase tracking-widest mt-4 group-hover:text-brand-400 transition-colors">
+            Pulsa para ver detalle
+          </p>
+        </button>
 
         {volumeChartData.length > 0 && (
-          <div className="glass-panel p-4 rounded-2xl">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Evolucion del Volumen</h3>
-            <div style={{ width: '100%', height: 192 }}>
+          <button 
+            className="glass-panel p-4 rounded-2xl w-full text-left active:scale-[0.98] transition-all block group cursor-pointer"
+            onClick={() => navigate('/volume-evolution', { state: { logs } })}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                Evolución del Volumen
+              </h3>
+              <ChevronRight size={14} className="text-slate-500 group-hover:text-white transition-colors" />
+            </div>
+            <div style={{ width: '100%', height: 192 }} className="pointer-events-none">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={volumeChartData}>
                   <defs>
@@ -200,7 +217,10 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
-          </div>
+            <p className="text-center text-[9px] text-slate-600 font-bold uppercase tracking-widest mt-4 group-hover:text-brand-400 transition-colors">
+              Pulsa para ver detalle
+            </p>
+          </button>
         )}
       </section>
 

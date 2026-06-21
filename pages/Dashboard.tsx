@@ -438,7 +438,18 @@ const Dashboard: React.FC = () => {
             <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-red-500" /> Fatiga</span>
           </div>
         </div>
-        <BodyHeatmap muscleVolume={muscleVolume} muscleSets={muscleSets} />
+        <button 
+          onClick={() => navigate('/muscle-load', { state: { muscleVolume, muscleSets, allLogs } })}
+          className="w-full block relative group cursor-pointer active:scale-[0.98] transition-transform"
+        >
+          <div className="absolute top-2 right-2 p-2 bg-zinc-800/80 backdrop-blur-md rounded-full text-zinc-400 group-hover:text-white transition-colors z-10 hidden sm:flex">
+             <ChevronRight size={16} />
+          </div>
+          <BodyHeatmap muscleVolume={muscleVolume} muscleSets={muscleSets} />
+          <p className="text-center text-[9px] text-zinc-500 font-bold uppercase tracking-widest mt-4 group-hover:text-brand-400 transition-colors">
+            Toca para ver detalle completo
+          </p>
+        </button>
       </section>
 
     </div>

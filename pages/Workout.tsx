@@ -22,6 +22,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { dispatchLiveActivity } from '../hooks/useLiveActivity';
 import { calculateCurrentStreak } from '../hooks/useRPGStats';
 import { CustomRoutineBuilder } from '../components/CustomRoutineBuilder';
+import { ExerciseDetailSheet } from '../components/ExerciseDetailSheet';
 import { MUSCLE_NAMES_ES, EQUIPMENT_ES } from '../data/translations.es';
 import { useProgression } from '../hooks/useProgression';
 import { getSettings } from '../services/settings';
@@ -1101,63 +1102,13 @@ const Workout: React.FC = () => {
         </div>
       )}
 
-      {/* TECH MODAL */}
-      {showTechFor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="relative w-full max-w-md max-h-[85vh] bg-zinc-950 border border-white/10 rounded-3xl overflow-hidden shadow-2xl flex flex-col premium-bisel animate-in zoom-in-95 duration-200">
-            <div className="p-5 border-b border-white/5 flex justify-between items-center bg-zinc-900/50">
-              <h2 className="text-xl font-display font-bold text-white truncate pr-4">
-                {techExerciseDb?.name || "Técnica del Ejercicio"}
-              </h2>
-              <button onClick={() => setShowTechFor(null)} className="text-zinc-500 hover:text-white shrink-0"><X size={20}/></button>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-5 space-y-6 custom-scrollbar">
-              {techExerciseDb ? (
-                <>
-                  {techExerciseDb.images && techExerciseDb.images.length > 0 && (
-                    <div className="flex gap-2 overflow-x-auto snap-x pb-2 no-scrollbar">
-                      {techExerciseDb.images.map((img, i) => (
-                        <img key={i} src={`/exercises/${img}`} className="h-48 rounded-xl object-contain bg-zinc-900 snap-center shrink-0 border border-white/5" alt={`Paso ${i+1}`} loading="lazy"/>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="flex flex-wrap gap-2">
-                    {techExerciseDb.primaryMuscles.map(m => (
-                       <span key={m} className="text-[10px] bg-brand-500/20 text-brand-400 border border-brand-500/30 font-bold uppercase tracking-widest px-2 py-1 rounded-md">
-                         {MUSCLE_NAMES_ES[m] || m}
-                       </span>
-                    ))}
-                    {techExerciseDb.equipment && (
-                       <span className="text-[10px] bg-zinc-800 text-zinc-400 border border-zinc-700 font-bold uppercase tracking-widest px-2 py-1 rounded-md">
-                         {EQUIPMENT_ES[techExerciseDb.equipment] || techExerciseDb.equipment}
-                       </span>
-                    )}
-                  </div>
-
-                  {techExerciseDb.instructions && techExerciseDb.instructions.length > 0 && (
-                    <div className="space-y-3">
-                      <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-                        <BookOpen size={14}/> Instrucciones
-                      </h3>
-                      <ol className="list-decimal pl-4 space-y-3 text-sm text-zinc-300">
-                        {techExerciseDb.instructions.map((inst, i) => (
-                          <li key={i} className="pl-1 leading-relaxed">{inst}</li>
-                        ))}
-                      </ol>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="py-10 text-center text-zinc-500 text-sm flex flex-col items-center justify-center gap-3">
-                   <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"/>
-                   Cargando técnica...
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+      {/* TECH MODAL / EXERCISE DETAIL SHEET */}
+      {showTechFor && techExerciseDb && (
+        <ExerciseDetailSheet
+          entry={techExerciseDb}
+          exerciseLog={logs.find(l => l.exerciseId === showTechFor)}
+          onClose={() => setShowTechFor(null)}
+        />
       )}
     </div>
   );

@@ -8,6 +8,9 @@ const History    = lazy(() => import('./pages/History'));
 const Stats      = lazy(() => import('./pages/Stats'));
 const TrophyRoom = lazy(() => import('./pages/TrophyRoom'));
 const Settings   = lazy(() => import('./pages/Settings'));
+const MuscleLoadScreen = lazy(() => import('./pages/MuscleLoadScreen'));
+const ConsistencyScreen = lazy(() => import('./pages/ConsistencyScreen'));
+const VolumeEvolutionScreen = lazy(() => import('./pages/VolumeEvolutionScreen'));
 
 const Loader = () => (
   <div className="flex items-center justify-center min-h-screen">
@@ -22,6 +25,9 @@ const App: React.FC = () => (
         <Route path="/" element={<Layout />}>
           <Route index element={<Workout />} />
           <Route path="today"    element={<Dashboard />} />
+          <Route path="muscle-load" element={<MuscleLoadScreen />} />
+          <Route path="consistency" element={<ConsistencyScreen />} />
+          <Route path="volume-evolution" element={<VolumeEvolutionScreen />} />
           <Route path="history"  element={<History />} />
           <Route path="stats"    element={<Stats />} />
           <Route path="trophies" element={<TrophyRoom />} />

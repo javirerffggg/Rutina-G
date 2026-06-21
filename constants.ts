@@ -125,6 +125,13 @@ export const MUSCLE_VOLUME_RECOMMENDATIONS: Record<string, { min: number, max: n
   'abs': { min: 8, max: 12 },
 };
 
+export const MEV_MAV: Record<string, [number, number]> = {
+  chest: [10, 20], back: [10, 25], quads: [8, 20],
+  shoulders: [8, 22], biceps: [8, 20], triceps: [6, 18],
+  glutes: [0, 15], hamstrings: [4, 16], calves: [8, 20],
+  abs: [0, 20], traps: [0, 20], forearms: [0, 20]
+};
+
 export const EXERCISE_ALTERNATIVES: Record<string, ExerciseAlternative> = {
   'push_bench_mach': { main: 'Press Banca Barra', secondary: 'Press Mancuernas', note: 'Prioriza estabilidad.' },
   'pull_pullups': { main: 'Jalón al Pecho', secondary: 'Dominadas Asistidas', note: 'Rango completo es clave.' },

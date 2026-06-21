@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Search, Plus, Trash2, Dumbbell, ChevronUp, ChevronDown, Check, AlertTriangle, Minus } from 'lucide-react';
+import { X, Search, Plus, Trash2, Dumbbell, ChevronUp, ChevronDown, Check, AlertTriangle, Minus, Info } from 'lucide-react';
 import { CustomRoutine, Exercise, ExerciseDBEntry } from '../types';
 import { MUSCLE_NAMES_ES } from '../data/translations.es';
 import { getSettings } from '../services/settings';
+import { ExerciseDetailSheet } from './ExerciseDetailSheet';
 
 const EMOJIS = ['💪', '🏋️', '🦵', '🔥', '⚡', '🎯', '🏃', '🤸', '🧠', '💀', '👑', '🔱', '🦍', '🐅', '🦖', '🚀'];
 const POPULAR_EXERCISES = ['Barbell Squat', 'Bench Press', 'Deadlift', 'Pull Up', 'Push Up', 'Overhead Press', 'Barbell Row', 'Dumbbell Curl'];
@@ -31,6 +32,7 @@ export const CustomRoutineBuilder: React.FC<CustomRoutineBuilderProps> = ({ onCl
   const [filterMuscle, setFilterMuscle] = useState<string | null>(null);
   const [filterEquipment, setFilterEquipment] = useState<string | null>(null);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [showTechFor, setShowTechFor] = useState<ExerciseDBEntry | null>(null);
 
   useEffect(() => {
     import('../data/exercises.json')
@@ -80,21 +82,21 @@ export const CustomRoutineBuilder: React.FC<CustomRoutineBuilderProps> = ({ onCl
     return result.slice(0, 50); // limit to 50 for perf
   }, [db, search, filterMuscle, filterEquipment]);
 
-  const addExercise = (entry: ExerciseDBEntry) => {
-    if (exercises.some(e => e.id === entry.id)) return;
-    const newEx: Exercise = {
-      id: entry.id,
-      name: entry.name,
-      targetSets: '3',
-      targetReps: '10',
-      targetRIR: 2,
-      primaryMuscles: entry.primaryMuscles
-    };
-    setExercises(prev => [...prev, newEx]);
-    setShowSearch(false);
-    setSearch('');
-    setFilterMuscle(null);
-    setFilterEquipment(null);
+  const toggleExercise = (entry: ExerciseDBEntry) => {
+    const isAdded = exercises.some(e => e.id === entry.id);
+    if (isAdded) {
+      setExercises(prev => prev.filter(e => e.id !== entry.id));
+    } else {
+      const newEx: Exercise = {
+        id: entry.id,
+        name: entry.name,
+        targetSets: '3',
+        targetReps: '10',
+        targetRIR: 2,
+        primaryMuscles: entry.primaryMuscles
+      };
+      setExercises(prev => [...prev, newEx]);
+    }
   };
 
   const removeExercise = (idx: number) => {
@@ -236,13 +238,18 @@ export const CustomRoutineBuilder: React.FC<CustomRoutineBuilderProps> = ({ onCl
                 {exercises.map((ex, idx) => (
                   <div key={idx} className="bg-zinc-900/60 border border-white/5 p-3 rounded-2xl flex flex-col gap-3">
                     <div className="flex justify-between items-start">
-                      <div className="flex-1 pr-2">
-                        <p className="text-sm font-bold text-white leading-tight">{ex.name}</p>
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-brand-400 mt-1">
-                          {ex.primaryMuscles?.map(m => MUSCLE_NAMES_ES[m] || m).join(', ') || 'Varios'}
-                        </p>
+                      <div className="flex-1 pr-2 flex items-center gap-3">
+                        <div className="flex-1">
+                          <p className="text-sm font-bold text-white leading-tight">{ex.name}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-brand-400 mt-1">
+                            {ex.primaryMuscles?.map(m => MUSCLE_NAMES_ES[m] || m).join(', ') || 'Varios'}
+                          </p>
+                        </div>
+                        <button onClick={() => setShowTechFor(db.find(d => d.id === ex.id) || null)} className="p-2 bg-black/40 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors shrink-0">
+                           <Info size={16}/>
+                        </button>
                       </div>
-                      <div className="flex flex-col items-center bg-black/30 rounded-lg p-0.5 border border-white/5 shrink-0">
+                      <div className="flex flex-col items-center bg-black/30 rounded-lg p-0.5 border border-white/5 shrink-0 ml-2">
                         <button onClick={() => moveExercise(idx, -1)} disabled={idx === 0} className="p-1 text-zinc-400 hover:text-white disabled:opacity-30 disabled:hover:text-zinc-400 transition-colors">
                           <ChevronUp size={16} />
                         </button>
@@ -382,36 +389,48 @@ export const CustomRoutineBuilder: React.FC<CustomRoutineBuilderProps> = ({ onCl
               filteredDb.map(entry => {
                 const isAdded = exercises.some(e => e.id === entry.id);
                 return (
-                  <button 
-                    key={entry.id} 
-                    onClick={() => addExercise(entry)} 
-                    disabled={isAdded}
-                    className={`w-full text-left p-3 rounded-2xl border transition-all flex items-center gap-4 ${isAdded ? 'bg-emerald-950/20 border-emerald-500/20 opacity-70' : 'bg-zinc-900/30 border-white/5 hover:bg-zinc-800 hover:border-zinc-700'}`}
-                  >
+                  <div key={entry.id} className={`w-full text-left p-3 rounded-2xl border transition-all flex items-center gap-4 ${isAdded ? 'bg-emerald-950/20 border-emerald-500/20' : 'bg-zinc-900/30 border-white/5 hover:bg-zinc-800 hover:border-zinc-700'}`}>
                     {entry.images && entry.images.length > 0 ? (
                       <img src={`/exercises/${entry.images[0]}`} className="w-12 h-12 rounded-lg object-cover bg-black" loading="lazy" />
                     ) : (
                       <div className="w-12 h-12 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-600"><Dumbbell size={20}/></div>
                     )}
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 cursor-pointer" onClick={() => toggleExercise(entry)}>
                       <p className="text-sm font-bold text-white truncate leading-tight">{entry.name}</p>
                       <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest truncate mt-1">
                         {entry.primaryMuscles.map(m => MUSCLE_NAMES_ES[m] || m).join(', ')}
                       </p>
                     </div>
-                    {isAdded ? (
-                      <div className="flex flex-col items-center justify-center text-emerald-500 bg-emerald-500/10 p-2 rounded-xl border border-emerald-500/20 shrink-0">
-                        <Check size={16} />
-                      </div>
-                    ) : (
-                      <Plus size={20} className="text-zinc-500 shrink-0 mr-2"/>
-                    )}
-                  </button>
+                    
+                    <button onClick={() => setShowTechFor(entry)} className="p-2 text-zinc-400 hover:text-white transition-colors shrink-0">
+                      <Info size={18} />
+                    </button>
+
+                    <button onClick={() => toggleExercise(entry)} className="shrink-0 mr-1">
+                      {isAdded ? (
+                        <div className="flex flex-col items-center justify-center text-emerald-500 bg-emerald-500/10 p-1.5 rounded-xl border border-emerald-500/20">
+                          <Check size={16} />
+                        </div>
+                      ) : (
+                        <div className="p-1.5 text-zinc-500">
+                           <Plus size={20} />
+                        </div>
+                      )}
+                    </button>
+                  </div>
                 )
               })
             )}
           </div>
         </div>
+      )}
+
+      {/* Tech Modal */}
+      {showTechFor && (
+        <ExerciseDetailSheet
+          entry={showTechFor}
+          onClose={() => setShowTechFor(null)}
+        />
       )}
 
     </div>

@@ -84,7 +84,7 @@ export const deleteLog = (date: string): void => {
   const logs = getLogs();
   if (logs[date]) {
     delete logs[date];
-    localStorage.setItem(LOGS_KEY, JSON.stringify(logs));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
     window.dispatchEvent(new Event('storage-update'));
   }
 };
@@ -186,14 +186,18 @@ const matchExerciseId = (hevyName: string): string | null => {
   return bestScore >= 0.5 ? bestId : null;
 };
 
-// Guess RoutineType from workout title (best-effort)
+/**
+ * Guess RoutineType from workout title.
+ * Handles both English and Spanish Hevy export titles.
+ */
 const guessRoutineType = (title: string): RoutineType | undefined => {
-  const t = title.toLowerCase();
-  if (t.includes('push'))  return RoutineType.PUSH;
-  if (t.includes('pull'))  return RoutineType.PULL;
-  if (t.includes('upper')) return RoutineType.UPPER;
-  if (t.includes('lower')) return RoutineType.LOWER;
-  if (t.includes('leg') || t.includes('pierna')) return RoutineType.LEGS;
+  const t = normalise(title);
+  // English & Spanish push/pull/legs/upper/lower
+  if (t.includes('push') || t.includes('empuje'))              return RoutineType.PUSH;
+  if (t.includes('pull') || t.includes('tirón') || t.includes('tiron') || t.includes('jale')) return RoutineType.PULL;
+  if (t.includes('upper') || t.includes('superior'))           return RoutineType.UPPER;
+  if (t.includes('lower') || t.includes('inferior'))           return RoutineType.LOWER;
+  if (t.includes('leg') || t.includes('pierna') || t.includes('legs')) return RoutineType.LEGS;
   return undefined;
 };
 
@@ -254,14 +258,28 @@ export const importFromHevyCSV = (csvText: string): HevyImportResult => {
     const row = parseCSVLine(lines[i]);
     if (row.length < 3) continue;
 
-    // Parse date from start time (ISO or "YYYY-MM-DD HH:MM:SS" or "DD/MM/YYYY ...")
+    // Parse date from start time (ISO or "YYYY-MM-DD HH:MM:SS" or "DD/MM/YYYY ..."
+    // Also handles Spanish locale: "19 jun 2026, 16:09"
     let dateStr = '';
     const rawTime = iStartTime !== -1 ? row[iStartTime] : '';
     const isoMatch = rawTime.match(/^(\d{4}-\d{2}-\d{2})/);
     const dmyMatch = rawTime.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    // Spanish locale: "19 jun 2026, 16:09" → parse manually
+    const esMonths: Record<string, string> = {
+      ene:'01', feb:'02', mar:'03', abr:'04', may:'05', jun:'06',
+      jul:'07', ago:'08', sep:'09', oct:'10', nov:'11', dic:'12'
+    };
+    const esMatch = rawTime.match(/^(\d{1,2})\s+([a-záéíóú]+)\s+(\d{4})/i);
     if (isoMatch)      dateStr = isoMatch[1];
     else if (dmyMatch) dateStr = `${dmyMatch[3]}-${dmyMatch[2]}-${dmyMatch[1]}`;
-    else               dateStr = new Date().toISOString().slice(0, 10);
+    else if (esMatch) {
+      const day = esMatch[1].padStart(2, '0');
+      const month = esMonths[esMatch[2].toLowerCase().slice(0, 3)] ?? '01';
+      const year = esMatch[3];
+      dateStr = `${year}-${month}-${day}`;
+    } else {
+      dateStr = new Date().toISOString().slice(0, 10);
+    }
 
     const title = iTitle !== -1 ? row[iTitle] : '';
     if (!byDate.has(dateStr)) byDate.set(dateStr, { title, rows: [] });

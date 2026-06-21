@@ -224,21 +224,21 @@ const Layout: React.FC = () => {
               </>)}
             </NavLink>
 
-            <NavLink to="/" end className={({ isActive }) =>
-              `flex flex-col items-center gap-1 transition-all ${ isActive ? 'text-emerald-400 scale-110' : 'text-zinc-500 hover:text-zinc-300' }`
-            }>
-              {({ isActive }) => (<>
-                <Dumbbell size={20} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[9px] font-bold tracking-[0.05em] uppercase">Entreno</span>
-              </>)}
-            </NavLink>
-
             <NavLink to="/stats" className={({ isActive }) =>
               `flex flex-col items-center gap-1 transition-all ${ isActive ? 'text-purple-400 scale-110' : 'text-zinc-500 hover:text-zinc-300' }`
             }>
               {({ isActive }) => (<>
                 <Scale size={20} strokeWidth={isActive ? 2.5 : 2} />
                 <span className="text-[9px] font-bold tracking-[0.05em] uppercase">Stats</span>
+              </>)}
+            </NavLink>
+
+            <NavLink to="/" end className={({ isActive }) =>
+              `flex flex-col items-center gap-1 transition-all ${ isActive ? 'text-emerald-400 scale-110' : 'text-zinc-500 hover:text-zinc-300' }`
+            }>
+              {({ isActive }) => (<>
+                <Dumbbell size={20} strokeWidth={isActive ? 2.5 : 2} />
+                <span className="text-[9px] font-bold tracking-[0.05em] uppercase">Entreno</span>
               </>)}
             </NavLink>
 

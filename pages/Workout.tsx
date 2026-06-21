@@ -1018,14 +1018,12 @@ const Workout: React.FC = () => {
             // FOLDED UPCOMING ROW
             if (!isActive) {
                return (
-                 <div key={exercise.id} onClick={() => setActiveExercise(exercise.id)} className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-900/40 border border-white/5 hover:border-brand-500/30 active:scale-[0.98] transition-all">
+                 <div key={exercise.id} onClick={() => setActiveExercise(exercise.id)} className="flex items-center gap-2 p-3 rounded-[20px] bg-zinc-900/40 border border-white/5 hover:border-brand-500/30 active:scale-[0.98] transition-all">
                     <div className="flex-1 min-w-0">
-                       <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-1">Próximo</p>
-                       <p className="text-base font-bold text-zinc-200 truncate">{exercise.name}</p>
+                       <p className="text-sm font-bold text-zinc-300 truncate">{exercise.name}</p>
                     </div>
-                    <div className="shrink-0 text-right">
-                       <p className="text-xs font-bold text-brand-400">{exercise.targetSets} Sets</p>
-                       <p className="text-[10px] text-zinc-500 mt-0.5">{exercise.targetReps} reps</p>
+                    <div className="shrink-0 bg-black/40 px-2 py-1 rounded-lg">
+                       <p className="text-[10px] font-bold text-brand-400">{exercise.targetSets}x{exercise.targetReps}</p>
                     </div>
                  </div>
                );

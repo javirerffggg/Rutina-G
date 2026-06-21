@@ -308,31 +308,41 @@ export const WARMUP_GUIDE: Record<string, WarmupStep[]> = {
     { phase: 'movilidad', name: 'Balanceos de brazos horizontales', reps: 15, notes: 'Frente al pecho.' },
     { phase: 'movilidad', name: 'Círculos de hombros (Molinos)', reps: 20, notes: '10 adelante, 10 atrás.' },
     { phase: 'movilidad', name: 'Rotaciones Externas "en L"', reps: 15, notes: 'Codos pegados al torso.' },
-    { phase: 'activacion', name: 'Plancha Frontal', duration: 30, rest: 30, notes: 'Activa el core antes de empujar.' }
+    { phase: 'activacion', name: 'Plancha Frontal', duration: 30, rest: 30, notes: 'Activa el core antes de empujar.' },
+    { phase: 'aproximacion', name: 'Aproximación Ligera', sets: 1, reps: 10, weightPercent: 0.5, rest: 60, notes: 'Prepara el SNC para el peso.' },
+    { phase: 'aproximacion', name: 'Aproximación Media', sets: 1, reps: 5, weightPercent: 0.75, rest: 90, notes: 'Activa la fuerza máxima sin fatiga.' }
   ],
   [RoutineType.PULL]: [
     { phase: 'movilidad', name: 'Rotaciones de Tronco', reps: 20, notes: 'Brazos relajados.' },
     { phase: 'movilidad', name: 'Círculos Escapulares', reps: 12, notes: 'Lentos y amplios.' },
     { phase: 'movilidad', name: 'Círculos de muñecas', duration: 30 },
-    { phase: 'activacion', name: 'Superman + Puente Glúteo', sets: 2, reps: 15, rest: 45, notes: 'Fija la pelvis para prevenir balanceo lumbar.' }
+    { phase: 'activacion', name: 'Superman + Puente Glúteo', sets: 2, reps: 15, rest: 45, notes: 'Fija la pelvis para prevenir balanceo lumbar.' },
+    { phase: 'aproximacion', name: 'Aproximación Ligera', sets: 1, reps: 10, weightPercent: 0.5, rest: 60, notes: 'Prepara el SNC para el peso.' },
+    { phase: 'aproximacion', name: 'Aproximación Media', sets: 1, reps: 5, weightPercent: 0.75, rest: 90, notes: 'Activa la fuerza máxima sin fatiga.' }
   ],
   [RoutineType.LEGS]: [
     { phase: 'temperatura', name: 'Bicicleta / Elíptica', duration: 300, notes: 'Ritmo suave, que permita hablar.' },
     { phase: 'movilidad', name: 'Balanceos de Pierna', reps: 30, notes: '15 frontales, 15 laterales por pierna.' },
     { phase: 'movilidad', name: 'Sentadilla Cossack', reps: 10, notes: 'Totales.' },
-    { phase: 'movilidad', name: 'Plancha Lateral', duration: 30, notes: 'Por lado.' }
+    { phase: 'movilidad', name: 'Plancha Lateral', duration: 30, notes: 'Por lado.' },
+    { phase: 'aproximacion', name: 'Aproximación Ligera', sets: 1, reps: 10, weightPercent: 0.5, rest: 60, notes: 'Prepara el SNC para el peso.' },
+    { phase: 'aproximacion', name: 'Aproximación Media', sets: 1, reps: 5, weightPercent: 0.75, rest: 90, notes: 'Activa la fuerza máxima sin fatiga.' }
   ],
   [RoutineType.UPPER]: [
     { phase: 'movilidad', name: 'Círculos de cuello y muñecas', duration: 30 },
     { phase: 'movilidad', name: 'Balanceos de brazos (Horiz/Vert)', reps: 30, notes: '15 de cada.' },
     { phase: 'movilidad', name: 'Círculos Escapulares', reps: 12 },
     { phase: 'movilidad', name: 'Rotaciones Externas "en L"', reps: 15 },
-    { phase: 'activacion', name: 'Plancha + Superman', duration: 30, rest: 45, notes: 'Plancha 30s, luego Superman 10/lado.' }
+    { phase: 'activacion', name: 'Plancha + Superman', duration: 30, rest: 45, notes: 'Plancha 30s, luego Superman 10/lado.' },
+    { phase: 'aproximacion', name: 'Aproximación Ligera', sets: 1, reps: 10, weightPercent: 0.5, rest: 60, notes: 'Prepara el SNC para el peso.' },
+    { phase: 'aproximacion', name: 'Aproximación Media', sets: 1, reps: 5, weightPercent: 0.75, rest: 90, notes: 'Activa la fuerza máxima sin fatiga.' }
   ],
   [RoutineType.LOWER]: [
     { phase: 'temperatura', name: 'Bicicleta / Elíptica', duration: 300 },
     { phase: 'movilidad', name: 'Balanceos de Pierna', reps: 30 },
     { phase: 'movilidad', name: 'Rotaciones de Cadera', reps: 20, notes: '10 por lado.' },
-    { phase: 'movilidad', name: 'Sentadilla Profunda (Pry)', duration: 45, notes: 'Usa codos para abrir rodillas.' }
+    { phase: 'movilidad', name: 'Sentadilla Profunda (Pry)', duration: 45, notes: 'Usa codos para abrir rodillas.' },
+    { phase: 'aproximacion', name: 'Aproximación Ligera', sets: 1, reps: 10, weightPercent: 0.5, rest: 60, notes: 'Prepara el SNC para el peso.' },
+    { phase: 'aproximacion', name: 'Aproximación Media', sets: 1, reps: 5, weightPercent: 0.75, rest: 90, notes: 'Activa la fuerza máxima sin fatiga.' }
   ]
 };

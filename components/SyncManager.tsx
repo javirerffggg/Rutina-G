@@ -97,9 +97,11 @@ export const SyncManager: React.FC = () => {
     // We also hook into the original saveLog event and achievements events
     window.addEventListener('storage-update', handleStorageUpdate);
     window.addEventListener('achievements-unlocked', handleStorageUpdate);
+    window.addEventListener('xp-updated', handleStorageUpdate);
     return () => {
       window.removeEventListener('storage-update', handleStorageUpdate);
       window.removeEventListener('achievements-unlocked', handleStorageUpdate);
+      window.removeEventListener('xp-updated', handleStorageUpdate);
     };
   }, [deviceId, pushSync]);
 

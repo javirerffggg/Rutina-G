@@ -4,6 +4,7 @@ export interface AppSettings {
   largeText: boolean;
   routineFolders: boolean;
   hideDefaultRoutines: boolean;
+  hideCustomRoutines: boolean;
   defaultRestTime: number; // 90, 120, 180
   deloadFrequency: number; // 4-12 para semanas
   autoDeload: boolean;
@@ -26,6 +27,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   largeText: false,
   routineFolders: false,
   hideDefaultRoutines: false,
+  hideCustomRoutines: false,
   defaultRestTime: 90,
   deloadFrequency: 6,
   autoDeload: true,

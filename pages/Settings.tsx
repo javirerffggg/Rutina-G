@@ -139,6 +139,13 @@ export const Settings: React.FC = () => {
               <div className={`w-4 h-4 rounded-full bg-white transition-transform ${settings.hideDefaultRoutines ? 'translate-x-6' : 'translate-x-0'}`} />
             </button>
           </div>
+          <div className="h-px bg-white/5 mx-4" />
+          <div className="flex items-center justify-between p-4">
+            <p className="font-bold text-white text-sm">Ocultar rutinas personalizadas</p>
+            <button onClick={() => updateSetting('hideCustomRoutines', !settings.hideCustomRoutines)} className={`w-12 h-6 rounded-full p-1 transition-colors ${settings.hideCustomRoutines ? 'bg-brand-500' : 'bg-zinc-700'}`}>
+              <div className={`w-4 h-4 rounded-full bg-white transition-transform ${settings.hideCustomRoutines ? 'translate-x-6' : 'translate-x-0'}`} />
+            </button>
+          </div>
         </div>
       </section>
 

@@ -55,7 +55,11 @@ export function useProgression() {
     };
 
     window.addEventListener('xp-updated', handleUpdate);
-    return () => window.removeEventListener('xp-updated', handleUpdate);
+    window.addEventListener('storage-update', loadXP);
+    return () => {
+      window.removeEventListener('xp-updated', handleUpdate);
+      window.removeEventListener('storage-update', loadXP);
+    };
   }, []);
 
   const handleAddXP = useCallback((amount: number, reason: keyof typeof XP_REWARDS | string) => {

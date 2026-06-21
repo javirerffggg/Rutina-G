@@ -556,7 +556,7 @@ const Workout: React.FC = () => {
   }, [allLogsList, today]);
 
   if (selectedRoutine === null) {
-    const ORDERED: RoutineType[] = [RoutineType.PUSH, RoutineType.PULL, RoutineType.LEGS, RoutineType.UPPER, RoutineType.LOWER, RoutineType.REST];
+    const ORDERED: RoutineType[] = [RoutineType.PUSH, RoutineType.PULL, RoutineType.LEGS, RoutineType.UPPER, RoutineType.LOWER];
     const recentHistory = allLogsList.filter((l: any) => l.workoutCompleted && l.exercises?.length).slice(0, 3);
     const activeSession = localStorage.getItem(`workoutSessionState_${today}`) === 'active';
     const defaultMeta = ROUTINE_META[defaultRoutine as RoutineType];
@@ -584,13 +584,9 @@ const Workout: React.FC = () => {
 
     return (
       <div className="min-h-screen pb-32">
-        <div className="pt-12 px-6 pb-6">
-          <h1 className="text-4xl font-display font-bold text-white tracking-tight mb-1">Entrenamiento</h1>
-          <p className="text-brand-400 text-[10px] font-bold tracking-[0.2em] uppercase flex items-center gap-2">
-            <Trophy size={14} /> {phase.trainingFocus}
-          </p>
+        <div className="pt-[calc(env(safe-area-inset-top,0px)+1rem)] px-6 pb-4">
           {phase.name === 'Descarga (Deload)' && (
-            <div className="mt-3 bg-amber-500/10 border border-amber-500/20 text-amber-400 p-3 rounded-xl flex items-start gap-2">
+            <div className="bg-amber-500/10 border border-amber-500/20 text-amber-400 p-3 rounded-xl flex items-start gap-2">
               <AlertTriangle size={16} className="mt-0.5 shrink-0" />
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider">{phase.name}</p>
@@ -716,79 +712,133 @@ const Workout: React.FC = () => {
           </div>
         )}
 
-        <div className="px-4 mt-8 mb-4">
-           <div className="flex justify-between items-end mb-4">
-             <h2 className="text-xl font-display font-bold text-white tracking-tight">Mis Rutinas</h2>
-             {customRoutines.length > 0 && (
-               <button onClick={() => setShowBuilder(true)} className="text-[10px] text-brand-400 font-bold uppercase tracking-widest flex items-center gap-1 bg-brand-500/10 hover:bg-brand-500/20 px-3 py-1.5 rounded-full transition-all">
-                 <Plus size={12}/> Crear
-               </button>
-             )}
-           </div>
-
-           {customRoutines.length > 0 && (
-             <div className="relative mb-4">
-               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={14} />
-               <input 
-                 type="text" 
-                 placeholder="Buscar mis rutinas..." 
-                 value={searchCustom}
-                 onChange={e => setSearchCustom(e.target.value)}
-                 className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl py-2 pl-9 pr-3 text-xs font-bold text-white placeholder:text-zinc-600 focus:outline-none focus:border-brand-500/50 transition-all"
-               />
-             </div>
-           )}
-        </div>
-        
-        {customRoutines.length === 0 ? (
-          <div className="px-4">
-            <div className="p-8 border border-dashed border-zinc-800 rounded-3xl bg-zinc-900/30 flex flex-col items-center justify-center text-center">
-              <div className="w-16 h-16 rounded-full bg-zinc-800/50 flex items-center justify-center mb-4 text-zinc-500">
-                <Dumbbell size={28} />
+        {!settings.hideCustomRoutines && (
+          <>
+            <div className="px-4 mt-8 mb-4">
+              <div className="flex justify-between items-end mb-4">
+                <h2 className="text-xl font-display font-bold text-white tracking-tight">Mis Rutinas</h2>
+                {customRoutines.length > 0 && (
+                  <button onClick={() => setShowBuilder(true)} className="text-[10px] text-brand-400 font-bold uppercase tracking-widest flex items-center gap-1 bg-brand-500/10 hover:bg-brand-500/20 px-3 py-1.5 rounded-full transition-all">
+                    <Plus size={12}/> Crear
+                  </button>
+                )}
               </div>
-              <p className="text-sm font-bold text-white mb-1">Crea tu primera rutina</p>
-              <p className="text-xs text-zinc-500 mb-6 max-w-xs">Diseña un entrenamiento a tu medida usando nuestra base de datos completa de ejercicios.</p>
-              <button onClick={() => setShowBuilder(true)} className="flex items-center gap-2 bg-white text-black px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-zinc-200 transition-all active:scale-95">
-                <Plus size={16} /> Crear Rutina
-              </button>
+
+              {customRoutines.length > 0 && (
+                <div className="relative mb-4">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={14} />
+                  <input 
+                    type="text" 
+                    placeholder="Buscar mis rutinas..." 
+                    value={searchCustom}
+                    onChange={e => setSearchCustom(e.target.value)}
+                    className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl py-2 pl-9 pr-3 text-xs font-bold text-white placeholder:text-zinc-600 focus:outline-none focus:border-brand-500/50 transition-all"
+                  />
+                </div>
+              )}
             </div>
-          </div>
-        ) : (
-          <div className="px-4 pb-8 space-y-6">
-             {settings.routineFolders ? (
-               Object.entries(
-                 filteredCustomRoutines.reduce((acc, r) => {
-                   const f = r.folder || 'Sin Categoría';
-                   if (!acc[f]) acc[f] = [];
-                   acc[f].push(r);
-                   return acc;
-                 }, {} as Record<string, CustomRoutine[]>)
-               ).map(([folderName, routines]) => (
-                 <div key={folderName} className="space-y-3">
-                   <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest pl-1">{folderName}</h3>
-                   <div className="space-y-2">
-                     {(routines as CustomRoutine[]).map(routine => {
+            
+            {customRoutines.length === 0 ? (
+              <div className="px-4">
+                <div className="p-8 border border-dashed border-zinc-800 rounded-3xl bg-zinc-900/30 flex flex-col items-center justify-center text-center">
+                  <div className="w-16 h-16 rounded-full bg-zinc-800/50 flex items-center justify-center mb-4 text-zinc-500">
+                    <Dumbbell size={28} />
+                  </div>
+                  <p className="text-sm font-bold text-white mb-1">Crea tu primera rutina</p>
+                  <p className="text-xs text-zinc-500 mb-6 max-w-xs">Diseña un entrenamiento a tu medida usando nuestra base de datos completa de ejercicios.</p>
+                  <button onClick={() => setShowBuilder(true)} className="flex items-center gap-2 bg-white text-black px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-zinc-200 transition-all active:scale-95">
+                    <Plus size={16} /> Crear Rutina
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="px-4 pb-8 space-y-6">
+                {settings.routineFolders ? (
+                  Object.entries(
+                    filteredCustomRoutines.reduce((acc, r) => {
+                      const f = r.folder || 'Sin Categoría';
+                      if (!acc[f]) acc[f] = [];
+                      acc[f].push(r);
+                      return acc;
+                    }, {} as Record<string, CustomRoutine[]>)
+                  ).map(([folderName, routines]) => (
+                    <div key={folderName} className="space-y-3">
+                      <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest pl-1">{folderName}</h3>
+                      <div className="space-y-2">
+                        {(routines as CustomRoutine[]).map(routine => {
+                            const doneToday = !!Object.values(getLogs()).find((l:any) => l.workoutType === routine.id && l.date === today && l.workoutCompleted);
+                            const muscles = getCustomMuscles(routine);
+                            const isMenuOpen = customMenuOpen === routine.id;
+
+                            return (
+                              <div key={routine.id} className="relative">
+                                <div className="flex items-center gap-3 px-4 h-[72px] rounded-2xl bg-zinc-900/60 border border-white/6 cursor-pointer hover:border-brand-500/30 active:scale-[0.98] transition-all" onClick={() => setSelectedRoutine(routine.id)}>
+                                  <span className="text-xl shrink-0">{routine.emoji}</span>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold text-white truncate">{routine.name}</p>
+                                    <p className="text-[10px] text-zinc-500 truncate">{routine.description ? routine.description : muscles} · {routine.exercises.length} ej.</p>
+                                  </div>
+                                  {doneToday && <Check size={14} className="text-emerald-500 shrink-0"/>}
+                                  <button 
+                                    onClick={(e) => { e.stopPropagation(); setCustomMenuOpen(isMenuOpen ? null : routine.id); }}
+                                    className="w-8 h-8 flex items-center justify-center text-zinc-500 hover:text-white shrink-0 -mr-2"
+                                  >
+                                    <MoreVertical size={16}/>
+                                  </button>
+                                </div>
+
+
+                                {isMenuOpen && (
+                                  <div className="absolute top-12 right-2 z-30 w-36 bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl overflow-hidden animate-in zoom-in-95 origin-top-right">
+                                    <div className="flex flex-col">
+                                      <button onClick={(e) => { e.stopPropagation(); setCustomMenuOpen(null); }} className="px-4 py-2.5 text-left text-xs font-bold text-white hover:bg-zinc-700 transition-colors border-b border-zinc-700/50">
+                                        Editar Rutina
+                                      </button>
+                                      <button onClick={(e) => deleteCustomRoutine(routine.id, e)} className="px-4 py-2.5 text-left text-xs font-bold text-red-400 hover:bg-zinc-700 transition-colors">
+                                        Eliminar
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )
+                        })}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="grid grid-cols-3 gap-2">
+                    {filteredCustomRoutines.map(routine => {
                         const doneToday = !!Object.values(getLogs()).find((l:any) => l.workoutType === routine.id && l.date === today && l.workoutCompleted);
                         const muscles = getCustomMuscles(routine);
                         const isMenuOpen = customMenuOpen === routine.id;
 
                         return (
                           <div key={routine.id} className="relative">
-                            <div className="flex items-center gap-3 px-4 h-[72px] rounded-2xl bg-zinc-900/60 border border-white/6 cursor-pointer hover:border-brand-500/30 active:scale-[0.98] transition-all" onClick={() => setSelectedRoutine(routine.id)}>
-                              <span className="text-xl shrink-0">{routine.emoji}</span>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-bold text-white truncate">{routine.name}</p>
-                                <p className="text-[10px] text-zinc-500 truncate">{routine.description ? routine.description : muscles} · {routine.exercises.length} ej.</p>
+                            <motion.button onClick={() => setSelectedRoutine(routine.id)} whileTap={{ scale: 0.97 }}
+                              className={`w-full relative overflow-hidden rounded-[24px] border border-white/6 text-left transition-all duration-300 active:scale-[0.97] bg-zinc-900/70 backdrop-blur-sm`}>
+                              <div className={`absolute inset-0 bg-gradient-to-br from-brand-600/10 to-transparent pointer-events-none`} />
+                              {doneToday && <div className="absolute top-3 left-3 z-10 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.5)]"><Check size={11} strokeWidth={3} className="text-white" /></div>}
+                              <div className="relative z-10 p-3 pt-4">
+                                <span className="text-2xl mb-2 block">{routine.emoji}</span>
+                                <h2 className={`text-base font-display font-black leading-none tracking-tight mb-1 text-zinc-200 truncate`}>{routine.name}</h2>
+                                {routine.description ? (
+                                  <p className="text-[10px] font-bold text-brand-500/70 leading-snug mb-2 line-clamp-2">{routine.description}</p>
+                                ) : (
+                                  <p className="text-[10px] font-bold text-zinc-500 leading-snug mb-2 line-clamp-2">{muscles}</p>
+                                )}
+                                <div className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-lg border bg-zinc-800 text-zinc-400 border-white/10`}>
+                                  <Dumbbell size={8} /> {routine.exercises.length} ej.
+                                </div>
                               </div>
-                              {doneToday && <Check size={14} className="text-emerald-500 shrink-0"/>}
-                              <button 
-                                onClick={(e) => { e.stopPropagation(); setCustomMenuOpen(isMenuOpen ? null : routine.id); }}
-                                className="w-8 h-8 flex items-center justify-center text-zinc-500 hover:text-white shrink-0 -mr-2"
-                              >
-                                <MoreVertical size={16}/>
-                              </button>
-                            </div>
-
+                            </motion.button>
+                            
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); setCustomMenuOpen(isMenuOpen ? null : routine.id); }}
+                              className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
+                            >
+                              <MoreVertical size={16} />
+                            </button>
 
                             {isMenuOpen && (
                               <div className="absolute top-12 right-2 z-30 w-36 bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl overflow-hidden animate-in zoom-in-95 origin-top-right">
@@ -804,62 +854,12 @@ const Workout: React.FC = () => {
                             )}
                           </div>
                         )
-                     })}
-                   </div>
-                 </div>
-               ))
-             ) : (
-               <div className="grid grid-cols-3 gap-2">
-                 {filteredCustomRoutines.map(routine => {
-                    const doneToday = !!Object.values(getLogs()).find((l:any) => l.workoutType === routine.id && l.date === today && l.workoutCompleted);
-                    const muscles = getCustomMuscles(routine);
-                    const isMenuOpen = customMenuOpen === routine.id;
-
-                    return (
-                      <div key={routine.id} className="relative">
-                        <motion.button onClick={() => setSelectedRoutine(routine.id)} whileTap={{ scale: 0.97 }}
-                          className={`w-full relative overflow-hidden rounded-[24px] border border-white/6 text-left transition-all duration-300 active:scale-[0.97] bg-zinc-900/70 backdrop-blur-sm`}>
-                          <div className={`absolute inset-0 bg-gradient-to-br from-brand-600/10 to-transparent pointer-events-none`} />
-                          {doneToday && <div className="absolute top-3 left-3 z-10 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.5)]"><Check size={11} strokeWidth={3} className="text-white" /></div>}
-                          <div className="relative z-10 p-3 pt-4">
-                            <span className="text-2xl mb-2 block">{routine.emoji}</span>
-                            <h2 className={`text-base font-display font-black leading-none tracking-tight mb-1 text-zinc-200 truncate`}>{routine.name}</h2>
-                            {routine.description ? (
-                              <p className="text-[10px] font-bold text-brand-500/70 leading-snug mb-2 line-clamp-2">{routine.description}</p>
-                            ) : (
-                              <p className="text-[10px] font-bold text-zinc-500 leading-snug mb-2 line-clamp-2">{muscles}</p>
-                            )}
-                            <div className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-lg border bg-zinc-800 text-zinc-400 border-white/10`}>
-                              <Dumbbell size={8} /> {routine.exercises.length} ej.
-                            </div>
-                          </div>
-                        </motion.button>
-                        
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); setCustomMenuOpen(isMenuOpen ? null : routine.id); }}
-                          className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
-                        >
-                          <MoreVertical size={16} />
-                        </button>
-
-                        {isMenuOpen && (
-                          <div className="absolute top-12 right-2 z-30 w-36 bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl overflow-hidden animate-in zoom-in-95 origin-top-right">
-                            <div className="flex flex-col">
-                              <button onClick={(e) => { e.stopPropagation(); setCustomMenuOpen(null); }} className="px-4 py-2.5 text-left text-xs font-bold text-white hover:bg-zinc-700 transition-colors border-b border-zinc-700/50">
-                                Editar Rutina
-                              </button>
-                              <button onClick={(e) => deleteCustomRoutine(routine.id, e)} className="px-4 py-2.5 text-left text-xs font-bold text-red-400 hover:bg-zinc-700 transition-colors">
-                                Eliminar
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )
-                 })}
-               </div>
-             )}
-          </div>
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </>
         )}
 
         {showBuilder && (

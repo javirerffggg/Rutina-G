@@ -175,8 +175,6 @@ const Layout: React.FC = () => {
       <main
         className="flex-1 overflow-y-auto no-scrollbar relative z-10"
         style={{
-          // Content starts below the iOS status bar
-          paddingTop: 'env(safe-area-inset-top, 0px)',
           // Extra bottom padding so content clears the floating nav + home indicator
           paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 7rem)',
           // overscroll-behavior: contain prevents the page-level rubber-band

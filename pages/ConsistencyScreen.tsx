@@ -34,11 +34,13 @@ export default function ConsistencyScreen() {
       let type = 'Desconocido';
 
       if (log?.exercises?.length) {
-        sets = log.exercises.reduce((acc, ex) => acc + ex.sets.length, 0);
-        volume = log.exercises.reduce((acc, ex) => acc + ex.sets.reduce((sa, s) => sa + (s.weight || 0) * (s.reps || 0), 0), 0);
+        log.exercises.forEach(ex => {
+          const doneSets = ex.sets.filter(s => s.completed && ((s.weight || 0) > 0 || (s.reps || 0) > 0));
+          sets += doneSets.length;
+          volume += doneSets.reduce((sa, s) => sa + (s.weight || 0) * (s.reps || 0), 0);
+        });
         type = log.routineType || 'Entrenamiento';
-        totalVol += volume;
-        workoutCount++;
+        if (sets > 0) { totalVol += volume; workoutCount++; }
       } else if (log?.workoutCompleted) {
         // Marcado completado pero sin volumen
         type = 'Sin volumen';

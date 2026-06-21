@@ -95,12 +95,12 @@ export default function VolumeEvolutionScreen() {
 
       log.exercises?.forEach(ex => {
         ex.sets.forEach(s => {
-          if (s.weight && s.reps) {
+          if (s.completed && s.weight && s.reps) {
             vol += s.weight * s.reps;
             weightRepSum += s.weight * s.reps;
             repSum += s.reps;
           }
-          sets++;
+          if (s.completed) sets++;
         });
       });
 
@@ -153,6 +153,7 @@ export default function VolumeEvolutionScreen() {
         let val = 0;
         log.exercises?.forEach(ex => {
           ex.sets.forEach(s => {
+            if (!s.completed) return;
             if (metric === 'volume') val += (s.weight || 0) * (s.reps || 0);
             else if (metric === 'sets') val++;
           });
@@ -160,7 +161,7 @@ export default function VolumeEvolutionScreen() {
 
         if (metric === 'intensity') {
            let wRep = 0, rSum = 0;
-           log.exercises?.forEach(ex => ex.sets.forEach(s => { wRep += (s.weight||0)*(s.reps||0); rSum += (s.reps||0); }));
+           log.exercises?.forEach(ex => ex.sets.forEach(s => { if(s.completed){wRep += (s.weight||0)*(s.reps||0); rSum += (s.reps||0);} }));
            val = rSum > 0 ? wRep / rSum : 0;
            val = Math.round(val * 10) / 10;
         }
@@ -170,12 +171,13 @@ export default function VolumeEvolutionScreen() {
         const ma = i >= 6 ? filteredLogs.slice(i-6, i+1).reduce((s, d) => {
            let dVal = 0;
            d.exercises?.forEach(ex => ex.sets.forEach(s => {
+              if (!s.completed) return;
               if (metric === 'volume') dVal += (s.weight || 0) * (s.reps || 0);
               else if (metric === 'sets') dVal++;
            }));
            if (metric === 'intensity') {
               let wR = 0, rS = 0;
-              d.exercises?.forEach(ex => ex.sets.forEach(s => { wR += (s.weight||0)*(s.reps||0); rS += (s.reps||0); }));
+              d.exercises?.forEach(ex => ex.sets.forEach(s => { if(s.completed){wR += (s.weight||0)*(s.reps||0); rS += (s.reps||0);} }));
               dVal = rS > 0 ? wR / rS : 0;
            }
            return s + dVal;

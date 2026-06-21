@@ -33,8 +33,9 @@ export default function MuscleLoadScreen() {
         const muscles = EXERCISE_MUSCLE_MAP[ex.exerciseId] || [];
         if (muscles.includes(selectedMuscle)) {
           details.exercises.add(ex.exerciseId);
-          dailySets += ex.sets.length;
-          dailyVol += ex.sets.reduce((sum: number, s: any) => sum + (s.weight || 0) * (s.reps || 0), 0);
+          const doneSets = ex.sets.filter((s: any) => s.completed && ((s.reps || 0) > 0 || (s.weight || 0) > 0));
+          dailySets += doneSets.length;
+          dailyVol += doneSets.reduce((sum: number, s: any) => sum + (s.weight || 0) * (s.reps || 0), 0);
         }
       });
       if (dailySets > 0) {
@@ -64,7 +65,9 @@ export default function MuscleLoadScreen() {
       if (w >= 0 && w <= 3) {
         allLogs[dateStr].exercises?.forEach((ex: any) => {
            const muscles = EXERCISE_MUSCLE_MAP[ex.exerciseId] || [];
-           const setsCount = ex.sets.length;
+           const completedSets = ex.sets.filter((s: any) => s.completed && ((s.reps || 0) > 0 || (s.weight || 0) > 0));
+           const setsCount = completedSets.length;
+           if (setsCount === 0) return;
            muscles.forEach((m: string) => {
              weeklyData[w][m] = (weeklyData[w][m] || 0) + setsCount;
            });

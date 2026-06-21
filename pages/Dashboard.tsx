@@ -99,52 +99,61 @@ const Dashboard: React.FC = () => {
   }, [phase]);
 
   useEffect(() => {
-    const saved = getLogs();
-    setAllLogs(saved);
-    if (saved[today]) {
-      setLog(saved[today]);
-      if (saved[today].weight) setWeightInput(saved[today].weight.toString());
-    }
-
-    // Calcular media y tendencia de peso 7d
-    const weightValues = Object.keys(saved)
-      .sort()
-      .slice(-7)
-      .map(d => saved[d].weight)
-      .filter((w): w is number => w !== undefined);
-      
-    const avg = calculate7DayAverage(weightValues);
-    setWeightAvg7d(avg);
-    
-    if (saved[today]?.weight && avg) {
-      setWeightTrend(calculate7DayTrend(saved[today].weight!, avg));
-    }
-
-    // Volumen + series musculares semanales
-    const todayDate = new Date(today);
-    const volumeData: Record<string, number> = {};
-    const setsData: Record<string, number> = {};
-
-    Object.keys(saved).forEach(dateStr => {
-      const logDate = new Date(dateStr);
-      const diffTime = Math.abs(todayDate.getTime() - logDate.getTime());
-      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-
-      if (diffDays <= 7 && saved[dateStr].exercises) {
-        saved[dateStr].exercises!.forEach(ex => {
-          const muscles = EXERCISE_MUSCLE_MAP[ex.exerciseId] || [];
-          const reps = ex.sets.reduce((sum, set) => sum + (set.reps || 0), 0);
-          const sets = ex.sets.length;
-          muscles.forEach(m => {
-            volumeData[m] = (volumeData[m] || 0) + reps;
-            setsData[m] = (setsData[m] || 0) + sets;
-          });
-        });
+    const load = () => {
+      const saved = getLogs();
+      setAllLogs(saved);
+      if (saved[today]) {
+        setLog(saved[today]);
+        if (saved[today].weight) setWeightInput(saved[today].weight.toString());
       }
-    });
 
-    setMuscleVolume(volumeData);
-    setMuscleSets(setsData);
+      // Calcular media y tendencia de peso 7d
+      const weightValues = Object.keys(saved)
+        .sort()
+        .slice(-7)
+        .map(d => saved[d].weight)
+        .filter((w): w is number => w !== undefined);
+        
+      const avg = calculate7DayAverage(weightValues);
+      setWeightAvg7d(avg);
+      
+      if (saved[today]?.weight && avg) {
+        setWeightTrend(calculate7DayTrend(saved[today].weight!, avg));
+      }
+
+      // Volumen + series musculares semanales (solo sets completados con reps reales)
+      const todayDate = new Date(today);
+      const volumeData: Record<string, number> = {};
+      const setsData: Record<string, number> = {};
+
+      Object.keys(saved).forEach(dateStr => {
+        const logDate = new Date(dateStr);
+        const diffTime = Math.abs(todayDate.getTime() - logDate.getTime());
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays <= 7 && saved[dateStr].exercises) {
+          saved[dateStr].exercises!.forEach(ex => {
+            const muscles = EXERCISE_MUSCLE_MAP[ex.exerciseId] || [];
+            // Solo contar sets completados con reps/peso real
+            const completedSets = ex.sets.filter(s => s.completed && ((s.reps || 0) > 0 || (s.weight || 0) > 0));
+            const reps = completedSets.reduce((sum, set) => sum + (set.reps || 0), 0);
+            const sets = completedSets.length;
+            if (sets === 0) return;
+            muscles.forEach(m => {
+              volumeData[m] = (volumeData[m] || 0) + reps;
+              setsData[m] = (setsData[m] || 0) + sets;
+            });
+          });
+        }
+      });
+
+      setMuscleVolume(volumeData);
+      setMuscleSets(setsData);
+    };
+
+    load();
+    window.addEventListener('storage-update', load);
+    return () => window.removeEventListener('storage-update', load);
   }, [today]);
 
   const handleWeightSave = () => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Palette, Smartphone, Baseline, Moon, Clock, Type,
   User, Calendar, Ruler, Scale, Target, Bell, Flame,
@@ -12,11 +12,6 @@ import { DataTab } from '../components/stats/DataTab';
 
 export const Settings: React.FC = () => {
   const [settings, setSettingsState] = useState<AppSettings>(getSettings());
-  const [dbSize, setDbSize] = useState('0 KB');
-
-  useEffect(() => {
-    calculateDbSize();
-  }, [settings]);
 
   const updateSetting = (key: keyof AppSettings, value: any) => {
     const updated = saveSettings({ [key]: value });

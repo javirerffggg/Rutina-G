@@ -229,13 +229,24 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
         <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider px-1 flex items-center gap-2">
           <Flame size={16} /> Analisis Muscular
         </h2>
-        <div className="glass-panel p-5 rounded-2xl space-y-4">
-          <div>
-            <h3 className="text-xs font-bold text-white">Heatmap Historico</h3>
-            <p className="text-[10px] text-slate-400 mt-1">Distribucion de volumen total</p>
+        <button 
+          onClick={() => navigate('/muscle-load', { state: { logs } })}
+          className="glass-panel p-5 rounded-2xl w-full text-left cursor-pointer hover:bg-white/5 active:scale-[0.98] transition-all group block relative"
+        >
+          <div className="flex justify-between items-start mb-4 relative z-10">
+            <div>
+              <h3 className="text-xs font-bold text-white group-hover:text-brand-400 transition-colors">Heatmap Histórico</h3>
+              <p className="text-[10px] text-slate-400 mt-1">Distribución de volumen total</p>
+            </div>
+            <ChevronRight size={14} className="text-slate-500 group-hover:text-white transition-colors mt-1" />
           </div>
-          <BodyHeatmap muscleVolume={muscleVolume} muscleSets={muscleSets} />
-        </div>
+          <div className="pointer-events-none relative z-0">
+            <BodyHeatmap muscleVolume={muscleVolume} muscleSets={muscleSets} />
+          </div>
+          <p className="text-center text-[9px] text-slate-600 font-bold uppercase tracking-widest mt-4 group-hover:text-brand-400 transition-colors relative z-10">
+            Pulsa para ver detalle de carga muscular
+          </p>
+        </button>
 
         <div className="glass-panel p-4 rounded-2xl">
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Fatiga Semanal (Series)</h3>

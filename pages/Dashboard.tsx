@@ -8,6 +8,7 @@ import { EXERCISE_MUSCLE_MAP, PHASES } from '../constants';
 import { BodyHeatmap } from '../components/BodyHeatmap';
 import { calculate7DayAverage, calculate7DayTrend } from '../utils/bodyComposition';
 import { useProgression } from '../hooks/useProgression';
+import { getSettings } from '../services/settings';
 
 const getGreeting = () => {
   const h = new Date().getHours();

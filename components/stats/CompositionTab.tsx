@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useMemo } from 'react';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { ResponsiveContainer, LineChart, Line, BarChart, Bar, Cell, ReferenceLine, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { DailyLog, Gender } from '../../types';
 import { Scale, Target, TrendingDown, TrendingUp, Minus, Activity, Ruler, User } from 'lucide-react';
 import { getSettings } from '../../services/settings';
@@ -24,6 +24,7 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
   const gender = (todayLog.gender || (settings.profile.gender === 'F' ? 'female' : 'male')) as Gender;
   const height = todayLog.height || settings.profile.height;
   const [chartMetric, setChartMetric] = useState<'weight' | 'bodyFat'>('weight');
+  const [showAvg7d, setShowAvg7d] = useState(true);
 
   const debouncedUpdate = useCallback((key: keyof DailyLog, value: number | boolean | Gender) => {
     clearTimeout(debounceRef.current[key as string]);
@@ -79,25 +80,104 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
   const changeRateStatus = weeklyChangeRate !== undefined ? classifyWeeklyChangeRate(weeklyChangeRate) : undefined;
 
   // ====================
-  // CHART DATA (30 days)
+  // CHART DATA (Base for charts 1, 2, 3)
   // ====================
-  const chartData = useMemo(() => {
-    return weightLogs.slice(-30).map(log => {
+  const { chartData, variationData, projectionData, heatmapData, consistencyPercentage } = useMemo(() => {
+    // We will compute stats for all available logs to have history for 7d avg
+    const fullData = weightLogs.map((log, i) => {
       const date = new Date(log.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+      const rawDate = log.date;
       const weight = log.weight || null;
-
       let bodyFat: number | null = null;
+      let lbm: number | null = null;
+      
       const logHeight = log.height || height;
       if (log.weight && log.waist && log.neck && logHeight) {
         try {
           const comp = calculateBodyComposition(log.weight, log.waist, log.neck, logHeight, log.gender || gender);
           bodyFat = comp.bodyFatPercentage;
+          lbm = comp.leanBodyMass;
         } catch {}
       }
 
-      return { date, weight, bodyFat };
+      // Calculate 7-day avg (up to this log)
+      const past7 = weightLogs.slice(Math.max(0, i - 6), i + 1).map(l => l.weight).filter((w): w is number => w !== undefined);
+      const avg7d = past7.length > 0 ? calculate7DayAverage(past7) : null;
+
+      // Calculate delta (current - previous)
+      const prevLog = i > 0 ? weightLogs[i - 1] : null;
+      const delta = weight && prevLog?.weight ? Number((weight - prevLog.weight).toFixed(1)) : null;
+
+      return { date, rawDate, weight, bodyFat, lbm, avg7d, delta };
     });
-  }, [weightLogs, gender]);
+
+    const last30 = fullData.slice(-30);
+    const variationData = fullData.slice(-21).filter(d => d.delta !== null);
+
+    // --- Heatmap Data ---
+    // Generate the last 56 days calendar
+    const heatmap = [];
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    let logCount = 0;
+    for (let i = 55; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const iso = d.toISOString().split('T')[0];
+      const hasLog = weightLogs.some(l => l.date.startsWith(iso) && l.weight);
+      if (hasLog) logCount++;
+      heatmap.push({ date: iso, hasLog });
+    }
+    const consistencyPercentage = Math.round((logCount / 56) * 100);
+
+    // --- Projection Data ---
+    const projection: any[] = [];
+    const targetWeight = settings.profile.goalWeight;
+    const currentWeight = fullData.length > 0 ? fullData[fullData.length - 1].weight : null;
+    
+    // We only project if there's a target, a current weight, a weekly change rate, and it's moving towards target
+    if (targetWeight && currentWeight && weeklyChangeRate) {
+      // difference per day
+      const diffTotal = targetWeight - currentWeight;
+      const weeklyAbsoluteChange = currentWeight * (weeklyChangeRate / 100);
+      const dailyChange = weeklyAbsoluteChange / 7;
+
+      // Project if we are moving towards goal
+      if ((diffTotal < 0 && dailyChange < 0) || (diffTotal > 0 && dailyChange > 0)) {
+         const daysToGoal = Math.abs(diffTotal / dailyChange);
+         // Limit projection to 90 days max to prevent crazy long charts
+         const daysToProject = Math.min(Math.ceil(daysToGoal), 90);
+         
+         const lastDateStr = fullData[fullData.length - 1].rawDate;
+         const lastDateObj = new Date(lastDateStr);
+
+         // Combine existing data with projection data for a unified chart
+         projection.push(...last30); // Start with last 30 days
+         
+         for (let i = 1; i <= daysToProject; i += 7) {
+            const nextD = new Date(lastDateObj);
+            nextD.setDate(nextD.getDate() + i);
+            const dateStr = nextD.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+            projection.push({
+               date: dateStr,
+               projectedWeight: Number((currentWeight + dailyChange * i).toFixed(1))
+            });
+         }
+         // Add exact final day if not added
+         if (daysToProject % 7 !== 0) {
+            const finalD = new Date(lastDateObj);
+            finalD.setDate(finalD.getDate() + daysToProject);
+            projection.push({
+               date: finalD.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }),
+               projectedWeight: targetWeight,
+               isGoal: true
+            });
+         }
+      }
+    }
+
+    return { chartData: last30, variationData, projectionData: projection.length > last30.length ? projection : null, heatmapData: heatmap, consistencyPercentage };
+  }, [weightLogs, gender, height, settings.profile.goalWeight, weeklyChangeRate]);
 
   // ====================
   // CUSTOM TOOLTIP
@@ -108,11 +188,25 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
     return (
       <div className="bg-zinc-900/90 backdrop-blur-sm border border-zinc-700 rounded-lg px-3 py-2 shadow-xl">
         <p className="text-xs text-zinc-400 font-medium mb-1">{data.date}</p>
-        {data.weight !== null && chartMetric === 'weight' && (
+        {data.weight !== undefined && data.weight !== null && chartMetric === 'weight' && (
           <p className="text-sm text-blue-400 font-semibold">Peso: {data.weight} kg</p>
         )}
-        {data.bodyFat !== null && chartMetric === 'bodyFat' && (
+        {data.projectedWeight !== undefined && data.projectedWeight !== null && chartMetric === 'weight' && (
+          <p className="text-sm text-amber-400 font-semibold">Proyección: {data.projectedWeight} kg</p>
+        )}
+        {data.avg7d !== undefined && data.avg7d !== null && showAvg7d && (
+          <p className="text-sm text-violet-400 font-semibold">Media 7d: {data.avg7d} kg</p>
+        )}
+        {data.bodyFat !== undefined && data.bodyFat !== null && chartMetric === 'bodyFat' && (
           <p className="text-sm text-rose-400 font-semibold">Grasa: {data.bodyFat.toFixed(1)}%</p>
+        )}
+        {data.lbm !== undefined && data.lbm !== null && chartMetric === 'weight' && (
+          <p className="text-sm text-emerald-400 font-semibold">LBM: {data.lbm} kg</p>
+        )}
+        {data.delta !== undefined && data.delta !== null && (
+          <p className={`text-sm font-semibold ${data.delta > 0 ? 'text-rose-400' : data.delta < 0 ? 'text-emerald-400' : 'text-zinc-400'}`}>
+            Var: {data.delta > 0 ? '+' : ''}{data.delta} kg
+          </p>
         )}
       </div>
     );
@@ -265,28 +359,36 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
           <h3 className="text-sm font-bold text-zinc-300 flex items-center gap-2">
             <Activity size={16} className="text-zinc-500" />
-            Evolución (30 días)
+            Evolución y Proyección
           </h3>
-          <div className="flex bg-zinc-800/50 rounded-lg p-1 gap-1">
+          <div className="flex flex-wrap items-center gap-2">
             <button 
-              onClick={() => setChartMetric('weight')} 
-              className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all ${chartMetric === 'weight' ? 'bg-zinc-700 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>
-              Peso
+              onClick={() => setShowAvg7d(!showAvg7d)} 
+              className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all border ${showAvg7d ? 'bg-violet-500/10 border-violet-500/30 text-violet-400' : 'border-zinc-700 text-zinc-500'}`}>
+              Media 7d
             </button>
-            <button 
-              onClick={() => setChartMetric('bodyFat')} 
-              className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all ${chartMetric === 'bodyFat' ? 'bg-zinc-700 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>
-              Grasa
-            </button>
+            <div className="flex bg-zinc-800/50 rounded-lg p-1 gap-1">
+              <button 
+                onClick={() => setChartMetric('weight')} 
+                className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all ${chartMetric === 'weight' ? 'bg-zinc-700 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>
+                Peso
+              </button>
+              <button 
+                onClick={() => setChartMetric('bodyFat')} 
+                className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all ${chartMetric === 'bodyFat' ? 'bg-zinc-700 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>
+                Grasa
+              </button>
+            </div>
           </div>
         </div>
         
         <ResponsiveContainer width="100%" height={220}>
-          <LineChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+          <LineChart data={projectionData || chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
             <XAxis
               dataKey="date"
-              interval={6}
+              interval="preserveStartEnd"
+              minTickGap={20}
               tick={{ fill: '#71717a', fontSize: 10 }}
               stroke="#3f3f46"
               tickMargin={10}
@@ -299,16 +401,52 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
               domain={['auto', 'auto']}
             />
             <Tooltip content={<CustomTooltip />} />
-            {chartMetric === 'weight' ? (
-              <Line
-                type="monotone"
-                dataKey="weight"
-                stroke="#3b82f6"
-                strokeWidth={3}
-                dot={{ r: 3, fill: '#3b82f6', strokeWidth: 0 }}
-                activeDot={{ r: 6, fill: '#3b82f6', stroke: '#1d4ed8', strokeWidth: 2 }}
-                connectNulls
+            
+            {/* Projection Target Date */}
+            {projectionData && projectionData.find(d => d.isGoal) && (
+              <ReferenceLine 
+                x={projectionData.find(d => d.isGoal).date} 
+                stroke="#f59e0b" 
+                strokeDasharray="3 3" 
+                label={{ position: 'top', value: 'Meta', fill: '#f59e0b', fontSize: 10 }} 
               />
+            )}
+
+            {chartMetric === 'weight' ? (
+              <>
+                <Line
+                  type="monotone"
+                  dataKey="weight"
+                  stroke="#3b82f6"
+                  strokeWidth={3}
+                  dot={{ r: 3, fill: '#3b82f6', strokeWidth: 0 }}
+                  activeDot={{ r: 6, fill: '#3b82f6', stroke: '#1d4ed8', strokeWidth: 2 }}
+                  connectNulls
+                />
+                {projectionData && (
+                  <Line
+                    type="monotone"
+                    dataKey="projectedWeight"
+                    stroke="#f59e0b"
+                    strokeWidth={2}
+                    strokeDasharray="4 4"
+                    dot={false}
+                    connectNulls
+                  />
+                )}
+                {showAvg7d && (
+                  <Line
+                    type="monotone"
+                    dataKey="avg7d"
+                    stroke="#a78bfa"
+                    strokeWidth={2}
+                    strokeDasharray="4 2"
+                    dot={false}
+                    connectNulls
+                    opacity={0.8}
+                  />
+                )}
+              </>
             ) : (
               <Line
                 type="monotone"
@@ -322,6 +460,83 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
             )}
           </LineChart>
         </ResponsiveContainer>
+      </div>
+
+      {/* ── DUAL AXIS: PESO VS MASA MAGRA ── */}
+      {chartData.some(d => d.lbm) && (
+        <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-2xl p-4 sm:p-5">
+          <div className="mb-4">
+            <h3 className="text-sm font-bold text-zinc-300 flex items-center gap-2">
+              <Activity size={16} className="text-zinc-500" />
+              Peso vs. Masa Magra (LBM)
+            </h3>
+            <p className="text-[10px] text-zinc-500 mt-1">El LBM debería mantenerse mientras el peso baja</p>
+          </div>
+          
+          <ResponsiveContainer width="100%" height={220}>
+            <LineChart data={chartData} margin={{ top: 5, right: 0, left: -25, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+              <XAxis dataKey="date" minTickGap={20} tick={{ fill: '#71717a', fontSize: 10 }} stroke="#3f3f46" tickMargin={10} />
+              <YAxis yAxisId="left" tick={{ fill: '#3b82f6', fontSize: 10 }} stroke="#3f3f46" axisLine={false} tickLine={false} domain={['auto', 'auto']} />
+              <YAxis yAxisId="right" orientation="right" tick={{ fill: '#10b981', fontSize: 10 }} stroke="#3f3f46" axisLine={false} tickLine={false} domain={['auto', 'auto']} />
+              <Tooltip content={<CustomTooltip />} />
+              <Line yAxisId="left" type="monotone" dataKey="weight" stroke="#3b82f6" strokeWidth={2} dot={false} connectNulls />
+              <Line yAxisId="right" type="monotone" dataKey="lbm" stroke="#10b981" strokeWidth={2} dot={false} connectNulls />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* ── VARIACIÓN DIARIA BARRAS ── */}
+      <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-2xl p-4 sm:p-5">
+        <div className="mb-4">
+          <h3 className="text-sm font-bold text-zinc-300 flex items-center gap-2">
+            <Activity size={16} className="text-zinc-500" />
+            Variación Diaria (21 días)
+          </h3>
+        </div>
+        
+        <ResponsiveContainer width="100%" height={180}>
+          <BarChart data={variationData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+            <XAxis dataKey="date" minTickGap={10} tick={{ fill: '#71717a', fontSize: 10 }} stroke="#3f3f46" tickMargin={10} />
+            <YAxis tick={{ fill: '#71717a', fontSize: 10 }} stroke="#3f3f46" axisLine={false} tickLine={false} />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: '#27272a', opacity: 0.4 }} />
+            <Bar dataKey="delta" radius={[4, 4, 0, 0]}>
+              {variationData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.delta > 0 ? '#f43f5e' : entry.delta < 0 ? '#10b981' : '#52525b'} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* ── HEATMAP CONSISTENCIA ── */}
+      <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-2xl p-4 sm:p-5">
+        <div className="flex justify-between items-end mb-4">
+          <div>
+            <h3 className="text-sm font-bold text-zinc-300 flex items-center gap-2">
+              <Activity size={16} className="text-zinc-500" />
+              Consistencia de Registro
+            </h3>
+            <p className="text-[10px] text-zinc-500 mt-1">Últimas 8 semanas</p>
+          </div>
+          <div className="text-right">
+            <span className="text-2xl font-bold text-white">{consistencyPercentage}%</span>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto pb-2 scrollbar-hide">
+          <div className="grid grid-rows-7 gap-1" style={{ gridAutoFlow: 'column' }}>
+            {heatmapData.map((day, i) => (
+              <div 
+                key={i} 
+                className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-sm ${day.hasLog ? 'bg-violet-500' : 'bg-zinc-800'}`}
+                title={day.date}
+              />
+            ))}
+          </div>
+        </div>
       </div>
 
     </div>

@@ -1,15 +1,26 @@
-import React, { useState } from 'react';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { X } from 'lucide-react';
+import Model from 'react-body-highlighter';
 
 interface BodyHeatmapProps {
   muscleVolume: Record<string, number>;
   muscleSets: Record<string, number>; // series semanales
 }
 
-const getVolumeColor = (reps: number = 0) => {
-  if (reps < 30) return 'bg-slate-800 border border-slate-700';
-  if (reps < 120) return 'bg-amber-500 border border-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.2)]';
-  return 'bg-red-500 border border-red-400 shadow-[0_0_15px_rgba(239,68,68,0.5)]';
+// Mapa nombre interno → react-body-highlighter keys
+const MUSCLE_MAPPING: Record<string, string[]> = {
+  shoulders: ['front-deltoids', 'back-deltoids'],
+  biceps: ['biceps'],
+  chest: ['chest'],
+  abs: ['abs', 'obliques'],
+  quads: ['quadriceps'],
+  triceps: ['triceps'],
+  back: ['upper-back', 'lower-back'],
+  glutes: ['gluteal'],
+  hamstrings: ['hamstring'],
+  calves: ['calves'],
+  traps: ['trapezius'],
+  forearms: ['forearm'],
 };
 
 // Mapa nombre interno → etiqueta legible en español
@@ -37,6 +48,35 @@ export const BodyHeatmap: React.FC<BodyHeatmapProps> = ({ muscleVolume = {}, mus
     .map(([key, label]) => ({ key, label, sets: (muscleSets && muscleSets[key]) || 0 }))
     .sort((a, b) => b.sets - a.sets);
 
+  // Generamos el array de datos para react-body-highlighter
+  // Repetimos los ejercicios tantas veces como sets para incrementar su 'frequency'
+  const modelData = useMemo(() => {
+    const data: Array<{ name: string; muscles: string[] }> = [];
+    Object.entries(muscleSets).forEach(([key, sets]) => {
+      const targetMuscles = MUSCLE_MAPPING[key] || [];
+      if (targetMuscles.length > 0) {
+        // Expand sets to individual items to build frequency
+        for (let i = 0; i < sets; i++) {
+          data.push({ name: `${key}-${i}`, muscles: targetMuscles });
+        }
+      }
+    });
+    return data;
+  }, [muscleSets]);
+
+  // Generamos escala de color continua (hasta MAX_SETS = 40)
+  const MAX_SETS = 40;
+  const highlightedColors = useMemo(() => {
+    return Array.from({ length: MAX_SETS }, (_, i) => {
+      const sets = i + 1;
+      const ratio = Math.min(sets / MAX_SETS, 1);
+      const l = 0.3 + ratio * 0.25;
+      const c = ratio * 0.18;
+      const h = 30 - ratio * 20;
+      return `oklch(${l} ${c} ${h})`;
+    });
+  }, []);
+
   return (
     <>
       {/* Figura clickable */}
@@ -44,75 +84,34 @@ export const BodyHeatmap: React.FC<BodyHeatmapProps> = ({ muscleVolume = {}, mus
         className="cursor-pointer active:scale-95 transition-transform select-none"
         onClick={() => setShowModal(true)}
       >
-        {/* —— figura original sin cambios —— */}
         <div className="flex justify-around items-center pt-4 pb-2">
           {/* FRONTAL */}
           <div className="flex flex-col items-center">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Frontal</span>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-6 h-6 bg-slate-800 rounded-full mb-0.5 border border-white/5" />
-              <div className="flex gap-1">
-                <div className="flex flex-col gap-1 mt-1">
-                  <div className={`w-4 h-5 rounded-full transition-colors ${getVolumeColor(muscleVolume['shoulders'])}`} />
-                  <div className={`w-3 h-7 rounded-full mx-auto transition-colors ${getVolumeColor(muscleVolume['biceps'])}`} />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <div className="flex gap-1">
-                    <div className={`w-7 h-8 rounded-tl-xl rounded-bl-sm transition-colors ${getVolumeColor(muscleVolume['chest'])}`} />
-                    <div className={`w-7 h-8 rounded-tr-xl rounded-br-sm transition-colors ${getVolumeColor(muscleVolume['chest'])}`} />
-                  </div>
-                  <div className={`w-10 h-10 mx-auto rounded-md transition-colors ${getVolumeColor(muscleVolume['abs'])}`} />
-                </div>
-                <div className="flex flex-col gap-1 mt-1">
-                  <div className={`w-4 h-5 rounded-full transition-colors ${getVolumeColor(muscleVolume['shoulders'])}`} />
-                  <div className={`w-3 h-7 rounded-full mx-auto transition-colors ${getVolumeColor(muscleVolume['biceps'])}`} />
-                </div>
-              </div>
-              <div className="flex gap-1.5 mt-1">
-                <div className={`w-6 h-14 rounded-lg transition-colors ${getVolumeColor(muscleVolume['quads'])}`} />
-                <div className={`w-6 h-14 rounded-lg transition-colors ${getVolumeColor(muscleVolume['quads'])}`} />
-              </div>
-            </div>
+            <Model
+              data={modelData}
+              type="anterior"
+              bodyColor="#1e293b" // slate-800
+              highlightedColors={highlightedColors}
+              style={{ width: '8rem', color: '#1e293b' }}
+            />
           </div>
+
           {/* TRASERO */}
           <div className="flex flex-col items-center">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Trasero</span>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-6 h-6 bg-slate-800 rounded-full mb-0.5 border border-white/5" />
-              <div className="flex gap-1">
-                <div className="flex flex-col gap-1 mt-1">
-                  <div className={`w-4 h-5 rounded-full transition-colors ${getVolumeColor(muscleVolume['shoulders'])}`} />
-                  <div className={`w-3 h-7 rounded-full mx-auto transition-colors ${getVolumeColor(muscleVolume['triceps'])}`} />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <div className={`w-[52px] h-8 rounded-t-xl rounded-b-sm transition-colors ${getVolumeColor(muscleVolume['back'])}`} />
-                  <div className={`w-10 h-10 mx-auto rounded-md transition-colors ${getVolumeColor(muscleVolume['back'])}`} />
-                </div>
-                <div className="flex flex-col gap-1 mt-1">
-                  <div className={`w-4 h-5 rounded-full transition-colors ${getVolumeColor(muscleVolume['shoulders'])}`} />
-                  <div className={`w-3 h-7 rounded-full mx-auto transition-colors ${getVolumeColor(muscleVolume['triceps'])}`} />
-                </div>
-              </div>
-              <div className="flex flex-col gap-1 mt-1 items-center">
-                <div className="flex gap-1">
-                  <div className={`w-7 h-5 rounded-t-lg rounded-b-sm transition-colors ${getVolumeColor(muscleVolume['glutes'])}`} />
-                  <div className={`w-7 h-5 rounded-t-lg rounded-b-sm transition-colors ${getVolumeColor(muscleVolume['glutes'])}`} />
-                </div>
-                <div className="flex gap-1">
-                  <div className={`w-6 h-8 rounded-sm transition-colors ${getVolumeColor(muscleVolume['hamstrings'])}`} />
-                  <div className={`w-6 h-8 rounded-sm transition-colors ${getVolumeColor(muscleVolume['hamstrings'])}`} />
-                </div>
-                <div className="flex gap-1">
-                  <div className={`w-5 h-7 rounded-b-lg transition-colors ${getVolumeColor(muscleVolume['calves'])}`} />
-                  <div className={`w-5 h-7 rounded-b-lg transition-colors ${getVolumeColor(muscleVolume['calves'])}`} />
-                </div>
-              </div>
-            </div>
+            <Model
+              data={modelData}
+              type="posterior"
+              bodyColor="#1e293b"
+              highlightedColors={highlightedColors}
+              style={{ width: '8rem', color: '#1e293b' }}
+            />
           </div>
         </div>
 
         {/* Hint tap */}
-        <p className="text-center text-[9px] text-slate-600 font-bold uppercase tracking-widest mt-1">
+        <p className="text-center text-[9px] text-slate-600 font-bold uppercase tracking-widest mt-2">
           Pulsa para ver detalle
         </p>
       </div>

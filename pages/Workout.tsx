@@ -456,18 +456,20 @@ const Workout: React.FC = () => {
   };
 
   const calculateSessionAnalysis = (currentLogs: WorkoutLogEntry[], routine: string) => {
-    const tonnage = currentLogs.reduce((a,ex) => a + ex.sets.reduce((s,set) => s + set.weight*set.reps, 0), 0);
+    const tonnage = currentLogs.reduce((a,ex) => a + ex.sets.filter(s => s.completed && (s.weight||0)>0).reduce((s,set) => s + (set.weight||0)*(set.reps||0), 0), 0);
     const sameType = Object.values(allLogs).filter((l:any) => l.workoutType === routine && l.date !== today).sort((a:any,b:any) => b.date.localeCompare(a.date));
     const last = sameType[0] as any;
     let diff = 0;
-    if (last?.exercises) { const lt = last.exercises.reduce((a:number,ex:any) => a + ex.sets.reduce((s:number,set:any) => s+set.weight*set.reps, 0), 0); diff = lt>0 ? ((tonnage-lt)/lt)*100 : 0; }
+    if (last?.exercises) { const lt = last.exercises.reduce((a:number,ex:any) => a + ex.sets.filter((s:any)=>s.completed&&(s.weight||0)>0).reduce((s:number,set:any) => s+(set.weight||0)*(set.reps||0), 0), 0); diff = lt>0 ? ((tonnage-lt)/lt)*100 : 0; }
     const allEx = [...EXERCISES_PUSH,...EXERCISES_PULL,...EXERCISES_LEGS,...EXERCISES_UPPER,...EXERCISES_LOWER];
     const prs: string[] = [];
     currentLogs.forEach(ex => {
       const exercise = allEx.find(e=>e.id===ex.exerciseId); if (!exercise) return;
-      const cur1RM = Math.max(...ex.sets.map(s=>calculateOneRM(s.weight,s.reps)));
+      const completedSets = ex.sets.filter(s=>s.completed&&(s.weight||0)>0);
+      if (completedSets.length === 0) return;
+      const cur1RM = Math.max(...completedSets.map(s=>calculateOneRM(s.weight||0,s.reps||0)));
       const hist = getExerciseHistory(ex.exerciseId, 10);
-      const past1RM = hist.length>0 ? Math.max(...hist.filter((h:any)=>h.date!==today).map((h:any)=>Math.max(...h.log.sets.map((s:any)=>calculateOneRM(s.weight,s.reps))))) : 0;
+      const past1RM = hist.length>0 ? Math.max(...hist.filter((h:any)=>h.date!==today).map((h:any)=>Math.max(...h.log.sets.filter((s:any)=>s.completed&&(s.weight||0)>0).map((s:any)=>calculateOneRM(s.weight||0,s.reps||0)).filter((v:number)=>isFinite(v))))) : 0;
       if (cur1RM>past1RM && past1RM>0) prs.push(`${exercise.name}: ${cur1RM}kg est. 1RM`);
     });
     return { tonnage, tonnageDiff: diff, prs };

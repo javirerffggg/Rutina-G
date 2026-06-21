@@ -79,7 +79,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
 
   const totalVolume = useMemo(() => workoutLogs.reduce((acc, log) =>
     acc + (log.exercises?.reduce((ea, ex) =>
-      ea + ex.sets.reduce((sa, s) => sa + s.weight * s.reps, 0), 0) || 0), 0), [workoutLogs]);
+      ea + ex.sets.filter(s => s.completed && (s.weight || 0) > 0).reduce((sa, s) => sa + (s.weight || 0) * (s.reps || 0), 0), 0) || 0), 0), [workoutLogs]);
 
   const totalSets = useMemo(() => workoutLogs.reduce((acc, log) =>
     acc + (log.exercises?.reduce((ea, ex) => ea + ex.sets.length, 0) || 0), 0), [workoutLogs]);
@@ -121,7 +121,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
     workoutLogs.forEach(log => {
       log.exercises?.forEach(ex => {
         const muscles = EXERCISE_MUSCLE_MAP[ex.exerciseId] || [];
-        const exVol = ex.sets.reduce((acc, s) => acc + s.weight * s.reps, 0);
+        const exVol = ex.sets.reduce((acc, s) => acc + (s.weight || 0) * (s.reps || 0), 0);
         muscles.forEach(m => {
           sets[m] = (sets[m] || 0) + ex.sets.length;
           vol[m]  = (vol[m]  || 0) + exVol;
@@ -147,10 +147,12 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
     if (!entry?.exercises) return null;
     const exLog = entry.exercises.find(e => e.exerciseId === selectedExercise);
     if (!exLog || exLog.sets.length === 0) return null;
-    const max1RM    = Math.max(...exLog.sets.map(s => calculateOneRM(s.weight, s.reps)));
-    const volume    = exLog.sets.reduce((acc, s) => acc + s.weight * s.reps, 0);
-    const maxWeight = Math.max(...exLog.sets.map(s => s.weight));
-    const rirSets   = exLog.sets.filter(s => s.rir != null);
+    const completedSets = exLog.sets.filter(s => s.completed && ((s.weight || 0) > 0 || (s.reps || 0) > 0));
+    if (completedSets.length === 0) return null;
+    const max1RM    = Math.max(...completedSets.map(s => calculateOneRM(s.weight || 0, s.reps || 0)));
+    const volume    = completedSets.reduce((acc, s) => acc + (s.weight || 0) * (s.reps || 0), 0);
+    const maxWeight = Math.max(...completedSets.map(s => s.weight || 0));
+    const rirSets   = completedSets.filter(s => s.rir != null);
     const avgRIR    = rirSets.length > 0 ? rirSets.reduce((acc, s) => acc + s.rir!, 0) / rirSets.length : null;
     return {
       date: new Date(date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }),
@@ -166,7 +168,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
 
   const volumeChartData = useMemo(() => workoutLogs.map(log => ({
     date: new Date(log.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }),
-    volume: log.exercises?.reduce((acc, ex) => acc + ex.sets.reduce((sa, s) => sa + s.weight * s.reps, 0), 0) || 0,
+    volume: log.exercises?.reduce((acc, ex) => acc + ex.sets.reduce((sa, s) => sa + (s.weight || 0) * (s.reps || 0), 0), 0) || 0,
   })).slice(-30), [workoutLogs]);
 
   // Calendar using ISO string comparison

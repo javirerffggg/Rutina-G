@@ -735,6 +735,204 @@
       "sleep": 3,
       "stress": 3,
       "warmupCompleted": true
+    },
+    "2026-06-21": {
+      "date": "2026-06-21",
+      "workoutType": "Lower (Glúteo/Femoral)",
+      "exercises": [
+        {
+          "exerciseId": "low_press",
+          "sets": [
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": true,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            }
+          ],
+          "completed": false
+        },
+        {
+          "exerciseId": "low_hip",
+          "sets": [
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            }
+          ],
+          "completed": false
+        },
+        {
+          "exerciseId": "low_goblet",
+          "sets": [
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            }
+          ],
+          "completed": false
+        },
+        {
+          "exerciseId": "low_back_ext",
+          "sets": [
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            }
+          ],
+          "completed": false
+        },
+        {
+          "exerciseId": "low_curl_ly",
+          "sets": [
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            }
+          ],
+          "completed": false
+        },
+        {
+          "exerciseId": "low_calves",
+          "sets": [
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            }
+          ],
+          "completed": false
+        },
+        {
+          "exerciseId": "low_crunch",
+          "sets": [
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            },
+            {
+              "weight": 0,
+              "reps": 0,
+              "completed": false,
+              "setType": "N"
+            }
+          ],
+          "completed": false
+        }
+      ]
     }
   },
   "achievements": {
@@ -761,10 +959,11 @@
       "shoulders": 12,
       "back": 21,
       "biceps": 18,
-      "quads": 12,
-      "glutes": 12,
-      "calves": 0,
-      "abs": 0
+      "quads": 15,
+      "glutes": 16,
+      "calves": 4,
+      "abs": 4,
+      "hamstrings": 4
     },
     "muscleVolume": {
       "chest": 3150,
@@ -775,7 +974,8 @@
       "quads": 0,
       "glutes": 0,
       "calves": 0,
-      "abs": 0
+      "abs": 0,
+      "hamstrings": 0
     },
     "topExercises": [
       {
@@ -795,35 +995,35 @@
         "totalSets": 6
       },
       {
+        "name": "Hip Thrust Máquina",
+        "totalSets": 4
+      },
+      {
+        "name": "low_curl_ly",
+        "totalSets": 4
+      },
+      {
+        "name": "Elevación Talones",
+        "totalSets": 4
+      },
+      {
+        "name": "Crunch Abdominal Máq.",
+        "totalSets": 4
+      },
+      {
         "name": "Press Banca Máquina",
         "totalSets": 3
       },
       {
         "name": "Press Inclinado Máquina",
         "totalSets": 3
-      },
-      {
-        "name": "Press Hombro Máquina",
-        "totalSets": 3
-      },
-      {
-        "name": "Elevaciones Laterales",
-        "totalSets": 3
-      },
-      {
-        "name": "Press Tríceps Sentado",
-        "totalSets": 3
-      },
-      {
-        "name": "Extensión Tríceps Cuerda",
-        "totalSets": 3
       }
     ],
     "monthlyReport": {
       "currentMonth": {
         "volumeKg": 1642,
-        "totalSets": 21,
-        "workouts": 1
+        "totalSets": 46,
+        "workouts": 2
       },
       "previousMonth": {
         "volumeKg": 0,
@@ -832,5 +1032,5 @@
       }
     }
   },
-  "lastSync": "2026-06-20T23:51:43.105Z"
+  "lastSync": "2026-06-21T11:49:51.450Z"
 }

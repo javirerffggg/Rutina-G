@@ -12,6 +12,27 @@ export const getSyncState = query({
   },
 });
 
+export const resolveDevice = query({
+  args: { identifier: v.string() },
+  handler: async (ctx, args) => {
+    // Try by exact device ID
+    const byId = await ctx.db
+      .query("userState")
+      .withIndex("by_device", (q) => q.eq("deviceId", args.identifier))
+      .first();
+    if (byId) return byId.deviceId;
+
+    // Try by username (case sensitive first, but users should match exact)
+    const byUsername = await ctx.db
+      .query("userState")
+      .withIndex("by_username", (q) => q.eq("username", args.identifier))
+      .first();
+    if (byUsername) return byUsername.deviceId;
+
+    return null;
+  },
+});
+
 export const pushSyncState = mutation({
   args: {
     deviceId: v.string(),

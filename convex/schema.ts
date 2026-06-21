@@ -12,5 +12,5 @@ export default defineSchema({
     rpgXp: v.optional(v.number()),
     username: v.optional(v.string()),
     updatedAt: v.number(),
-  }).index("by_device", ["deviceId"]),
+  }).index("by_device", ["deviceId"]).index("by_username", ["username"]),
 });

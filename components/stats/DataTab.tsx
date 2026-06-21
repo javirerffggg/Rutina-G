@@ -3,11 +3,17 @@ import { clearAllData, importFromHevyCSV, HevyImportResult } from '../../service
 import { Trash2, Upload, AlertTriangle, CheckCircle2, XCircle, FileUp, ShieldAlert, Info, Share2, Link as LinkIcon } from 'lucide-react';
 import { getDeviceId } from '../SyncManager';
 import { motion, AnimatePresence } from 'motion/react';
+import { useConvex } from 'convex/react';
+
+// @ts-ignore
+import { api } from '../../convex/_generated/api';
 
 // ---------------------------------------------------------------------------
 // DataTab — borrar datos, exportar/importar JSON y CSV
 // ---------------------------------------------------------------------------
 export const DataTab: React.FC = () => {
+  const convex = useConvex();
+
   // --- Delete flow ---
   const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm1' | 'confirm2'>('idle');
   const [deleted, setDeleted]       = useState(false);
@@ -257,17 +263,28 @@ export const DataTab: React.FC = () => {
                 className="flex-1 bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-white placeholder-zinc-600 outline-none focus:border-violet-500/50"
               />
               <button 
-                onClick={() => {
+                onClick={async () => {
                   const input = document.getElementById('linkDeviceInput') as HTMLInputElement;
-                  if (input && input.value.trim().length > 5) {
-                    if (confirm('¿Estás seguro? Esto reemplazará tus datos locales con los del dispositivo vinculado la próxima vez que se sincronice.')) {
-                      localStorage.setItem('ot_device_id', input.value.trim());
-                      localStorage.setItem('ot_last_update', '0'); // force pull
-                      alert('Dispositivo vinculado. Recarga la página para sincronizar.');
-                      window.location.reload();
+                  const linkValue = input ? input.value.trim() : '';
+                  if (linkValue.length > 2) {
+                    try {
+                      const resolvedId = await convex.query(api.sync.resolveDevice, { identifier: linkValue });
+                      if (resolvedId) {
+                        if (confirm(`¿Estás seguro? Encontramos el dispositivo. Esto reemplazará tus datos locales la próxima vez que se sincronice.`)) {
+                          localStorage.setItem('ot_device_id', resolvedId);
+                          localStorage.setItem('ot_last_update', '0'); // force pull
+                          alert('Dispositivo vinculado. Recarga la página para sincronizar.');
+                          window.location.reload();
+                        }
+                      } else {
+                        alert('No se encontró ningún dispositivo con ese ID o Nombre de usuario.');
+                      }
+                    } catch (err) {
+                      console.error('Error resolving device:', err);
+                      alert('Error al buscar el dispositivo. Asegúrate de tener conexión.');
                     }
                   } else {
-                    alert('Por favor, ingresa un ID válido.');
+                    alert('Por favor, ingresa un ID o Nombre de Usuario válido.');
                   }
                 }}
                 className="px-4 py-3 shrink-0 rounded-xl bg-violet-500 hover:bg-violet-400 text-white font-bold text-xs transition-all shadow-lg shadow-violet-500/20"

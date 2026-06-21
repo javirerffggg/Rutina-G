@@ -6,6 +6,9 @@ export default defineSchema({
     deviceId: v.string(),
     logs: v.string(),
     achievements: v.string(),
+    routines: v.optional(v.string()),
+    settings: v.optional(v.string()),
+    rpgLevel: v.optional(v.string()),
     updatedAt: v.number(),
   }).index("by_device", ["deviceId"]),
 });

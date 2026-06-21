@@ -29,6 +29,9 @@ export const SyncManager: React.FC = () => {
       // Server is newer
       localStorage.setItem('fitness_pro_logs_v1', serverState.logs);
       localStorage.setItem('fitness_pro_achievements_v1', serverState.achievements);
+      if (serverState.routines) localStorage.setItem('customRoutines', serverState.routines);
+      if (serverState.settings) localStorage.setItem('appSettings', serverState.settings);
+      if (serverState.rpgLevel) localStorage.setItem('rpg_last_seen_level', serverState.rpgLevel);
       localStorage.setItem('ot_last_update', serverState.updatedAt.toString());
       window.dispatchEvent(new Event('storage-update'));
       window.dispatchEvent(new Event('achievements-unlocked'));
@@ -36,11 +39,17 @@ export const SyncManager: React.FC = () => {
       // Local is newer
       const logs = localStorage.getItem('fitness_pro_logs_v1') || '{}';
       const achievements = localStorage.getItem('fitness_pro_achievements_v1') || '{}';
+      const routines = localStorage.getItem('customRoutines') || '[]';
+      const settings = localStorage.getItem('appSettings') || '{}';
+      const rpgLevel = localStorage.getItem('rpg_last_seen_level') || '1';
       if (pushSync && api) {
         pushSync({
           deviceId,
           logs,
           achievements,
+          routines,
+          settings,
+          rpgLevel,
           updatedAt: localUpdatedAt
         }).catch(console.error);
       }
@@ -55,11 +64,17 @@ export const SyncManager: React.FC = () => {
       
       const logs = localStorage.getItem('fitness_pro_logs_v1') || '{}';
       const achievements = localStorage.getItem('fitness_pro_achievements_v1') || '{}';
+      const routines = localStorage.getItem('customRoutines') || '[]';
+      const settings = localStorage.getItem('appSettings') || '{}';
+      const rpgLevel = localStorage.getItem('rpg_last_seen_level') || '1';
       if (pushSync && api) {
         pushSync({
           deviceId,
           logs,
           achievements,
+          routines,
+          settings,
+          rpgLevel,
           updatedAt: now
         }).catch(console.error);
       }

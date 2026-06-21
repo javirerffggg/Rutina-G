@@ -17,6 +17,9 @@ export const pushSyncState = mutation({
     deviceId: v.string(),
     logs: v.string(),
     achievements: v.string(),
+    routines: v.optional(v.string()),
+    settings: v.optional(v.string()),
+    rpgLevel: v.optional(v.string()),
     updatedAt: v.number(),
   },
   handler: async (ctx, args) => {
@@ -30,6 +33,9 @@ export const pushSyncState = mutation({
         await ctx.db.patch(existing._id, {
           logs: args.logs,
           achievements: args.achievements,
+          routines: args.routines,
+          settings: args.settings,
+          rpgLevel: args.rpgLevel,
           updatedAt: args.updatedAt,
         });
       }
@@ -38,6 +44,9 @@ export const pushSyncState = mutation({
         deviceId: args.deviceId,
         logs: args.logs,
         achievements: args.achievements,
+        routines: args.routines,
+        settings: args.settings,
+        rpgLevel: args.rpgLevel,
         updatedAt: args.updatedAt,
       });
     }

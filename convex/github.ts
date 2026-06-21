@@ -26,6 +26,9 @@ export const syncToGithub = action({
     const responseBody = {
       logs: parsedLogs,
       achievements: JSON.parse(state.achievements),
+      routines: state.routines ? JSON.parse(state.routines) : [],
+      settings: state.settings ? JSON.parse(state.settings) : {},
+      rpgLevel: state.rpgLevel || '1',
       statistics: aiStats,
       lastSync: new Date(state.updatedAt).toISOString()
     };

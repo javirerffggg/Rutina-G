@@ -62,7 +62,13 @@ const Stats: React.FC = () => {
       </div>
 
       {activeTab === 'composition' && (
-        <CompositionTab todayLog={todayLog} weightLogs={weightLogs} updateLog={updateLog} today={today} />
+        <CompositionTab
+          todayLog={todayLog}
+          weightLogs={weightLogs}
+          updateLog={updateLog}
+          today={today}
+          allLogs={logs}
+        />
       )}
       {activeTab === 'performance' && <PerformanceTab logs={logs} />}
     </div>

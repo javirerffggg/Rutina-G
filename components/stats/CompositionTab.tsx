@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef, useMemo } from 'react';
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, Cell, ReferenceLine, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { DailyLog, Gender } from '../../types';
-import { Scale, Target, TrendingDown, TrendingUp, Minus, Activity, Ruler, User } from 'lucide-react';
+import { Scale, Target, TrendingDown, TrendingUp, Minus, Activity, Ruler, User, Flame } from 'lucide-react';
 import { getSettings } from '../../services/settings';
 import {
   calculateBodyComposition,
@@ -10,15 +10,18 @@ import {
   calculateWeeklyWeightChangeRate,
   classifyWeeklyChangeRate
 } from '../../utils/bodyComposition';
+import { BodyHeatmap } from '../BodyHeatmap';
+import { EXERCISE_MUSCLE_MAP } from '../../constants';
 
 interface CompositionTabProps {
   todayLog: DailyLog;
   weightLogs: DailyLog[];
   updateLog: (updates: Partial<DailyLog>) => void;
   today: string;
+  allLogs?: Record<string, DailyLog>;
 }
 
-export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weightLogs, updateLog }) => {
+export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weightLogs, updateLog, today, allLogs = {} }) => {
   const debounceRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const settings = useMemo(() => getSettings(), []);
   const gender = (todayLog.gender || (settings.profile.gender === 'F' ? 'female' : 'male')) as Gender;
@@ -30,6 +33,37 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
     clearTimeout(debounceRef.current[key as string]);
     debounceRef.current[key as string] = setTimeout(() => updateLog({ [key]: value }), 300);
   }, [updateLog]);
+
+  // ====================
+  // MUSCLE HEATMAP (últimos 7 días)
+  // ====================
+  const { muscleSets, muscleVolume } = useMemo(() => {
+    const setsData: Record<string, number> = {};
+    const volumeData: Record<string, number> = {};
+    const todayDate = new Date(today);
+
+    Object.keys(allLogs).forEach(dateStr => {
+      const diffDays = Math.round(
+        Math.abs(todayDate.getTime() - new Date(dateStr).getTime()) / 86400000
+      );
+      if (diffDays <= 7 && allLogs[dateStr].exercises) {
+        allLogs[dateStr].exercises!.forEach(ex => {
+          const muscles = EXERCISE_MUSCLE_MAP[ex.exerciseId] || [];
+          const completedSets = ex.sets.filter(
+            (s: any) => s.completed && ((s.reps || 0) > 0 || (s.weight || 0) > 0)
+          );
+          if (completedSets.length === 0) return;
+          const reps = completedSets.reduce((sum: number, s: any) => sum + (s.reps || 0), 0);
+          muscles.forEach((m: string) => {
+            setsData[m] = (setsData[m] || 0) + completedSets.length;
+            volumeData[m] = (volumeData[m] || 0) + reps;
+          });
+        });
+      }
+    });
+
+    return { muscleSets: setsData, muscleVolume: volumeData };
+  }, [allLogs, today]);
 
   // ====================
   // BODY COMPOSITION
@@ -115,13 +149,12 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
     const variationData = fullData.slice(-21).filter(d => d.delta !== null);
 
     // --- Heatmap Data ---
-    // Generate the last 56 days calendar
     const heatmap = [];
-    const today = new Date();
-    today.setHours(0,0,0,0);
+    const todayDate = new Date();
+    todayDate.setHours(0,0,0,0);
     let logCount = 0;
     for (let i = 55; i >= 0; i--) {
-      const d = new Date(today);
+      const d = new Date(todayDate);
       d.setDate(d.getDate() - i);
       const iso = d.toISOString().split('T')[0];
       const hasLog = weightLogs.some(l => l.date.startsWith(iso) && l.weight);
@@ -135,24 +168,19 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
     const targetWeight = settings.profile.goalWeight;
     const currentWeight = fullData.length > 0 ? fullData[fullData.length - 1].weight : null;
     
-    // We only project if there's a target, a current weight, a weekly change rate, and it's moving towards target
     if (targetWeight && currentWeight && weeklyChangeRate) {
-      // difference per day
       const diffTotal = targetWeight - currentWeight;
       const weeklyAbsoluteChange = currentWeight * (weeklyChangeRate / 100);
       const dailyChange = weeklyAbsoluteChange / 7;
 
-      // Project if we are moving towards goal
       if ((diffTotal < 0 && dailyChange < 0) || (diffTotal > 0 && dailyChange > 0)) {
          const daysToGoal = Math.abs(diffTotal / dailyChange);
-         // Limit projection to 90 days max to prevent crazy long charts
          const daysToProject = Math.min(Math.ceil(daysToGoal), 90);
          
          const lastDateStr = fullData[fullData.length - 1].rawDate;
          const lastDateObj = new Date(lastDateStr);
 
-         // Combine existing data with projection data for a unified chart
-         projection.push(...last30); // Start with last 30 days
+         projection.push(...last30);
          
          for (let i = 1; i <= daysToProject; i += 7) {
             const nextD = new Date(lastDateObj);
@@ -163,7 +191,6 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
                projectedWeight: Number((currentWeight + dailyChange * i).toFixed(1))
             });
          }
-         // Add exact final day if not added
          if (daysToProject % 7 !== 0) {
             const finalD = new Date(lastDateObj);
             finalD.setDate(finalD.getDate() + daysToProject);
@@ -241,6 +268,8 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
       </div>
     );
   };
+
+  const hasMuscleData = Object.keys(muscleSets).length > 0;
 
   return (
     <div className="space-y-4 pb-8">
@@ -354,6 +383,31 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
         )}
       </div>
 
+      {/* ── MAPA DE CALOR MUSCULAR (últimos 7 días) ── */}
+      <div className="bg-zinc-900/50 border border-zinc-800/50 p-5 rounded-2xl">
+        <div className="flex justify-between items-end mb-1">
+          <div>
+            <h3 className="text-base font-display font-bold text-white flex items-center gap-2">
+              <Flame size={16} className="text-brand-400" /> Carga Muscular
+            </h3>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">Volumen últimos 7 días</p>
+          </div>
+          <div className="flex flex-col gap-1 text-[9px] font-bold uppercase tracking-widest text-zinc-500">
+            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-zinc-800 border border-zinc-700" /> Sin entreno</span>
+            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-amber-500" /> Óptimo</span>
+          </div>
+        </div>
+        {hasMuscleData ? (
+          <BodyHeatmap muscleVolume={muscleVolume} muscleSets={muscleSets} />
+        ) : (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <Flame size={28} className="text-zinc-700 mb-3" />
+            <p className="text-zinc-500 text-xs font-bold">Sin entrenamientos registrados</p>
+            <p className="text-zinc-600 text-[10px] mt-1">Completa una sesión para ver la carga muscular</p>
+          </div>
+        )}
+      </div>
+
       {/* ── EVOLUCIÓN (30 días) ── */}
       <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-2xl p-4 sm:p-5">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
@@ -402,10 +456,9 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
             />
             <Tooltip content={<CustomTooltip />} />
             
-            {/* Projection Target Date */}
-            {projectionData && projectionData.find(d => d.isGoal) && (
+            {projectionData && projectionData.find((d: any) => d.isGoal) && (
               <ReferenceLine 
-                x={projectionData.find(d => d.isGoal).date} 
+                x={projectionData.find((d: any) => d.isGoal).date} 
                 stroke="#f59e0b" 
                 strokeDasharray="3 3" 
                 label={{ position: 'top', value: 'Meta', fill: '#f59e0b', fontSize: 10 }} 
@@ -463,7 +516,7 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
       </div>
 
       {/* ── DUAL AXIS: PESO VS MASA MAGRA ── */}
-      {chartData.some(d => d.lbm) && (
+      {chartData.some((d: any) => d.lbm) && (
         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-2xl p-4 sm:p-5">
           <div className="mb-4">
             <h3 className="text-sm font-bold text-zinc-300 flex items-center gap-2">
@@ -503,7 +556,7 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
             <YAxis tick={{ fill: '#71717a', fontSize: 10 }} stroke="#3f3f46" axisLine={false} tickLine={false} />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: '#27272a', opacity: 0.4 }} />
             <Bar dataKey="delta" radius={[4, 4, 0, 0]}>
-              {variationData.map((entry, index) => (
+              {variationData.map((entry: any, index: number) => (
                 <Cell key={`cell-${index}`} fill={entry.delta > 0 ? '#f43f5e' : entry.delta < 0 ? '#10b981' : '#52525b'} />
               ))}
             </Bar>
@@ -528,7 +581,7 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
 
         <div className="overflow-x-auto pb-2 scrollbar-hide">
           <div className="grid grid-rows-7 gap-1" style={{ gridAutoFlow: 'column' }}>
-            {heatmapData.map((day, i) => (
+            {heatmapData.map((day: any, i: number) => (
               <div 
                 key={i} 
                 className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-sm ${day.hasLog ? 'bg-violet-500' : 'bg-zinc-800'}`}

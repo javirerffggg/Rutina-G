@@ -549,7 +549,8 @@ const Workout: React.FC = () => {
       const daysAgo = Math.floor((new Date(today).getTime() - new Date(last.date).getTime()) / 86400000);
       const volume = last.exercises?.reduce((sum: number, ex: any) => sum + ex.sets.reduce((s: number, set: any) => s + ((set.weight || 0) * (set.reps || 0)), 0), 0) || 0;
       const avgDuration = Math.round(routineLogs.reduce((sum: number, l: any) => sum + (l.duration || 0), 0) / routineLogs.length);
-      stats[routineId] = { daysAgo, volume, avgDuration };
+      const avgVolume = routineLogs.length > 0 ? routineLogs.slice(0, 5).reduce((sum: number, l: any) => sum + (l.exercises?.reduce((s: number, ex: any) => s + ex.sets.reduce((ss: number, set: any) => ss + ((set.weight || 0) * (set.reps || 0)), 0), 0) || 0), 0) / Math.min(routineLogs.length, 5) : 0;
+      stats[routineId] = { daysAgo, volume, avgDuration, avgVolume };
     });
     return stats;
   }, [allLogsList, today]);
@@ -639,15 +640,21 @@ const Workout: React.FC = () => {
           )}
 
           {!activeSession && defaultRoutine !== RoutineType.REST && defaultMeta && !settings.hideDefaultRoutines && (
-            <div className="relative overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">
-               <div className="flex justify-between items-start mb-4">
+            <div className={`relative overflow-hidden rounded-3xl bg-zinc-900/50 p-6 border-t-2 ${defaultMeta.border.replace('border-', 'border-t-')}`}>
+               <div className="flex justify-between items-start mb-6">
                  <div>
                    <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-1">Hoy Toca</h2>
-                   <h3 className="text-2xl font-display font-bold text-white">{defaultMeta.label}</h3>
+                   <h3 className="text-3xl font-display font-bold text-white mb-2">{defaultMeta.label}</h3>
+                   {getRoutineStats(defaultRoutine) && (
+                     <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-zinc-800/80 rounded-lg border border-white/5">
+                        <Clock size={10} className="text-zinc-500" />
+                        <span className="text-[10px] text-zinc-400 font-bold">Hace {getRoutineStats(defaultRoutine).daysAgo} días · {(getRoutineStats(defaultRoutine).volume/1000).toFixed(1)}t</span>
+                     </div>
+                   )}
                  </div>
-                 <span className="text-3xl opacity-80">{defaultMeta.emoji}</span>
+                 <span className="text-5xl opacity-90">{defaultMeta.emoji}</span>
                </div>
-               <button onClick={() => setSelectedRoutine(defaultRoutine)} className="w-full py-3 bg-white text-black text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-zinc-200 transition-colors">
+               <button onClick={() => setSelectedRoutine(defaultRoutine)} className={`w-full py-4 text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-all shadow-lg active:scale-95 ${defaultMeta.badge.split(' ')[0]} ${defaultMeta.glow}`}>
                  Comenzar Sesión
                </button>
             </div>
@@ -655,7 +662,7 @@ const Workout: React.FC = () => {
         </div>
 
         {!settings.hideDefaultRoutines && (
-          <div className="px-4 grid grid-cols-3 gap-2">
+          <div className="px-4 space-y-3">
             {ORDERED.map(routine => {
               const meta = ROUTINE_META[routine];
               const isToday = defaultRoutine === routine;
@@ -666,31 +673,43 @@ const Workout: React.FC = () => {
 
               return (
                 <motion.button key={routine} onClick={() => setSelectedRoutine(routine)} whileTap={{ scale: 0.97 }}
-                  className={`w-full relative overflow-hidden rounded-[24px] border text-left transition-all duration-300 active:scale-[0.97] bg-zinc-900/70 backdrop-blur-sm ${isToday ? `${meta.border} ${meta.glow}` : 'border-white/6'}`}>
-                  <div className={`absolute inset-0 bg-gradient-to-br ${meta.accent} pointer-events-none`} />
+                  className={`w-full flex items-center gap-4 p-4 rounded-[24px] border text-left transition-all duration-300 active:scale-[0.97] bg-zinc-900/70 backdrop-blur-sm ${isToday ? `${meta.border} ${meta.glow}` : 'border-white/6'}`}>
                   
-                  {isToday && <div className={`absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b ${meta.accent} from-50%`} />}
-                  {isToday && <div className="absolute top-3 right-3 z-10"><span className={`text-[10px] font-black uppercase tracking-[0.15em] px-2 py-0.5 rounded-full border ${meta.badge}`}>HOY</span></div>}
                   {doneToday && <div className="absolute top-3 left-3 z-10 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.5)]"><Check size={11} strokeWidth={3} className="text-white" /></div>}
                   
-                  <div className="relative z-10 p-3 pt-4">
-                    <span className="text-2xl mb-2 block">{meta.emoji}</span>
-                    <h2 className={`text-base font-display font-black leading-none tracking-tight mb-1 ${isToday ? 'text-white' : 'text-zinc-300'} truncate`}>{meta.label}</h2>
-                    <p className="text-[10px] font-bold text-zinc-500 leading-snug mb-2 line-clamp-2">{meta.muscles}</p>
+                  <span className="text-3xl shrink-0">{meta.emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <h2 className="text-base font-display font-black text-white">{meta.label}</h2>
+                      {isToday && <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${meta.badge}`}>HOY</span>}
+                    </div>
+                    <p className="text-[10px] text-zinc-500 mb-2">{meta.muscles}</p>
                     
                     {stats ? (
-                      <div className="space-y-1 mb-2">
-                        <div className="text-[10px] font-bold text-zinc-400 flex items-center gap-1">
-                          <Clock size={8} className="text-zinc-500" /> ~{stats.avgDuration || 50}m
+                      <div className="w-full">
+                        <div className="flex items-center gap-3 text-[10px] font-bold text-zinc-400">
+                          <span className="flex items-center gap-1"><Clock size={9}/> ~{stats.avgDuration}m</span>
+                          <span className="text-zinc-700">·</span>
+                          <span>hace {stats.daysAgo}d</span>
+                          <span className="text-zinc-700">·</span>
+                          <span className="text-brand-400">{(stats.volume/1000).toFixed(1)}t</span>
                         </div>
-                        <div className="text-[10px] font-bold text-zinc-500 line-clamp-1">
-                          hace {stats.daysAgo}d
-                        </div>
+                        {stats.volume > 0 && stats.avgVolume > 0 && (
+                          <div className="h-[3px] bg-zinc-800 rounded-full mt-2 overflow-hidden w-2/3">
+                            <div 
+                              className={`h-full rounded-full transition-all bg-gradient-to-r ${meta.accent.replace('from-', 'from-').replace('/30', '/80').replace('/20', '/60')}`}
+                              style={{ width: `${Math.min((stats.volume / stats.avgVolume) * 100, 100)}%` }}
+                            />
+                          </div>
+                        )}
                       </div>
                     ) : (
-                      exList.length > 0 && <div className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 mb-2 rounded-lg border ${meta.badge}`}><Dumbbell size={8} /> {exList.length} ej.</div>
+                      <div className="flex items-center">
+                        {exList.length > 0 && <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-lg border ${meta.badge}`}><Dumbbell size={8} /> {exList.length} ej.</span>}
+                      </div>
                     )}
                   </div>
+                  <ChevronRight size={16} className="text-zinc-600 shrink-0"/>
                 </motion.button>
               );
             })}
@@ -747,7 +766,7 @@ const Workout: React.FC = () => {
                ).map(([folderName, routines]) => (
                  <div key={folderName} className="space-y-3">
                    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest pl-1">{folderName}</h3>
-                   <div className="grid grid-cols-3 gap-2">
+                   <div className="space-y-2">
                      {(routines as CustomRoutine[]).map(routine => {
                         const doneToday = !!Object.values(getLogs()).find((l:any) => l.workoutType === routine.id && l.date === today && l.workoutCompleted);
                         const muscles = getCustomMuscles(routine);
@@ -755,30 +774,21 @@ const Workout: React.FC = () => {
 
                         return (
                           <div key={routine.id} className="relative">
-                            <motion.button onClick={() => setSelectedRoutine(routine.id)} whileTap={{ scale: 0.97 }}
-                              className={`w-full relative overflow-hidden rounded-[24px] border border-white/6 text-left transition-all duration-300 active:scale-[0.97] bg-zinc-900/70 backdrop-blur-sm`}>
-                              <div className={`absolute inset-0 bg-gradient-to-br from-brand-600/10 to-transparent pointer-events-none`} />
-                              {doneToday && <div className="absolute top-3 left-3 z-10 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.5)]"><Check size={11} strokeWidth={3} className="text-white" /></div>}
-                              <div className="relative z-10 p-3 pt-4">
-                                <span className="text-2xl mb-2 block">{routine.emoji}</span>
-                                <h2 className={`text-base font-display font-black leading-none tracking-tight mb-1 text-zinc-200 truncate`}>{routine.name}</h2>
-                                {routine.description ? (
-                                  <p className="text-[10px] font-bold text-brand-500/70 leading-snug mb-2 line-clamp-2">{routine.description}</p>
-                                ) : (
-                                  <p className="text-[10px] font-bold text-zinc-500 leading-snug mb-2 line-clamp-2">{muscles}</p>
-                                )}
-                                <div className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-lg border bg-zinc-800 text-zinc-400 border-white/10`}>
-                                  <Dumbbell size={8} /> {routine.exercises.length} ej.
-                                </div>
+                            <div className="flex items-center gap-3 px-4 h-[72px] rounded-2xl bg-zinc-900/60 border border-white/6 cursor-pointer hover:border-brand-500/30 active:scale-[0.98] transition-all" onClick={() => setSelectedRoutine(routine.id)}>
+                              <span className="text-xl shrink-0">{routine.emoji}</span>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold text-white truncate">{routine.name}</p>
+                                <p className="text-[10px] text-zinc-500 truncate">{routine.description ? routine.description : muscles} · {routine.exercises.length} ej.</p>
                               </div>
-                            </motion.button>
-                            
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); setCustomMenuOpen(isMenuOpen ? null : routine.id); }}
-                              className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
-                            >
-                              <MoreVertical size={16} />
-                            </button>
+                              {doneToday && <Check size={14} className="text-emerald-500 shrink-0"/>}
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); setCustomMenuOpen(isMenuOpen ? null : routine.id); }}
+                                className="w-8 h-8 flex items-center justify-center text-zinc-500 hover:text-white shrink-0 -mr-2"
+                              >
+                                <MoreVertical size={16}/>
+                              </button>
+                            </div>
+
 
                             {isMenuOpen && (
                               <div className="absolute top-12 right-2 z-30 w-36 bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl overflow-hidden animate-in zoom-in-95 origin-top-right">
@@ -1043,13 +1053,17 @@ const Workout: React.FC = () => {
 
             // COMPLETED ROW
             if (isCompleted && !isActive) {
+               const totalVol = log.sets.reduce((sum, s) => sum + ((s.weight||0) * (s.reps||0)), 0);
                return (
-                  <div key={exercise.id} onClick={() => setActiveExercise(exercise.id)} className="flex items-center gap-3 p-3 rounded-2xl bg-emerald-950/20 border border-emerald-900/30 active:scale-[0.98] transition-all">
+                  <div key={exercise.id} onClick={() => setActiveExercise(exercise.id)} className="flex items-center gap-3 p-3 rounded-2xl bg-emerald-950/20 border border-emerald-900/30 active:scale-[0.98] transition-all cursor-pointer hover:bg-emerald-900/20">
                      <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0"><Check size={16} className="text-emerald-500" strokeWidth={3}/></div>
                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-zinc-400 line-through truncate">{exercise.name}</p>
+                        <p className="text-sm font-bold text-emerald-400/70 line-through truncate">{exercise.name}</p>
+                        <p className="text-[10px] text-emerald-500/60 font-bold uppercase tracking-widest mt-0.5">
+                          {log.sets.length} series · {totalVol > 0 ? `${totalVol} kg` : 'Completado'}
+                        </p>
                      </div>
-                     <span className="text-[10px] text-emerald-500/50 font-bold uppercase tracking-widest">{log.sets.length} sets</span>
+                     <ChevronDown size={16} className="text-emerald-500/50 shrink-0" />
                   </div>
                );
             }

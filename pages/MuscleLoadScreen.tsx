@@ -4,6 +4,8 @@ import { ArrowLeft, Activity, Info, BarChart2, CalendarRange, Flame, AlertTriang
 import { BodyHeatmap, MUSCLE_LABELS } from '../components/BodyHeatmap';
 import { MEV_MAV, EXERCISE_MUSCLE_MAP } from '../constants';
 import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer, YAxis, CartesianGrid } from 'recharts';
+import { getLogs } from '../services/storage';
+import { getTodayDateString } from '../utils';
 
 export default function MuscleLoadScreen() {
   const { state } = useLocation();
@@ -11,13 +13,43 @@ export default function MuscleLoadScreen() {
   const [activeTab, setActiveTab] = useState<'summary' | 'group' | 'history'>('summary');
   const [selectedMuscle, setSelectedMuscle] = useState<string>('chest');
 
-  const muscleVolume = state?.muscleVolume || {};
-  const muscleSets = state?.muscleSets || {};
-  const allLogs = state?.allLogs || {};
+  // Prefer state passed via navigation, but fall back to reading from localStorage
+  const allLogs = useMemo(() => state?.allLogs || getLogs(), [state]);
+
+  // Compute muscleVolume and muscleSets from the last 7 days if not provided
+  const { muscleVolume, muscleSets } = useMemo(() => {
+    if (state?.muscleVolume && Object.keys(state.muscleVolume).length > 0) {
+      return { muscleVolume: state.muscleVolume, muscleSets: state.muscleSets || {} };
+    }
+    const today = getTodayDateString();
+    const todayDate = new Date(today);
+    const volData: Record<string, number> = {};
+    const setsData: Record<string, number> = {};
+
+    Object.keys(allLogs).forEach(dateStr => {
+      const logDate = new Date(dateStr);
+      const diffDays = Math.round(Math.abs(todayDate.getTime() - logDate.getTime()) / 86400000);
+      if (diffDays <= 7 && allLogs[dateStr].exercises) {
+        allLogs[dateStr].exercises!.forEach((ex: any) => {
+          const muscles = EXERCISE_MUSCLE_MAP[ex.exerciseId] || [];
+          const doneSets = ex.sets.filter((s: any) => s.completed && ((s.reps || 0) > 0 || (s.weight || 0) > 0));
+          const reps = doneSets.reduce((sum: number, s: any) => sum + (s.reps || 0), 0);
+          const sets = doneSets.length;
+          if (sets === 0) return;
+          muscles.forEach((m: string) => {
+            volData[m] = (volData[m] || 0) + reps;
+            setsData[m] = (setsData[m] || 0) + sets;
+          });
+        });
+      }
+    });
+    return { muscleVolume: volData, muscleSets: setsData };
+  }, [allLogs, state]);
 
   // Sort muscles for summary tab
   const muscleList = Object.entries(MUSCLE_LABELS)
     .map(([key, label]) => ({ key, label, sets: muscleSets[key] || 0, vol: muscleVolume[key] || 0 }))
+
     .sort((a, b) => b.sets - a.sets);
 
   // Group Details

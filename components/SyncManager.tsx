@@ -80,9 +80,13 @@ export const SyncManager: React.FC = () => {
       }
     };
 
-    // We also hook into the original saveLog event
+    // We also hook into the original saveLog event and achievements events
     window.addEventListener('storage-update', handleStorageUpdate);
-    return () => window.removeEventListener('storage-update', handleStorageUpdate);
+    window.addEventListener('achievements-unlocked', handleStorageUpdate);
+    return () => {
+      window.removeEventListener('storage-update', handleStorageUpdate);
+      window.removeEventListener('achievements-unlocked', handleStorageUpdate);
+    };
   }, [deviceId, pushSync]);
 
   return null;

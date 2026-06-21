@@ -33,7 +33,6 @@ const MobileApp: React.FC = () => (
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Workout />} />
-          <Route path="today"             element={<Dashboard />} />
           <Route path="muscle-load"       element={<MuscleLoadScreen />} />
           <Route path="consistency"       element={<ConsistencyScreen />} />
           <Route path="volume-evolution"  element={<VolumeEvolutionScreen />} />
@@ -41,7 +40,7 @@ const MobileApp: React.FC = () => (
           <Route path="stats"             element={<Stats />} />
           <Route path="trophies"          element={<TrophyRoom />} />
           <Route path="settings"          element={<Settings />} />
-          <Route path="*" element={<Navigate to="/today" replace />} />
+          <Route path="*" element={<Navigate to="/stats" replace />} />
         </Route>
       </Routes>
     </Suspense>

@@ -4,13 +4,14 @@ import { getTodayDateString } from '../utils';
 import { DailyLog } from '../types';
 import { CompositionTab } from '../components/stats/CompositionTab';
 import { PerformanceTab } from '../components/stats/PerformanceTab';
-import { Activity, Dumbbell } from 'lucide-react';
+import { Activity, Dumbbell, LayoutDashboard } from 'lucide-react';
+import Dashboard from './Dashboard';
 
 const Stats: React.FC = () => {
   const today = getTodayDateString();
   const [logs, setLogs] = useState<Record<string, DailyLog>>({});
   const [todayLog, setTodayLog] = useState<DailyLog>({ date: today });
-  const [activeTab, setActiveTab] = useState<'composition' | 'performance' | 'reports' | 'data'>('performance');
+  const [activeTab, setActiveTab] = useState<'today' | 'composition' | 'performance' | 'reports' | 'data'>('today');
 
   useEffect(() => {
     const load = () => {
@@ -36,6 +37,7 @@ const Stats: React.FC = () => {
     .filter(l => l.weight !== undefined && l.weight > 0);
 
   const TABS = [
+    { id: 'today',       label: 'Hoy',         Icon: LayoutDashboard },
     { id: 'performance', label: 'Rendimiento', Icon: Dumbbell },
     { id: 'composition', label: 'Cuerpo',      Icon: Activity },
   ] as const;
@@ -61,6 +63,7 @@ const Stats: React.FC = () => {
         ))}
       </div>
 
+      {activeTab === 'today' && <Dashboard />}
       {activeTab === 'composition' && (
         <CompositionTab
           todayLog={todayLog}

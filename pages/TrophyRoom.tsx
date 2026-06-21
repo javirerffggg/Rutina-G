@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { AchievementDef, AchievementTier, AchievementCategory, TIER_XP } from '../achievements';
+import { ACHIEVEMENTS, AchievementDef, AchievementTier, AchievementCategory, TIER_XP } from '../achievements';
 import { getUnlockedAchievements, getLogs } from '../services/storage';
 import { getTodayDateString } from '../utils';
 import * as Icons from 'lucide-react';
@@ -48,11 +48,7 @@ const TrophyRoom: React.FC = () => {
   const today = getTodayDateString();
   const { rankInfo } = useProgression();
 
-  const [achievementsData, setAchievementsData] = useState<AchievementDef[]>([]);
-
-  useEffect(() => {
-    import('../achievements').then(m => setAchievementsData(m.ACHIEVEMENTS));
-  }, []);
+  const [achievementsData, setAchievementsData] = useState<AchievementDef[]>(ACHIEVEMENTS);
 
   const loadData = useCallback(() => {
     setUnlocked(getUnlockedAchievements());

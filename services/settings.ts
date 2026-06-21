@@ -19,6 +19,7 @@ export interface AppSettings {
     weightReminder: boolean;
     streakWarning: boolean;
   };
+  strictRoutineHistory?: boolean;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -41,7 +42,8 @@ const DEFAULT_SETTINGS: AppSettings = {
     workoutReminder: false,
     weightReminder: false,
     streakWarning: false,
-  }
+  },
+  strictRoutineHistory: false,
 };
 
 export const getSettings = (): AppSettings => {

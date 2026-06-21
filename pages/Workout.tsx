@@ -253,7 +253,7 @@ const Workout: React.FC = () => {
       initialLogs = existing.exercises;
     } else {
       initialLogs = list.map(ex => {
-        const prev = getPreviousWorkoutLog(ex.id, today);
+        const prev = getPreviousWorkoutLog(ex.id, today, selectedRoutine || undefined);
         const targetCount = parseInt(ex.targetSets.split('-')[0]) || 0;
         const setCount = Math.max(targetCount, prev?.sets.length || 0);
         
@@ -342,7 +342,7 @@ const Workout: React.FC = () => {
       if (log.exerciseId !== exerciseId) return log;
       let ns: WorkoutSet = { weight: 0, reps: 0, setType: 'N' };
       if (log.sets.length > 0) ns = { ...log.sets[log.sets.length-1], completed: false };
-      else { const p = getPreviousWorkoutLog(exerciseId, today); if (p?.sets.length>0) ns = { weight: p.sets[0].weight, reps: p.sets[0].reps, completed: false, setType: 'N' }; }
+      else { const p = getPreviousWorkoutLog(exerciseId, today, selectedRoutine || undefined); if (p?.sets.length>0) ns = { weight: p.sets[0].weight, reps: p.sets[0].reps, completed: false, setType: 'N' }; }
       return { ...log, sets: [...log.sets, ns] };
     }));
     setActiveExercise(exerciseId);
@@ -359,7 +359,7 @@ const Workout: React.FC = () => {
       setStartTime(now);
       localStorage.setItem(`workoutStartTime_${today}`, now.toString());
     }
-    const prevGymLog = getPreviousWorkoutLog(exerciseId, today);
+    const prevGymLog = getPreviousWorkoutLog(exerciseId, today, selectedRoutine || undefined);
     const newLogs = logs.map(log => {
       if (log.exerciseId !== exerciseId) return log;
       const sets = [...log.sets];
@@ -445,7 +445,7 @@ const Workout: React.FC = () => {
     setExercises(prev => prev.map(ex => ex.id === originalId ? alternativeExercise : ex));
     setLogs(prev => prev.map(log => {
       if (log.exerciseId !== originalId) return log;
-      const prevLog = getPreviousWorkoutLog(alternativeExercise.id, today);
+      const prevLog = getPreviousWorkoutLog(alternativeExercise.id, today, selectedRoutine || undefined);
       const preloaded = prevLog?.sets.length > 0
         ? prevLog.sets.map((s: any) => ({ weight: s.weight, reps: s.reps, rir: s.rir, completed: false, setType: s.setType || 'N' }))
         : [{ weight: 0, reps: 0, completed: false, setType: 'N' as const }];
@@ -1047,7 +1047,7 @@ const Workout: React.FC = () => {
             const isCompleted = log.completed;
             const isActive = activeExercise === exercise.id;
             
-            const prevLog = getPreviousWorkoutLog(exercise.id, today);
+            const prevLog = getPreviousWorkoutLog(exercise.id, today, selectedRoutine || undefined);
             const currentSetIndex = isActive ? log.sets.findIndex(s=>!s.completed) : -1;
             const currentSet = currentSetIndex !== -1 ? log.sets[currentSetIndex] : null;
 

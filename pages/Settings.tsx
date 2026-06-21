@@ -3,7 +3,7 @@ import {
   Palette, Smartphone, Baseline, Moon, Clock, Type,
   User, Calendar, Ruler, Scale, Target, Bell, Flame,
   Download, Upload, Trash2, HardDrive, RefreshCw, Info,
-  ChevronRight, Check, FileText
+  ChevronRight, Check, FileText, History
 } from 'lucide-react';
 import { AppSettings, getSettings, saveSettings } from '../services/settings';
 import { getLogs } from '../services/storage';
@@ -172,6 +172,24 @@ export const Settings: React.FC = () => {
               <option value="120">120s</option>
               <option value="180">180s</option>
             </select>
+          </div>
+          <div className="h-px bg-white/5 mx-4" />
+          <div className="flex items-center justify-between p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-black border border-white/10 flex items-center justify-center text-zinc-400">
+                <History size={16} />
+              </div>
+              <div>
+                <p className="font-bold text-white text-sm">Historial Estricto</p>
+                <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-0.5">Valores previos solo de esta rutina</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => updateSetting('strictRoutineHistory', !settings.strictRoutineHistory)}
+              className={`w-12 h-6 rounded-full p-1 transition-colors ${settings.strictRoutineHistory ? 'bg-brand-500' : 'bg-zinc-700'}`}
+            >
+              <div className={`w-4 h-4 rounded-full bg-white transition-transform ${settings.strictRoutineHistory ? 'translate-x-6' : 'translate-x-0'}`} />
+            </button>
           </div>
           <div className="h-px bg-white/5 mx-4" />
           <div className="flex items-center justify-between p-4">

@@ -2,6 +2,7 @@ import { DailyLog, WorkoutLogEntry, Exercise, CustomRoutine } from '../types';
 import { ACHIEVEMENTS } from '../achievements';
 import { ACHIEVEMENT_XP } from '../constants/xpRewards';
 import { dispatchGlobalXP } from '../hooks/useProgression';
+import { getSettings } from './settings';
 import {
   EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS,
   EXERCISES_UPPER, EXERCISES_LOWER, EXERCISE_MUSCLE_MAP
@@ -89,13 +90,21 @@ export const deleteLog = (date: string): void => {
   }
 };
 
-export const getPreviousWorkoutLog = (exerciseId: string, beforeDate: string): WorkoutLogEntry | null => {
+export const getPreviousWorkoutLog = (exerciseId: string, beforeDate: string, routineId?: string): WorkoutLogEntry | null => {
   const logs = getLogs();
   const sortedDates = Object.keys(logs).sort().reverse();
+  const settings = getSettings();
+  
   for (const date of sortedDates) {
     if (date >= beforeDate) continue;
     const entry = logs[date];
     if (!entry?.exercises) continue;
+    
+    // Strict routine filtering if enabled
+    if (settings.strictRoutineHistory && routineId && entry.workoutType !== routineId) {
+      continue;
+    }
+    
     const exerciseLog = entry.exercises.find(e => e.exerciseId === exerciseId);
     if (exerciseLog && exerciseLog.sets.length > 0) return exerciseLog;
   }

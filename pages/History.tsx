@@ -1,16 +1,25 @@
 import React, { useState, useMemo } from 'react';
-import { getLogs, getExerciseHistory } from '../services/storage';
+import { getLogs, getExerciseHistory, deleteLog } from '../services/storage';
 import { DailyLog } from '../types';
-import { Search, CalendarDays, Clock, Dumbbell, Award, Flame, ChevronDown, ChevronRight, Hash } from 'lucide-react';
+import { Search, CalendarDays, Clock, Dumbbell, Award, Flame, ChevronDown, ChevronRight, Hash, Trash2 } from 'lucide-react';
 import { EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS, EXERCISES_UPPER, EXERCISES_LOWER, EXERCISE_MUSCLE_MAP } from '../constants';
 import { calculateOneRM } from '../utils';
 
 const ALL_EXERCISES = [...EXERCISES_PUSH, ...EXERCISES_PULL, ...EXERCISES_LEGS, ...EXERCISES_UPPER, ...EXERCISES_LOWER];
 
 const History: React.FC = () => {
-  const [logs] = useState<Record<string, DailyLog>>(() => getLogs());
+  const [logs, setLogs] = useState<Record<string, DailyLog>>(() => getLogs());
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
+  const [logToDelete, setLogToDelete] = useState<string | null>(null);
+
+  const handleDeleteLog = () => {
+    if (logToDelete) {
+      deleteLog(logToDelete);
+      setLogs(getLogs());
+      setLogToDelete(null);
+    }
+  };
 
   // Procesar logs en orden cronológico inverso y filtrar
   const historyData = useMemo(() => {
@@ -126,12 +135,20 @@ const History: React.FC = () => {
                         {log.workoutType || 'Sesión Libre'}
                       </p>
                     </div>
-                    {log.prs.length > 0 && (
-                      <div className="bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-1 rounded-lg flex items-center gap-1.5 shrink-0">
-                        <Award size={14} />
-                        <span className="text-[10px] font-bold">{log.prs.length} PRs</span>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2 shrink-0">
+                      {log.prs.length > 0 && (
+                        <div className="bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-1 rounded-lg flex items-center gap-1.5">
+                          <Award size={14} />
+                          <span className="text-[10px] font-bold">{log.prs.length} PRs</span>
+                        </div>
+                      )}
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setLogToDelete(log.date); }}
+                        className="p-1.5 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-zinc-800/50">
@@ -201,6 +218,19 @@ const History: React.FC = () => {
           })
         )}
       </div>
+
+      {logToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-sm bg-zinc-900 border border-white/10 rounded-3xl p-6 shadow-2xl">
+            <h2 className="text-xl font-bold text-red-500 mb-2">Eliminar Entrenamiento</h2>
+            <p className="text-sm text-zinc-400 mb-6">¿Estás seguro? Se recalcularán tus récords, estadísticas de volumen y el Body Heatmap automáticamente.</p>
+            <div className="flex gap-3">
+              <button onClick={()=>setLogToDelete(null)} className="flex-1 py-3 rounded-xl bg-zinc-800 text-white font-bold text-sm">Cancelar</button>
+              <button onClick={handleDeleteLog} className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm">Eliminar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

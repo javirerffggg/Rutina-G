@@ -66,6 +66,15 @@ export const saveLog = (log: DailyLog) => {
 export const getLogByDate = (date: string): DailyLog | undefined =>
   getLogs()[date];
 
+export const deleteLog = (date: string): void => {
+  const logs = getLogs();
+  if (logs[date]) {
+    delete logs[date];
+    localStorage.setItem(LOGS_KEY, JSON.stringify(logs));
+    window.dispatchEvent(new Event('storage-update'));
+  }
+};
+
 export const getPreviousWorkoutLog = (exerciseId: string, beforeDate: string): WorkoutLogEntry | null => {
   const logs = getLogs();
   const sortedDates = Object.keys(logs).sort().reverse();

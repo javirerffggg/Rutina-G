@@ -9,7 +9,7 @@ import {
   getGymSchedule, calculatePlates
 } from '../utils';
 import { RoutineType, Exercise, WorkoutLogEntry, WorkoutSet, CustomRoutine, ExerciseDBEntry } from '../types';
-import { saveLog, getLogs, getPreviousWorkoutLog, getExerciseHistory } from '../services/storage';
+import { saveLog, getLogs, getPreviousWorkoutLog, getExerciseHistory, deleteLog } from '../services/storage';
 import {
   Save, History, Plus, Minus, Check, Trophy, ArrowRightLeft, X,
   Dumbbell, Settings, Info, Bot, AlertTriangle, Clock, Flame, Activity,
@@ -115,6 +115,7 @@ const Workout: React.FC = () => {
   const [showWarmupModal, setShowWarmupModal] = useState(false);
   const [showHistoryFor, setShowHistoryFor] = useState<string | null>(null);
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [analysisData, setAnalysisData] = useState<any>(null);
   const settings = React.useMemo(() => getSettings(), []);
@@ -496,6 +497,17 @@ const Workout: React.FC = () => {
   };
 
   const saveWorkout = (finish = false) => saveWorkoutWithLogs(logs, finish);
+
+  const handleDiscard = () => {
+    setSessionState('idle');
+    localStorage.removeItem(`workoutSessionState_${today}`);
+    localStorage.removeItem(`workoutStartTime_${today}`);
+    setStartTime(null);
+    setRestTimer(null);
+    dispatchLiveActivity({ sessionState: 'idle', restTimer: null, elapsedSeconds: 0 });
+    deleteLog(today);
+    setShowDiscardConfirm(false);
+  };
 
   const totalExercises = exercises.length;
   const completedExercises = logs.filter(l=>l.completed).length;
@@ -1173,6 +1185,9 @@ const Workout: React.FC = () => {
             </div>
           ) : sessionState === 'active' ? (
             <div className="flex gap-3">
+               <button onClick={()=>setShowDiscardConfirm(true)} className="py-5 px-6 rounded-[24px] bg-red-600/20 text-red-500 hover:bg-red-600/30 font-bold border border-red-500/30 active:scale-[0.98] transition-all flex justify-center items-center">
+                 <Icons.Trash2 size={20}/>
+               </button>
                <button onClick={()=>setShowFinishConfirm(true)} className="flex-1 py-5 rounded-[24px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold uppercase tracking-[0.2em] text-sm shadow-[0_10px_40px_rgba(16,185,129,0.4)] active:scale-[0.98] transition-all flex justify-center items-center gap-2">
                  <Check size={18}/> Finalizar
                </button>
@@ -1183,6 +1198,19 @@ const Workout: React.FC = () => {
       )}
 
       {/* MODALS */}
+      {showDiscardConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-sm bg-zinc-900 border border-white/10 rounded-3xl p-6 shadow-2xl">
+            <h2 className="text-xl font-bold text-red-500 mb-2">Descartar Entrenamiento</h2>
+            <p className="text-sm text-zinc-400 mb-6">¿Estás seguro? Perderás todo el progreso de la sesión actual.</p>
+            <div className="flex gap-3">
+              <button onClick={()=>setShowDiscardConfirm(false)} className="flex-1 py-3 rounded-xl bg-zinc-800 text-white font-bold text-sm">Cancelar</button>
+              <button onClick={handleDiscard} className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm">Descartar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showFinishConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/80 backdrop-blur-sm">
           <div className="relative w-full max-w-sm bg-zinc-900 border border-white/10 rounded-3xl p-6 shadow-2xl">
@@ -1190,7 +1218,7 @@ const Workout: React.FC = () => {
             <p className="text-sm text-zinc-400 mb-6">¿Guardar y ver resumen?</p>
             <div className="flex gap-3">
               <button onClick={()=>setShowFinishConfirm(false)} className="flex-1 py-3 rounded-xl bg-zinc-800 text-white font-bold text-sm">Cancelar</button>
-              <button onClick={()=>{setShowFinishConfirm(false);saveWorkoutWithLogs(logs,true);}} className="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm">Finalizar</button>
+              <button onClick={()=>{setShowFinishConfirm(false);saveWorkoutWithLogs(logs,true);}} className="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm">Finalizar</button>
             </div>
           </div>
         </div>

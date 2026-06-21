@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCurrentPhase, getTodayDateString, getGymSchedule } from '../utils';
-import { getLogs, saveLog } from '../services/storage';
+import { getLogs, saveLog, getExerciseMuscles } from '../services/storage';
 import { DailyLog } from '../types';
 import { Activity, Battery, Moon, Scale, Utensils, CheckCircle2, AlertTriangle, Clock, Flame, ChevronRight, TrendingUp, TrendingDown, Minus, HeartPulse, CalendarRange, Dumbbell, Target, Crown } from 'lucide-react';
 import { EXERCISE_MUSCLE_MAP, PHASES } from '../constants';
@@ -153,6 +153,8 @@ const Dashboard: React.FC = () => {
       const todayDate = new Date(today);
       const setsData: Record<string, number> = {};
 
+      const customRoutines = JSON.parse(localStorage.getItem('customRoutines') || '[]');
+
       Object.keys(saved).forEach(dateStr => {
         const logDate = new Date(dateStr);
         const diffTime = Math.abs(todayDate.getTime() - logDate.getTime());
@@ -160,7 +162,7 @@ const Dashboard: React.FC = () => {
 
         if (diffDays <= 7 && saved[dateStr].exercises) {
           saved[dateStr].exercises!.forEach(ex => {
-            const muscles = EXERCISE_MUSCLE_MAP[ex.exerciseId] || [];
+            const muscles = getExerciseMuscles(ex.exerciseId, customRoutines) || [];
             const completedSets = ex.sets.filter((s: any) => s.completed && ((s.reps || 0) > 0 || (s.weight || 0) > 0));
             if (completedSets.length === 0) return;
             muscles.forEach((m: string) => {

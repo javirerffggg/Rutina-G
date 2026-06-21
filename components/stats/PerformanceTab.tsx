@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { ResponsiveContainer, ComposedChart, Line, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, Cell } from 'recharts';
 import { DailyLog } from '../../types';
 import { Dumbbell, Trophy, TrendingUp, Flame, Activity, Clock, Calendar as CalendarIcon, Target, ChevronRight } from 'lucide-react';
-import { EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS, EXERCISES_UPPER, EXERCISES_LOWER, EXERCISE_MUSCLE_MAP, MUSCLE_VOLUME_RECOMMENDATIONS } from '../../constants';
+import { MUSCLE_VOLUME_RECOMMENDATIONS, EXERCISE_MUSCLE_MAP } from '../../constants';
 import { calculateOneRM, getWeeklyMuscleVolume } from '../../utils';
 import { BodyHeatmap } from '../BodyHeatmap';
+import { getAvailableExercises } from '../../services/storage';
 
 const MemoMuscleChart = React.memo(({ activeChartData }: any) => (
   <ResponsiveContainer width="100%" height="100%">
@@ -64,11 +65,26 @@ MemoRirChart.displayName = 'MemoRirChart';
 
 export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => {
   const navigate = useNavigate();
-  const allExercises = useMemo(
-    () => [...EXERCISES_PUSH, ...EXERCISES_PULL, ...EXERCISES_LEGS, ...EXERCISES_UPPER, ...EXERCISES_LOWER],
-    []
-  );
-  const [selectedExercise, setSelectedExercise] = useState<string>(allExercises[0].id);
+
+  const customRoutines = useMemo(() => {
+    try { return JSON.parse(localStorage.getItem('customRoutines') || '[]'); } catch { return []; }
+  }, []);
+
+  const allExercises = useMemo(() => getAvailableExercises(logs, customRoutines), [logs, customRoutines]);
+
+  const combinedMuscleMap = useMemo(() => {
+    const map = { ...EXERCISE_MUSCLE_MAP };
+    customRoutines.forEach((cr: any) => {
+      cr.exercises?.forEach((ex: any) => {
+        if (ex.primaryMuscles && ex.primaryMuscles.length > 0) {
+          map[ex.id] = ex.primaryMuscles;
+        }
+      });
+    });
+    return map;
+  }, [customRoutines]);
+
+  const [selectedExercise, setSelectedExercise] = useState<string>(allExercises[0]?.id || '');
   const [muscleChartMode, setMuscleChartMode] = useState<'historical' | 'weekly'>('historical');
 
   const sortedDates = useMemo(() => Object.keys(logs).sort(), [logs]);
@@ -120,7 +136,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
     const vol: Record<string, number>  = {};
     workoutLogs.forEach(log => {
       log.exercises?.forEach(ex => {
-        const muscles = EXERCISE_MUSCLE_MAP[ex.exerciseId] || [];
+        const muscles = combinedMuscleMap[ex.exerciseId] || [];
         const exVol = ex.sets.reduce((acc, s) => acc + (s.weight || 0) * (s.reps || 0), 0);
         muscles.forEach(m => {
           sets[m] = (sets[m] || 0) + ex.sets.length;
@@ -136,7 +152,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
     [muscleSets]
   );
 
-  const weeklyMuscleVolume = useMemo(() => getWeeklyMuscleVolume(logs, EXERCISE_MUSCLE_MAP), [logs]);
+  const weeklyMuscleVolume = useMemo(() => getWeeklyMuscleVolume(logs, combinedMuscleMap), [logs, combinedMuscleMap]);
   const weeklyChartData = useMemo(
     () => Object.entries(weeklyMuscleVolume).map(([name, sets]) => ({ name, sets })).sort((a, b) => (b.sets as number) - (a.sets as number)),
     [weeklyMuscleVolume]

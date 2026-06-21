@@ -1,10 +1,10 @@
-import { DailyLog, WorkoutLogEntry } from '../types';
+import { DailyLog, WorkoutLogEntry, Exercise, CustomRoutine } from '../types';
 import { ACHIEVEMENTS } from '../achievements';
 import { ACHIEVEMENT_XP } from '../constants/xpRewards';
 import { dispatchGlobalXP } from '../hooks/useProgression';
 import {
   EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS,
-  EXERCISES_UPPER, EXERCISES_LOWER
+  EXERCISES_UPPER, EXERCISES_LOWER, EXERCISE_MUSCLE_MAP
 } from '../constants';
 import { RoutineType } from '../types';
 
@@ -152,6 +152,58 @@ export const ALL_EXERCISES = [
   ...EXERCISES_PUSH, ...EXERCISES_PULL, ...EXERCISES_LEGS,
   ...EXERCISES_UPPER, ...EXERCISES_LOWER,
 ];
+
+/**
+ * Returns a consolidated list of all exercises combining predefined, custom routines,
+ * and any orphaned IDs from the logs.
+ */
+export const getAvailableExercises = (logs: Record<string, DailyLog>, customRoutines: CustomRoutine[] = []): Exercise[] => {
+  const exercisesMap = new Map<string, Exercise>();
+  
+  // 1. Base predefined
+  ALL_EXERCISES.forEach(ex => exercisesMap.set(ex.id, ex));
+  
+  // 2. Custom Routines (overwrite with custom names if ID matches, or add new)
+  customRoutines.forEach(cr => {
+    cr.exercises?.forEach(ex => {
+      exercisesMap.set(ex.id, ex);
+    });
+  });
+
+  // 3. Orphans in logs
+  Object.values(logs).forEach(log => {
+    log.exercises?.forEach(exLog => {
+      if (!exercisesMap.has(exLog.exerciseId)) {
+        exercisesMap.set(exLog.exerciseId, {
+          id: exLog.exerciseId,
+          name: formatUnknownId(exLog.exerciseId),
+          targetSets: '-',
+          targetReps: '-'
+        });
+      }
+    });
+  });
+
+  return Array.from(exercisesMap.values());
+};
+
+const formatUnknownId = (id: string) => {
+  return id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') + ' (Historial)';
+};
+
+/**
+ * Returns the primary muscles for a given exercise ID, checking custom routines first,
+ * then falling back to the predefined EXERCISE_MUSCLE_MAP.
+ */
+export const getExerciseMuscles = (id: string, customRoutines: CustomRoutine[] = []): string[] => {
+  for (const cr of customRoutines) {
+    const ex = cr.exercises?.find(e => e.id === id);
+    if (ex && ex.primaryMuscles && ex.primaryMuscles.length > 0) {
+      return ex.primaryMuscles;
+    }
+  }
+  return EXERCISE_MUSCLE_MAP[id] || [];
+};
 
 /** Normalise a string for fuzzy matching: lowercase, remove accents & punctuation */
 const normalise = (s: string) =>

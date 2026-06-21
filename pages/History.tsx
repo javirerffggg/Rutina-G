@@ -14,6 +14,31 @@ const History: React.FC = () => {
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
   const [logToDelete, setLogToDelete] = useState<string | null>(null);
 
+  const customRoutines = useMemo(() => {
+    try { return JSON.parse(localStorage.getItem('customRoutines') || '[]'); } catch { return []; }
+  }, []);
+
+  const getWorkoutName = (type: string | undefined) => {
+    if (!type) return 'Sesión Libre';
+    if (type.startsWith('CUSTOM_')) {
+      const cr = customRoutines.find((r: any) => r.id === type);
+      return cr ? cr.name : type;
+    }
+    return type;
+  };
+
+  const availableFilters = useMemo(() => {
+    const types = new Set<string>();
+    Object.values(logs).forEach(log => {
+      if (log.workoutCompleted && log.workoutType) {
+        const name = getWorkoutName(log.workoutType);
+        const shortName = name.split(' (')[0].trim();
+        types.add(shortName);
+      }
+    });
+    return ['All', ...Array.from(types).sort()];
+  }, [logs, customRoutines]);
+
   const handleDeleteLog = () => {
     if (logToDelete) {
       deleteLog(logToDelete);
@@ -30,8 +55,9 @@ const History: React.FC = () => {
 
     if (activeFilter !== 'All') {
       sortedLogs = sortedLogs.filter(log => {
-        const type = log.workoutType?.toLowerCase() || '';
-        return type.includes(activeFilter.toLowerCase());
+        const name = getWorkoutName(log.workoutType);
+        const shortName = name.split(' (')[0].trim();
+        return shortName === activeFilter;
       });
     }
 
@@ -84,6 +110,7 @@ const History: React.FC = () => {
       return {
         date: log.date,
         workoutType: log.workoutType,
+        workoutTypeName: getWorkoutName(log.workoutType),
         duration: log.duration,
         tonnage,
         totalSets,
@@ -118,7 +145,7 @@ const History: React.FC = () => {
         </div>
 
         <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide snap-x">
-          {['All', 'Push', 'Pull', 'Legs', 'Upper', 'Lower'].map(filter => (
+          {availableFilters.map(filter => (
             <button
               key={filter}
               onClick={() => setActiveFilter(filter)}
@@ -158,7 +185,7 @@ const History: React.FC = () => {
                     <div>
                       <h3 className="text-sm font-bold text-white capitalize">{dateStr}</h3>
                       <p className="text-[10px] text-brand-400 uppercase tracking-widest font-bold mt-0.5 inline-block bg-brand-500/10 px-2 py-0.5 rounded-md">
-                        {log.workoutType || 'Sesión Libre'}
+                        {log.workoutTypeName}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">

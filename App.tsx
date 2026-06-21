@@ -1,6 +1,8 @@
 import React, { Suspense, lazy, useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
+import { useDeviceMode } from './hooks/useDeviceMode';
+import { DesktopApp } from './layouts/DesktopApp';
 
 const Dashboard  = lazy(() => import('./pages/Dashboard'));
 const Workout    = lazy(() => import('./pages/Workout'));
@@ -14,9 +16,7 @@ const VolumeEvolutionScreen = lazy(() => import('./pages/VolumeEvolutionScreen')
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
   return null;
 };
 
@@ -26,26 +26,31 @@ const Loader = () => (
   </div>
 );
 
-const App: React.FC = () => (
+const MobileApp: React.FC = () => (
   <HashRouter>
     <ScrollToTop />
     <Suspense fallback={<Loader />}>
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Workout />} />
-          <Route path="today"    element={<Dashboard />} />
-          <Route path="muscle-load" element={<MuscleLoadScreen />} />
-          <Route path="consistency" element={<ConsistencyScreen />} />
-          <Route path="volume-evolution" element={<VolumeEvolutionScreen />} />
-          <Route path="history"  element={<History />} />
-          <Route path="stats"    element={<Stats />} />
-          <Route path="trophies" element={<TrophyRoom />} />
-          <Route path="settings" element={<Settings />} />
+          <Route path="today"             element={<Dashboard />} />
+          <Route path="muscle-load"       element={<MuscleLoadScreen />} />
+          <Route path="consistency"       element={<ConsistencyScreen />} />
+          <Route path="volume-evolution"  element={<VolumeEvolutionScreen />} />
+          <Route path="history"           element={<History />} />
+          <Route path="stats"             element={<Stats />} />
+          <Route path="trophies"          element={<TrophyRoom />} />
+          <Route path="settings"          element={<Settings />} />
           <Route path="*" element={<Navigate to="/today" replace />} />
         </Route>
       </Routes>
     </Suspense>
   </HashRouter>
 );
+
+const App: React.FC = () => {
+  const mode = useDeviceMode();
+  return mode === 'desktop' ? <DesktopApp /> : <MobileApp />;
+};
 
 export default App;

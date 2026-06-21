@@ -43,6 +43,7 @@ const TrophyRoom: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AchievementCategory>('CONSISTENCIA');
   const [activeTier, setActiveTier] = useState<AchievementTier | null>(null);
   const [viewMode, setViewMode] = useState<'GRID' | 'TIMELINE'>('GRID');
+  const [visibleCount, setVisibleCount] = useState(20);
 
   const today = getTodayDateString();
   const { rankInfo } = useProgression();
@@ -107,6 +108,10 @@ const TrophyRoom: React.FC = () => {
   const filteredCollection = useMemo(() => {
     return enrichedAchievements.filter(a => a.category === activeTab && (activeTier === null || a.tier === activeTier));
   }, [enrichedAchievements, activeTab, activeTier]);
+
+  useEffect(() => {
+    setVisibleCount(20);
+  }, [activeTab, activeTier, viewMode]);
 
   const timelineGroups = useMemo(() => {
     if (viewMode !== 'TIMELINE') return [];
@@ -230,7 +235,7 @@ const TrophyRoom: React.FC = () => {
                       )}
                       <IconComponent size={20} className={meta.text} />
                     </div>
-                    <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border ${meta.border} ${meta.text}`}>
+                    <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border ${meta.border} ${meta.text}`}>
                       {meta.emoji} {meta.label}
                     </span>
                   </div>
@@ -339,7 +344,7 @@ const TrophyRoom: React.FC = () => {
               );
             })()}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {sortedCollection.map((ach) => {
+              {sortedCollection.slice(0, visibleCount).map((ach) => {
                 const isHidden = ach.category === 'EPICO' && !ach.isUnlocked;
                 const meta = ach.isUnlocked ? TIER_META[ach.tier] : LOCKED_STYLES;
                 const IconComponent = (Icons as any)[ach.icon] || Icons.Trophy;
@@ -360,7 +365,7 @@ const TrophyRoom: React.FC = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="text-xs font-bold text-zinc-500 line-clamp-1 mb-1 blur-[3px] select-none">Logro Secreto</h4>
-                        <p className={`text-[9px] font-bold uppercase tracking-widest ${hiddenMeta.text}`}>{hiddenMeta.emoji} Oculto</p>
+                        <p className={`text-[10px] font-bold uppercase tracking-widest ${hiddenMeta.text}`}>{hiddenMeta.emoji} Oculto</p>
                       </div>
                     </div>
                   );
@@ -384,10 +389,10 @@ const TrophyRoom: React.FC = () => {
                           <div className="flex-1 h-1 bg-zinc-800 rounded-full overflow-hidden">
                             <div className="h-full bg-zinc-500 rounded-full" style={{ width: `${(ach.prog.current / ach.prog.max) * 100}%` }} />
                           </div>
-                          <span className="text-[9px] font-bold text-zinc-500 tabular-nums">{ach.prog.current}/{ach.prog.max}</span>
+                          <span className="text-[10px] font-bold text-zinc-500 tabular-nums">{ach.prog.current}/{ach.prog.max}</span>
                         </div>
                       ) : (
-                        <p className={`text-[9px] font-bold uppercase tracking-widest ${ach.isUnlocked ? meta.text : 'text-zinc-600'}`}>
+                        <p className={`text-[10px] font-bold uppercase tracking-widest ${ach.isUnlocked ? meta.text : 'text-zinc-600'}`}>
                           {ach.isUnlocked ? TIER_META[ach.tier].label : 'Bloqueado'}
                         </p>
                       )}
@@ -396,11 +401,28 @@ const TrophyRoom: React.FC = () => {
                 )
               })}
             </div>
+            
+            {visibleCount < sortedCollection.length && (
+              <div className="mt-6 flex justify-center">
+                <button
+                  onClick={() => setVisibleCount(v => v + 20)}
+                  className="px-6 py-2.5 bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-zinc-800 hover:text-white transition-all active:scale-95"
+                >
+                  Cargar más
+                </button>
+              </div>
+            )}
           </>
         ) : (
           <div className="space-y-6">
             {timelineGroups.length === 0 ? (
-              <div className="text-center py-12 text-zinc-500 text-sm font-bold">Aún no hay logros desbloqueados.</div>
+              <div className="text-center py-16 flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-500">
+                <div className="w-20 h-20 rounded-3xl bg-zinc-900/50 flex items-center justify-center mb-4 border border-zinc-800 rotate-12 transition-transform hover:rotate-0">
+                   <Icons.Award size={32} className="text-zinc-600" />
+                </div>
+                <h3 className="text-white font-bold mb-1">Aún no hay trofeos</h3>
+                <p className="text-zinc-500 text-xs font-medium max-w-[200px]">Continúa entrenando para ganar tus primeros logros y verlos aquí.</p>
+              </div>
             ) : (
               timelineGroups.map(([month, items]) => (
                 <div key={month} className="relative">
@@ -423,7 +445,7 @@ const TrophyRoom: React.FC = () => {
                           </div>
                           <div className="flex justify-between items-center gap-2">
                             <div className="flex-1 min-w-0">
-                              <p className={`text-[9px] font-bold uppercase tracking-widest mb-0.5 ${meta.text}`}>{meta.emoji} {meta.label}</p>
+                              <p className={`text-[10px] font-bold uppercase tracking-widest mb-0.5 ${meta.text}`}>{meta.emoji} {meta.label}</p>
                               <h4 className="text-sm font-bold text-white truncate">{ach.title}</h4>
                             </div>
                             <span className="text-[10px] text-zinc-500 font-bold shrink-0">{new Date(unlocked[ach.id]).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}</span>

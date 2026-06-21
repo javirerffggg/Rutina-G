@@ -59,14 +59,14 @@ const PlateCalculator = ({ weight, barWeight = 20 }: { weight: number; barWeight
   if (plates.length === 0) return null;
   return (
     <div className="mt-6 pt-6 border-t border-white/5 flex flex-col items-center gap-3">
-      <p className="text-[9px] font-bold text-zinc-600 uppercase tracking-[0.2em]">Discos por lado</p>
+      <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.2em]">Discos por lado</p>
       <div className="flex items-center gap-1.5">
         <div className="flex flex-row-reverse items-center gap-1">
-          {plates.map((p, i) => (<div key={`l-${i}`} className={`rounded-sm flex items-center justify-center font-display font-black text-[8px] text-white/40 ${p===25?'w-4 h-14 bg-red-600/40':p===20?'w-4 h-12 bg-blue-600/40':p===15?'w-4 h-11 bg-yellow-600/40':p===10?'w-4 h-10 bg-green-600/40':p===5?'w-3 h-8 bg-white/20':'w-2 h-6 bg-white/10'}`}>{p}</div>))}
+          {plates.map((p, i) => (<div key={`l-${i}`} className={`rounded-sm flex items-center justify-center font-display font-black text-[10px] text-white/40 ${p===25?'w-4 h-14 bg-red-600/40':p===20?'w-4 h-12 bg-blue-600/40':p===15?'w-4 h-11 bg-yellow-600/40':p===10?'w-4 h-10 bg-green-600/40':p===5?'w-3 h-8 bg-white/20':'w-2 h-6 bg-white/10'}`}>{p}</div>))}
         </div>
         <div className="w-24 h-2 bg-zinc-800 rounded-full relative"><div className="absolute inset-y-0 -left-1 w-1 bg-zinc-700 rounded-full" /><div className="absolute inset-y-0 -right-1 w-1 bg-zinc-700 rounded-full" /></div>
         <div className="flex items-center gap-1">
-          {plates.map((p, i) => (<div key={`r-${i}`} className={`rounded-sm flex items-center justify-center font-display font-black text-[8px] text-white/40 ${p===25?'w-4 h-14 bg-red-600/40':p===20?'w-4 h-12 bg-blue-600/40':p===15?'w-4 h-11 bg-yellow-600/40':p===10?'w-4 h-10 bg-green-600/40':p===5?'w-3 h-8 bg-white/20':'w-2 h-6 bg-white/10'}`}>{p}</div>))}
+          {plates.map((p, i) => (<div key={`r-${i}`} className={`rounded-sm flex items-center justify-center font-display font-black text-[10px] text-white/40 ${p===25?'w-4 h-14 bg-red-600/40':p===20?'w-4 h-12 bg-blue-600/40':p===15?'w-4 h-11 bg-yellow-600/40':p===10?'w-4 h-10 bg-green-600/40':p===5?'w-3 h-8 bg-white/20':'w-2 h-6 bg-white/10'}`}>{p}</div>))}
         </div>
       </div>
     </div>
@@ -608,7 +608,7 @@ const Workout: React.FC = () => {
                 const volume = log.exercises?.reduce((sum: number, ex: any) => sum + ex.sets.reduce((s: number, set: any) => s + ((set.weight || 0) * (set.reps || 0)), 0), 0) || 0;
                 return (
                   <div key={i} className="snap-center shrink-0 w-40 bg-zinc-900/50 border border-zinc-800/50 p-3 rounded-2xl">
-                    <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest capitalize mb-1">{dateStr}</p>
+                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest capitalize mb-1">{dateStr}</p>
                     <h4 className="text-xs font-bold text-white truncate">{log.workoutType}</h4>
                     <p className="text-[10px] font-bold text-brand-400 mt-2">{volume.toLocaleString()} kg</p>
                   </div>
@@ -670,25 +670,25 @@ const Workout: React.FC = () => {
                   <div className={`absolute inset-0 bg-gradient-to-br ${meta.accent} pointer-events-none`} />
                   
                   {isToday && <div className={`absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b ${meta.accent} from-50%`} />}
-                  {isToday && <div className="absolute top-3 right-3 z-10"><span className={`text-[9px] font-black uppercase tracking-[0.15em] px-2 py-0.5 rounded-full border ${meta.badge}`}>HOY</span></div>}
+                  {isToday && <div className="absolute top-3 right-3 z-10"><span className={`text-[10px] font-black uppercase tracking-[0.15em] px-2 py-0.5 rounded-full border ${meta.badge}`}>HOY</span></div>}
                   {doneToday && <div className="absolute top-3 left-3 z-10 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.5)]"><Check size={11} strokeWidth={3} className="text-white" /></div>}
                   
                   <div className="relative z-10 p-3 pt-4">
                     <span className="text-2xl mb-2 block">{meta.emoji}</span>
                     <h2 className={`text-base font-display font-black leading-none tracking-tight mb-1 ${isToday ? 'text-white' : 'text-zinc-300'} truncate`}>{meta.label}</h2>
-                    <p className="text-[9px] font-bold text-zinc-500 leading-snug mb-2 line-clamp-2">{meta.muscles}</p>
+                    <p className="text-[10px] font-bold text-zinc-500 leading-snug mb-2 line-clamp-2">{meta.muscles}</p>
                     
                     {stats ? (
                       <div className="space-y-1 mb-2">
-                        <div className="text-[8px] font-bold text-zinc-400 flex items-center gap-1">
+                        <div className="text-[10px] font-bold text-zinc-400 flex items-center gap-1">
                           <Clock size={8} className="text-zinc-500" /> ~{stats.avgDuration || 50}m
                         </div>
-                        <div className="text-[8px] font-bold text-zinc-500 line-clamp-1">
+                        <div className="text-[10px] font-bold text-zinc-500 line-clamp-1">
                           hace {stats.daysAgo}d
                         </div>
                       </div>
                     ) : (
-                      exList.length > 0 && <div className={`inline-flex items-center gap-1 text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 mb-2 rounded-lg border ${meta.badge}`}><Dumbbell size={8} /> {exList.length} ej.</div>
+                      exList.length > 0 && <div className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 mb-2 rounded-lg border ${meta.badge}`}><Dumbbell size={8} /> {exList.length} ej.</div>
                     )}
                   </div>
                 </motion.button>
@@ -763,11 +763,11 @@ const Workout: React.FC = () => {
                                 <span className="text-2xl mb-2 block">{routine.emoji}</span>
                                 <h2 className={`text-base font-display font-black leading-none tracking-tight mb-1 text-zinc-200 truncate`}>{routine.name}</h2>
                                 {routine.description ? (
-                                  <p className="text-[9px] font-bold text-brand-500/70 leading-snug mb-2 line-clamp-2">{routine.description}</p>
+                                  <p className="text-[10px] font-bold text-brand-500/70 leading-snug mb-2 line-clamp-2">{routine.description}</p>
                                 ) : (
-                                  <p className="text-[9px] font-bold text-zinc-500 leading-snug mb-2 line-clamp-2">{muscles}</p>
+                                  <p className="text-[10px] font-bold text-zinc-500 leading-snug mb-2 line-clamp-2">{muscles}</p>
                                 )}
-                                <div className={`inline-flex items-center gap-1 text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-lg border bg-zinc-800 text-zinc-400 border-white/10`}>
+                                <div className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-lg border bg-zinc-800 text-zinc-400 border-white/10`}>
                                   <Dumbbell size={8} /> {routine.exercises.length} ej.
                                 </div>
                               </div>
@@ -815,11 +815,11 @@ const Workout: React.FC = () => {
                             <span className="text-2xl mb-2 block">{routine.emoji}</span>
                             <h2 className={`text-base font-display font-black leading-none tracking-tight mb-1 text-zinc-200 truncate`}>{routine.name}</h2>
                             {routine.description ? (
-                              <p className="text-[9px] font-bold text-brand-500/70 leading-snug mb-2 line-clamp-2">{routine.description}</p>
+                              <p className="text-[10px] font-bold text-brand-500/70 leading-snug mb-2 line-clamp-2">{routine.description}</p>
                             ) : (
-                              <p className="text-[9px] font-bold text-zinc-500 leading-snug mb-2 line-clamp-2">{muscles}</p>
+                              <p className="text-[10px] font-bold text-zinc-500 leading-snug mb-2 line-clamp-2">{muscles}</p>
                             )}
-                            <div className={`inline-flex items-center gap-1 text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-lg border bg-zinc-800 text-zinc-400 border-white/10`}>
+                            <div className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-lg border bg-zinc-800 text-zinc-400 border-white/10`}>
                               <Dumbbell size={8} /> {routine.exercises.length} ej.
                             </div>
                           </div>
@@ -1074,9 +1074,9 @@ const Workout: React.FC = () => {
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-500 to-amber-500" />
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1 pr-4">
-                    <p className="text-brand-400 font-bold text-[9px] uppercase tracking-[0.2em] mb-1 flex items-center gap-1"><PlaySquare size={10} fill="currentColor"/> Ejercicio Actual</p>
+                    <p className="text-brand-400 font-bold text-[10px] uppercase tracking-[0.2em] mb-1 flex items-center gap-1"><PlaySquare size={10} fill="currentColor"/> Ejercicio Actual</p>
                     <h2 className="text-xl font-display font-bold text-white leading-tight tracking-tight">{exercise.name}</h2>
-                    <button onClick={() => setShowTechFor(exercise.id)} className="text-brand-400 flex items-center gap-1 text-[9px] uppercase tracking-widest font-bold mt-1.5 bg-brand-500/10 hover:bg-brand-500/20 px-2 py-1 rounded-md w-fit transition-all"><ImageIcon size={10}/> Ver Técnica</button>
+                    <button onClick={() => setShowTechFor(exercise.id)} className="text-brand-400 flex items-center gap-1 text-[10px] uppercase tracking-widest font-bold mt-1.5 bg-brand-500/10 hover:bg-brand-500/20 px-2 py-1 rounded-md w-fit transition-all"><ImageIcon size={10}/> Ver Técnica</button>
                   </div>
                   <button onClick={e=>toggleExerciseComplete(exercise.id,e)} className="w-8 h-8 rounded-full border-2 border-zinc-700 hover:border-zinc-500 flex items-center justify-center shrink-0">
                      <Check size={14} className="text-zinc-500" />
@@ -1093,10 +1093,10 @@ const Workout: React.FC = () => {
                        return (
                          <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/10 mb-1.5">
                            <div className="flex items-center gap-2">
-                             <span className="text-[9px] font-bold text-emerald-500/50 w-3">{idx+1}</span>
+                             <span className="text-[10px] font-bold text-emerald-500/50 w-3">{idx+1}</span>
                              <span className="text-xs font-bold text-emerald-400 line-through">{set.weight}kg × {set.reps}{set.rir != null ? ` @ RPE ${10 - set.rir}` : ''}</span>
                            </div>
-                           <button onClick={() => toggleSetComplete(exercise.id, idx)} className="text-[9px] text-zinc-500 uppercase font-bold tracking-widest px-2 py-1 rounded bg-black/20 hover:text-white">Deshacer</button>
+                           <button onClick={() => toggleSetComplete(exercise.id, idx)} className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest px-2 py-1 rounded bg-black/20 hover:text-white">Deshacer</button>
                          </div>
                        );
                      }
@@ -1105,10 +1105,10 @@ const Workout: React.FC = () => {
                        return (
                          <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-black/20 border border-white/5 opacity-60 mb-1.5">
                            <div className="flex items-center gap-2">
-                             <span className="text-[9px] font-bold text-zinc-600 w-3">{idx+1}</span>
+                             <span className="text-[10px] font-bold text-zinc-600 w-3">{idx+1}</span>
                              <span className="text-xs font-bold text-zinc-500">{ps ? `Objetivo: ${ps.weight}kg × ${ps.reps}` : 'Próxima serie'}</span>
                            </div>
-                           <button onClick={() => removeSet(exercise.id, idx)} className="text-[9px] text-zinc-600 hover:text-red-400 uppercase font-bold tracking-widest px-2 py-1">Quitar</button>
+                           <button onClick={() => removeSet(exercise.id, idx)} className="text-[10px] text-zinc-600 hover:text-red-400 uppercase font-bold tracking-widest px-2 py-1">Quitar</button>
                          </div>
                        );
                      }
@@ -1116,38 +1116,38 @@ const Workout: React.FC = () => {
                      return (
                        <div key={idx} className={`p-3 rounded-2xl border transition-all mb-1.5 bg-black/40 border-brand-500/50 shadow-lg`}>
                           <div className="flex justify-between items-center mb-2">
-                            <span className="text-[9px] font-bold uppercase tracking-widest text-brand-400">Set {idx+1}</span>
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-brand-400">Set {idx+1}</span>
                             <div className="flex gap-2">
-                               <button onClick={() => cycleSetType(exercise.id, idx)} className={`w-8 h-5 rounded border text-[8px] font-bold flex items-center justify-center ${
+                               <button onClick={() => cycleSetType(exercise.id, idx)} className={`w-8 h-5 rounded border text-[10px] font-bold flex items-center justify-center ${
                                   setType === 'W' ? 'bg-zinc-700/50 text-zinc-400 border-zinc-600/50' :
                                   setType === 'N' ? 'bg-brand-500/20 text-brand-400 border-brand-500/30' :
                                   setType === 'D' ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' :
                                   'bg-red-500/20 text-red-400 border-red-500/30'
                                }`}>{setType}</button>
-                               <button onClick={() => removeSet(exercise.id, idx)} className="text-[9px] text-zinc-500 uppercase tracking-widest hover:text-red-400">Quitar</button>
+                               <button onClick={() => removeSet(exercise.id, idx)} className="text-[10px] text-zinc-500 uppercase tracking-widest hover:text-red-400">Quitar</button>
                             </div>
                           </div>
                           
                           <div className="grid grid-cols-2 gap-2 mb-2">
                             {/* PESO */}
                             <div className="bg-zinc-900/80 rounded-xl p-2 border border-white/5 relative">
-                               <p className="text-zinc-500 text-[8px] font-bold uppercase tracking-widest text-center mb-0.5">Peso (kg)</p>
+                               <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest text-center mb-0.5">Peso (kg)</p>
                                <input type="number" inputMode="decimal" placeholder={ps?`${ps.weight}`:'0'} value={set.weight||''} onChange={e=>updateSet(exercise.id,idx,'weight',parseFloat(e.target.value))} onBlur={()=>saveWorkout()}
                                  className="w-full bg-transparent text-center font-display font-bold text-2xl focus:outline-none text-white"/>
-                               {ps && <p className="text-[8px] text-center text-zinc-600 mt-0.5">ant: {ps.weight}</p>}
+                               {ps && <p className="text-[10px] text-center text-zinc-600 mt-0.5">ant: {ps.weight}</p>}
                             </div>
                             {/* REPS */}
                             <div className="bg-zinc-900/80 rounded-xl p-2 border border-white/5 relative">
-                               <p className="text-zinc-500 text-[8px] font-bold uppercase tracking-widest text-center mb-0.5">Reps</p>
+                               <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest text-center mb-0.5">Reps</p>
                                <input type="number" inputMode="decimal" placeholder={ps?`${ps.reps}`:'0'} value={set.reps||''} onChange={e=>updateSet(exercise.id,idx,'reps',parseFloat(e.target.value))} onBlur={()=>saveWorkout()}
                                  className="w-full bg-transparent text-center font-display font-bold text-2xl focus:outline-none text-white"/>
-                               {ps && <p className="text-[8px] text-center text-zinc-600 mt-0.5">ant: {ps.reps}</p>}
+                               {ps && <p className="text-[10px] text-center text-zinc-600 mt-0.5">ant: {ps.reps}</p>}
                             </div>
                           </div>
 
                           {/* RPE BUTTONS */}
                           <div className="mb-3">
-                            <p className="text-[8px] font-bold uppercase tracking-widest text-zinc-500 mb-1 text-center">Esfuerzo (RPE)</p>
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-1 text-center">Esfuerzo (RPE)</p>
                             <div className="flex justify-between gap-1 overflow-x-auto no-scrollbar pb-1">
                                {[7.5, 8, 8.5, 9, 9.5, 10].map(rpe => {
                                   const rir = 10 - rpe;
@@ -1177,7 +1177,7 @@ const Workout: React.FC = () => {
                   })}
                 </div>
                 
-                <button onClick={() => addSet(exercise.id)} className="w-full mt-2 py-2.5 rounded-xl border border-dashed border-zinc-800 text-zinc-500 hover:text-brand-400 transition-all flex items-center justify-center gap-2 text-[9px] font-bold uppercase tracking-widest">
+                <button onClick={() => addSet(exercise.id)} className="w-full mt-2 py-2.5 rounded-xl border border-dashed border-zinc-800 text-zinc-500 hover:text-brand-400 transition-all flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest">
                   <Plus size={12}/> Añadir Serie
                 </button>
               </div>

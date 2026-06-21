@@ -222,7 +222,7 @@ const Layout: React.FC = () => {
             }>
               {({ isActive }) => (<>
                 <Icons.BookOpen size={22} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[9px] font-bold tracking-[0.1em] uppercase">Historial</span>
+                <span className="text-[10px] font-bold tracking-[0.1em] uppercase">Historial</span>
               </>)}
             </NavLink>
 
@@ -231,7 +231,7 @@ const Layout: React.FC = () => {
             }>
               {({ isActive }) => (<>
                 <LayoutDashboard size={22} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[9px] font-bold tracking-[0.1em] uppercase">Hoy</span>
+                <span className="text-[10px] font-bold tracking-[0.1em] uppercase">Hoy</span>
               </>)}
             </NavLink>
 
@@ -240,7 +240,7 @@ const Layout: React.FC = () => {
             }>
               {({ isActive }) => (<>
                 <Dumbbell size={22} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[9px] font-bold tracking-[0.1em] uppercase">Entreno</span>
+                <span className="text-[10px] font-bold tracking-[0.1em] uppercase">Entreno</span>
               </>)}
             </NavLink>
 
@@ -249,7 +249,7 @@ const Layout: React.FC = () => {
             }>
               {({ isActive }) => (<>
                 <Scale size={22} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[9px] font-bold tracking-[0.1em] uppercase">Peso</span>
+                <span className="text-[10px] font-bold tracking-[0.1em] uppercase">Peso</span>
               </>)}
             </NavLink>
 
@@ -261,7 +261,7 @@ const Layout: React.FC = () => {
                   <span className="absolute -top-0.5 right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse border-2 border-zinc-950" />
                 )}
                 <Trophy size={22} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[9px] font-bold tracking-[0.1em] uppercase">Logros</span>
+                <span className="text-[10px] font-bold tracking-[0.1em] uppercase">Logros</span>
               </>)}
             </NavLink>
             
@@ -270,7 +270,7 @@ const Layout: React.FC = () => {
             }>
               {({ isActive }) => (<>
                 <Settings size={22} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[9px] font-bold tracking-[0.1em] uppercase">Ajustes</span>
+                <span className="text-[10px] font-bold tracking-[0.1em] uppercase">Ajustes</span>
               </>)}
             </NavLink>
           </div>

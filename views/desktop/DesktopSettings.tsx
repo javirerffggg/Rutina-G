@@ -62,6 +62,14 @@ const SectionTitle: React.FC<{ icon: React.ReactNode; children: React.ReactNode 
 export const DesktopSettings: React.FC = () => {
   const [settings, setSettingsState] = useState<AppSettings>(getSettings());
   const [activeSection, setActiveSection] = useState<SectionId>('appearance');
+  const [username, setUsername] = useState(() => localStorage.getItem('rutinag_username') || '');
+
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setUsername(val);
+    localStorage.setItem('rutinag_username', val);
+    window.dispatchEvent(new Event('storage-update'));
+  };
 
   const updateSetting = (key: keyof AppSettings, value: any) => {
     const updated = saveSettings({ [key]: value });
@@ -237,6 +245,16 @@ export const DesktopSettings: React.FC = () => {
         return (
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 divide-y divide-zinc-800">
             <SectionTitle icon={<RefreshCw size={14} />}>Integración y Sync</SectionTitle>
+            <div className="bg-zinc-800/60 rounded-xl p-4 mb-4">
+              <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest block mb-2">Nombre de Usuario (Cloud)</label>
+              <input
+                type="text"
+                value={username}
+                onChange={handleUsernameChange}
+                placeholder="Añade un usuario para vincular tu dispositivo"
+                className="w-full bg-transparent text-white font-bold text-xl outline-none placeholder:text-zinc-600"
+              />
+            </div>
             <Row label="Convex Cloud Sync" border>
               <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-2 py-1 rounded-lg flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Online

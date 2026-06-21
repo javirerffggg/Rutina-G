@@ -224,32 +224,32 @@ export default function ConsistencyScreen() {
            <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center text-center">
               <Flame size={20} className="text-amber-500 mb-2" />
               <span className="text-2xl font-black text-white">{stats.activeStreak}</span>
-              <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mt-1">Racha Actual</span>
+              <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1">Racha Actual</span>
            </div>
            <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center text-center">
               <Trophy size={20} className="text-brand-400 mb-2" />
               <span className="text-2xl font-black text-white">{stats.maxStreak}</span>
-              <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mt-1">Racha Máxima</span>
+              <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1">Racha Máxima</span>
            </div>
            <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center text-center">
               <Activity size={20} className="text-emerald-400 mb-2" />
               <span className="text-2xl font-black text-white">{stats.consistencyPct}%</span>
-              <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mt-1">Consistencia 90d</span>
+              <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1">Consistencia 90d</span>
            </div>
            <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center text-center">
               <Zap size={20} className="text-yellow-400 mb-2" />
               <span className="text-2xl font-black text-white capitalize">{stats.favDay}</span>
-              <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mt-1">Día Favorito</span>
+              <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1">Día Favorito</span>
            </div>
            <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center text-center">
               <CalendarDays size={20} className="text-sky-400 mb-2" />
               <span className="text-2xl font-black text-white">{stats.avgDaysWeek}</span>
-              <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mt-1">Media Semanal</span>
+              <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1">Media Semanal</span>
            </div>
            <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center text-center">
               <Moon size={20} className="text-indigo-400 mb-2" />
               <span className="text-2xl font-black text-white">{stats.avgRest} d</span>
-              <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mt-1">Descanso Medio</span>
+              <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1">Descanso Medio</span>
            </div>
         </div>
 

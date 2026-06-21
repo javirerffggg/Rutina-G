@@ -262,7 +262,7 @@ export const CustomRoutineBuilder: React.FC<CustomRoutineBuilderProps> = ({ onCl
                     {/* Steppers */}
                     <div className="flex items-center gap-2 mt-1">
                       <div className="flex-1 bg-black/40 border border-white/5 rounded-xl p-2 flex flex-col items-center">
-                         <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">Sets</span>
+                         <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">Sets</span>
                          <div className="flex items-center justify-between w-full">
                            <button onClick={() => updateNumeric(idx, 'targetSets', -1, 1)} className="w-6 h-6 rounded bg-zinc-800 text-zinc-400 flex items-center justify-center hover:bg-zinc-700 hover:text-white"><Minus size={12}/></button>
                            <span className="text-sm font-black text-white">{ex.targetSets}</span>
@@ -270,7 +270,7 @@ export const CustomRoutineBuilder: React.FC<CustomRoutineBuilderProps> = ({ onCl
                          </div>
                       </div>
                       <div className="flex-1 bg-black/40 border border-white/5 rounded-xl p-2 flex flex-col items-center">
-                         <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">Reps</span>
+                         <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">Reps</span>
                          <div className="flex items-center justify-between w-full">
                            <button onClick={() => updateNumeric(idx, 'targetReps', -1, 1)} className="w-6 h-6 rounded bg-zinc-800 text-zinc-400 flex items-center justify-center hover:bg-zinc-700 hover:text-white"><Minus size={12}/></button>
                            <span className="text-sm font-black text-white">{ex.targetReps}</span>
@@ -278,7 +278,7 @@ export const CustomRoutineBuilder: React.FC<CustomRoutineBuilderProps> = ({ onCl
                          </div>
                       </div>
                       <div className="flex-1 bg-black/40 border border-white/5 rounded-xl p-2 flex flex-col items-center relative">
-                         <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">RIR</span>
+                         <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">RIR</span>
                          <div className="flex items-center justify-between w-full">
                            <button onClick={() => updateNumeric(idx, 'targetRIR', -1, 0)} className="w-6 h-6 rounded bg-zinc-800 text-zinc-400 flex items-center justify-center hover:bg-zinc-700 hover:text-white"><Minus size={12}/></button>
                            <span className="text-sm font-black text-white">{ex.targetRIR ?? 2}</span>

@@ -57,8 +57,8 @@ export const RankBadge: React.FC<RankBadgeProps> = ({
             />
           </div>
           <div className="flex justify-between items-center mt-1">
-            <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">{rankInfo.xpCurrent} XP</span>
-            <span className="text-[9px] text-zinc-600 font-bold uppercase tracking-wider">{rankInfo.xpRequired} XP</span>
+            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">{rankInfo.xpCurrent} XP</span>
+            <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-wider">{rankInfo.xpRequired} XP</span>
           </div>
         </div>
       )}

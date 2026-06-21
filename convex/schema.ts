@@ -9,6 +9,8 @@ export default defineSchema({
     routines: v.optional(v.string()),
     settings: v.optional(v.string()),
     rpgLevel: v.optional(v.string()),
+    rpgXp: v.optional(v.number()),
+    username: v.optional(v.string()),
     updatedAt: v.number(),
   }).index("by_device", ["deviceId"]),
 });

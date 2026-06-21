@@ -237,7 +237,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
               />
             ))}
           </div>
-          <p className="text-center text-[9px] text-slate-600 font-bold uppercase tracking-widest mt-4 group-hover:text-brand-400 transition-colors">
+          <p className="text-center text-[10px] text-slate-600 font-bold uppercase tracking-widest mt-4 group-hover:text-brand-400 transition-colors">
             Pulsa para ver detalle
           </p>
         </button>
@@ -270,7 +270,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
-            <p className="text-center text-[9px] text-slate-600 font-bold uppercase tracking-widest mt-4 group-hover:text-brand-400 transition-colors">
+            <p className="text-center text-[10px] text-slate-600 font-bold uppercase tracking-widest mt-4 group-hover:text-brand-400 transition-colors">
               Pulsa para ver detalle
             </p>
           </button>
@@ -296,7 +296,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
           <div className="pointer-events-none relative z-0">
             <BodyHeatmap muscleVolume={muscleVolume} muscleSets={muscleSets} />
           </div>
-          <p className="text-center text-[9px] text-slate-600 font-bold uppercase tracking-widest mt-4 group-hover:text-brand-400 transition-colors relative z-10">
+          <p className="text-center text-[10px] text-slate-600 font-bold uppercase tracking-widest mt-4 group-hover:text-brand-400 transition-colors relative z-10">
             Pulsa para ver detalle de carga muscular
           </p>
         </button>
@@ -333,7 +333,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
               <div className="flex bg-slate-900/50 p-0.5 rounded-lg border border-white/5">
                 {(['historical', 'weekly'] as const).map(mode => (
                   <button key={mode} onClick={() => setMuscleChartMode(mode)}
-                    className={`px-2 py-1 text-[8px] font-bold uppercase rounded-md transition-all ${
+                    className={`px-2 py-1 text-[10px] font-bold uppercase rounded-md transition-all ${
                       muscleChartMode === mode ? 'bg-brand-500 text-white' : 'text-slate-500'
                     }`}
                   >
@@ -380,28 +380,28 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
               <div className="bg-slate-900/40 p-3 rounded-xl border border-white/5">
                 <div className="flex items-center gap-1.5 text-amber-500 mb-1">
                   <Trophy size={14} />
-                  <span className="text-[9px] font-bold uppercase tracking-wider">Record (PR)</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider">Record (PR)</span>
                 </div>
                 <p className="text-xl font-bold text-white">{maxExercisePR} <span className="text-xs text-slate-500 font-normal">kg</span></p>
               </div>
               <div className="bg-slate-900/40 p-3 rounded-xl border border-white/5">
                 <div className="flex items-center gap-1.5 text-emerald-400 mb-1">
                   <Target size={14} />
-                  <span className="text-[9px] font-bold uppercase tracking-wider">1RM Est.</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider">1RM Est.</span>
                 </div>
                 <p className="text-xl font-bold text-white">{maxExercise1RM} <span className="text-xs text-slate-500 font-normal">kg</span></p>
               </div>
               <div className="bg-slate-900/40 p-3 rounded-xl border border-white/5">
                 <div className="flex items-center gap-1.5 text-purple-400 mb-1">
                   <Activity size={14} />
-                  <span className="text-[9px] font-bold uppercase tracking-wider">Vol. Max Sesion</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider">Vol. Max Sesion</span>
                 </div>
                 <p className="text-xl font-bold text-white">{maxSessionVolume} <span className="text-xs text-slate-500 font-normal">kg</span></p>
               </div>
               <div className="bg-slate-900/40 p-3 rounded-xl border border-white/5">
                 <div className="flex items-center gap-1.5 text-brand-400 mb-1">
                   <TrendingUp size={14} />
-                  <span className="text-[9px] font-bold uppercase tracking-wider">Evolucion 1RM</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider">Evolucion 1RM</span>
                 </div>
                 <p className="text-xl font-bold text-white">{progress1RM > 0 ? '+' : ''}{progress1RM.toFixed(1)} <span className="text-xs text-slate-500 font-normal">kg</span></p>
               </div>

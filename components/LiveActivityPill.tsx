@@ -121,7 +121,7 @@ export const LiveActivityPill: React.FC<Props> = ({ state, onDismissRest, onAddR
           <div className="flex-1 min-w-0">
             {isResting ? (
               <>
-                <p className={`text-[9px] font-bold uppercase tracking-[0.2em] leading-none mb-0.5 ${
+                <p className={`text-[10px] font-bold uppercase tracking-[0.2em] leading-none mb-0.5 ${
                   isUrgent ? 'text-red-400' : 'text-brand-400'
                 }`}>
                   {isUrgent ? '⚡ ¡Prepárate!' : 'Descansando'}
@@ -134,12 +134,12 @@ export const LiveActivityPill: React.FC<Props> = ({ state, onDismissRest, onAddR
               </>
             ) : isFinished ? (
               <>
-                <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-emerald-400 leading-none mb-0.5">Sesión completada</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-400 leading-none mb-0.5">Sesión completada</p>
                 <p className="text-sm font-display font-bold text-white truncate">{fmtElapsed(elapsedSeconds)}</p>
               </>
             ) : (
               <>
-                <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500 leading-none mb-0.5 truncate">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 leading-none mb-0.5 truncate">
                   {exerciseName || 'Entrenando'}
                 </p>
                 <div className="flex items-baseline gap-2">
@@ -161,7 +161,7 @@ export const LiveActivityPill: React.FC<Props> = ({ state, onDismissRest, onAddR
               <>
                 <button
                   onClick={onAddRest}
-                  className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-[9px] font-bold uppercase tracking-widest text-zinc-300 active:scale-95 transition-all border border-white/5"
+                  className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-[10px] font-bold uppercase tracking-widest text-zinc-300 active:scale-95 transition-all border border-white/5"
                 >+30s</button>
                 <button
                   onClick={onDismissRest}

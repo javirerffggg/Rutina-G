@@ -281,7 +281,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ logs = {} }) => {
                   <div className="bg-black/40 backdrop-blur-md p-5 rounded-2xl border border-white/10">
                     <p className="text-xs text-slate-400 uppercase font-bold tracking-wider mb-2">Disciplina</p>
                     <p className="text-3xl font-black text-white">{((yearlyWorkouts / daysInYear) * 100).toFixed(0)}%</p>
-                    <p className="text-[9px] text-slate-500 mt-1">{daysInYear} dias transcurridos</p>
+                    <p className="text-[10px] text-slate-500 mt-1">{daysInYear} dias transcurridos</p>
                   </div>
                 </div>
                 {topExercises.length > 0 && (

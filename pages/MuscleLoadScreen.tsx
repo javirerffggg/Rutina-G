@@ -12,6 +12,7 @@ export default function MuscleLoadScreen() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'summary' | 'group' | 'history'>('summary');
   const [selectedMuscle, setSelectedMuscle] = useState<string>('chest');
+  const [timeRange, setTimeRange] = useState<7 | 14 | 28>(7);
 
   // Prefer state passed via navigation, but fall back to reading from localStorage
   const allLogs = useMemo(() => state?.allLogs || getLogs(), [state]);
@@ -29,7 +30,7 @@ export default function MuscleLoadScreen() {
     Object.keys(allLogs).forEach(dateStr => {
       const logDate = new Date(dateStr);
       const diffDays = Math.round(Math.abs(todayDate.getTime() - logDate.getTime()) / 86400000);
-      if (diffDays <= 7 && allLogs[dateStr].exercises) {
+      if (diffDays <= timeRange && allLogs[dateStr].exercises) {
         allLogs[dateStr].exercises!.forEach((ex: any) => {
           const muscles = EXERCISE_MUSCLE_MAP[ex.exerciseId] || [];
           const doneSets = ex.sets.filter((s: any) => s.completed && ((s.reps || 0) > 0 || (s.weight || 0) > 0));
@@ -44,7 +45,7 @@ export default function MuscleLoadScreen() {
       }
     });
     return { muscleVolume: volData, muscleSets: setsData };
-  }, [allLogs, state]);
+  }, [allLogs, state, timeRange]);
 
   // Sort muscles for summary tab
   const muscleList = Object.entries(MUSCLE_LABELS)
@@ -187,16 +188,28 @@ export default function MuscleLoadScreen() {
             </div>
 
             <div className="space-y-3">
-               <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-2">Desglose Semanal vs MEV/MAV</h2>
+               <div className="flex items-center justify-between pl-2 pr-1">
+                 <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Desglose vs MEV/MRV</h2>
+                 <div className="flex bg-zinc-900 rounded-lg p-0.5 border border-zinc-800">
+                   <button onClick={() => setTimeRange(7)} className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all ${timeRange === 7 ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>7d</button>
+                   <button onClick={() => setTimeRange(14)} className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all ${timeRange === 14 ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>14d</button>
+                   <button onClick={() => setTimeRange(28)} className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all ${timeRange === 28 ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>4s</button>
+                 </div>
+               </div>
+
                {muscleList.map(({ key, label, sets, vol }) => {
-                 const [mev, mav] = MEV_MAV[key] || [10, 20];
+                 const multiplier = timeRange / 7;
+                 const [mevBase, mrvBase] = MEV_MAV[key] || [10, 20];
+                 const mev = Math.round(mevBase * multiplier);
+                 const mrv = Math.round(mrvBase * multiplier);
+                 
                  const isZero = sets === 0;
                  const isUnder = sets < mev && sets > 0;
-                 const isOver = sets > mav;
-                 const isOptimal = sets >= mev && sets <= mav;
+                 const isOptimal = sets >= mev && sets <= mrv;
+                 const isOver = sets > mrv;
                  
-                 const progressPct = Math.min((sets / (mav || 1)) * 100, 100);
-                 const barColor = isOver ? 'bg-red-500' : isOptimal ? 'bg-emerald-500' : 'bg-brand-400';
+                 const progressPct = Math.min((sets / (mrv || 1)) * 100, 100);
+                 const barColor = isOver ? 'bg-red-500' : isOptimal ? 'bg-emerald-500' : 'bg-amber-400';
 
                  return (
                    <div key={key} onClick={() => { setSelectedMuscle(key); setActiveTab('group'); }} className="bg-zinc-900/60 border border-white/5 rounded-2xl p-4 active:scale-[0.98] transition-transform cursor-pointer">
@@ -207,17 +220,17 @@ export default function MuscleLoadScreen() {
                        </div>
                        <div className="text-right">
                          <p className={`text-xl font-display font-black leading-none ${isZero ? 'text-zinc-600' : isOver ? 'text-red-400' : 'text-white'}`}>{sets}</p>
-                         <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">Series</p>
+                         <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">Series</p>
                        </div>
                      </div>
                      <div className="relative h-1.5 bg-black/40 rounded-full overflow-hidden">
                        <div className={`absolute top-0 left-0 h-full ${barColor} rounded-full transition-all`} style={{ width: `${progressPct}%` }} />
-                       {mev > 0 && <div className="absolute top-0 bottom-0 w-px bg-zinc-600 z-10" style={{ left: `${(mev/mav)*100}%` }} />}
+                       {mev > 0 && <div className="absolute top-0 bottom-0 w-px bg-zinc-600 z-10" style={{ left: `${(mev/mrv)*100}%` }} />}
                      </div>
                      <div className="flex justify-between mt-1.5">
-                       <span className="text-[8px] font-bold text-zinc-600">0</span>
-                       <span className="text-[8px] font-bold text-zinc-600">MEV: {mev}</span>
-                       <span className="text-[8px] font-bold text-zinc-600">MAV: {mav}</span>
+                       <span className="text-[10px] font-bold text-zinc-600">0</span>
+                       <span className="text-[10px] font-bold text-zinc-600">MEV: {mev}</span>
+                       <span className="text-[10px] font-bold text-zinc-600">MRV: {mrv}</span>
                      </div>
                    </div>
                  );
@@ -308,7 +321,7 @@ export default function MuscleLoadScreen() {
               </div>
               <div className="mt-4 flex flex-wrap gap-2 justify-center">
                  {Object.keys(MUSCLE_LABELS).slice(0, 8).map((m, idx) => (
-                    <span key={m} className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1">
+                    <span key={m} className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1">
                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
                        {MUSCLE_LABELS[m]}
                     </span>

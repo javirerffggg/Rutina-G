@@ -87,7 +87,7 @@ export const DesktopPlan: React.FC = () => {
               <p className={`text-xl font-bold ${
                 day.isToday ? 'text-white' : day.isFuture ? 'text-zinc-600' : 'text-zinc-300'
               }`}>{day.dayNum}</p>
-              <p className="text-[9px] text-zinc-600">{day.month}</p>
+              <p className="text-[10px] text-zinc-600">{day.month}</p>
             </div>
 
             {/* Content */}
@@ -147,7 +147,7 @@ export const DesktopPlan: React.FC = () => {
                   <div
                     key={d.iso}
                     title={d.iso}
-                    className={`w-7 h-7 rounded-md flex items-center justify-center text-[9px] font-bold ${
+                    className={`w-7 h-7 rounded-md flex items-center justify-center text-[10px] font-bold ${
                       d.completed ? 'bg-brand-500/20 text-brand-400 border border-brand-500/30' : 'bg-zinc-800 text-zinc-600'
                     }`}
                   >

@@ -20,6 +20,8 @@ export const pushSyncState = mutation({
     routines: v.optional(v.string()),
     settings: v.optional(v.string()),
     rpgLevel: v.optional(v.string()),
+    rpgXp: v.optional(v.number()),
+    username: v.optional(v.string()),
     updatedAt: v.number(),
   },
   handler: async (ctx, args) => {
@@ -36,6 +38,8 @@ export const pushSyncState = mutation({
           routines: args.routines,
           settings: args.settings,
           rpgLevel: args.rpgLevel,
+          rpgXp: args.rpgXp,
+          username: args.username,
           updatedAt: args.updatedAt,
         });
       }
@@ -47,6 +51,8 @@ export const pushSyncState = mutation({
         routines: args.routines,
         settings: args.settings,
         rpgLevel: args.rpgLevel,
+        rpgXp: args.rpgXp,
+        username: args.username,
         updatedAt: args.updatedAt,
       });
     }

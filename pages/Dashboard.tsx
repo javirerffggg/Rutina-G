@@ -101,6 +101,8 @@ const Dashboard: React.FC = () => {
 
   const specialSchedule = getGymSchedule(today);
 
+  const [activeFocusTab, setActiveFocusTab] = useState<'nutrition' | 'training'>('nutrition');
+
   // Hook del nuevo sistema de progresión RPG
   const { rankInfo, addXP } = useProgression();
 
@@ -223,27 +225,33 @@ const Dashboard: React.FC = () => {
   }, [muscleSets]);
 
   const renderCompactRating = (field: 'sleep' | 'energy' | 'stress', icon: React.ReactNode, iconColor: string, activeClass: string) => (
-    <div className="flex items-center justify-between gap-3">
-      <div className={`flex items-center gap-2 w-[72px] ${iconColor}`}>
-        {icon}
-        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-          {field === 'sleep' ? 'Sueño' : field === 'energy' ? 'Energía' : 'Estrés'}
-        </span>
+    <div className="flex flex-col gap-1.5 mb-2">
+      <div className="flex justify-between pl-[84px] text-[10px] text-zinc-600 font-bold uppercase tracking-widest">
+         <span>Muy bajo</span>
+         <span>Muy alto</span>
       </div>
-      <div className="flex flex-1 justify-between gap-1.5">
-        {[1, 2, 3, 4, 5].map((val) => (
-          <button
-            key={val}
-            onClick={() => updateBiofeedback(field, val)}
-            className={`h-8 flex-1 rounded text-[10px] font-bold transition-all border ${
-              log[field] === val
-                ? `${activeClass} shadow-md scale-105`
-                : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-500 hover:bg-zinc-700/80 hover:text-zinc-300'
-            }`}
-          >
-            {val}
-          </button>
-        ))}
+      <div className="flex items-center justify-between gap-3">
+        <div className={`flex items-center gap-2 w-[72px] ${iconColor}`}>
+          {icon}
+          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+            {field === 'sleep' ? 'Sueño' : field === 'energy' ? 'Energía' : 'Estrés'}
+          </span>
+        </div>
+        <div className="flex flex-1 justify-between gap-1.5">
+          {[1, 2, 3, 4, 5].map((val) => (
+            <button
+              key={val}
+              onClick={() => updateBiofeedback(field, val)}
+              className={`h-8 flex-1 rounded text-[10px] font-bold transition-all border ${
+                log[field] === val
+                  ? `${activeClass} shadow-md scale-105`
+                  : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-500 hover:bg-zinc-700/80 hover:text-zinc-300'
+              }`}
+            >
+              {val}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -271,84 +279,6 @@ const Dashboard: React.FC = () => {
         </p>
       </header>
 
-      {/* ── HERO CARD - ACTUAL PHASE ── */}
-      <div className={`mb-5 relative rounded-3xl overflow-hidden shadow-2xl ${colors.shadow} border ${colors.border} premium-bisel`}>
-        <div className={`absolute inset-0 bg-gradient-to-br ${colors.gradient} z-0`} />
-        <div className="absolute top-0 right-0 p-3 opacity-10"><Target size={140} className="text-white" /></div>
-        <div className="relative z-10 p-6 space-y-5">
-          <div className="flex justify-between items-start">
-            <div>
-               <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-widest ${colors.bg} ${colors.text} ${colors.border}`}>
-                 <colors.icon size={12} strokeWidth={3} /> {colors.label}
-               </span>
-               <h2 className="text-3xl font-display font-bold text-white leading-tight mt-3">{phase.name}</h2>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4 text-xs font-bold text-zinc-300">
-             <div className="flex items-center gap-1.5"><Clock size={14} className={colors.text}/> {phaseProgress.remainingDays} días restantes</div>
-             <div className="flex items-center gap-1.5"><CalendarRange size={14} className={colors.text}/> Semana {phaseProgress.currentWeek}/{phaseProgress.totalWeeks}</div>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex justify-between text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-              <span>Progreso de Fase</span>
-              <span className={colors.text}>{phaseProgress.pct}%</span>
-            </div>
-            <div className="w-full h-2 bg-black/60 rounded-full overflow-hidden border border-white/5">
-              <div className={`h-full ${colors.bar} rounded-full transition-all duration-700`} style={{ width: `${phaseProgress.pct}%` }} />
-            </div>
-          </div>
-          {phase.name === 'Descarga (Deload)' && (
-            <div className="mt-4 bg-amber-500/20 border border-amber-500/30 text-amber-400 p-3 rounded-2xl flex items-start gap-2 backdrop-blur-md">
-              <AlertTriangle size={18} className="mt-0.5 shrink-0" />
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-white">¡Toca Descarga!</p>
-                <p className="text-[10px] leading-relaxed mt-0.5 opacity-90">{phase.description}</p>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── HOY EN ESTA FASE ── */}
-      <section className="mb-5 space-y-4">
-         <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] px-1">Foco Actual</h3>
-         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* DIETA */}
-            <div className={`p-4 rounded-2xl bg-zinc-900/60 border border-white/5 hover:border-orange-500/30 transition-all`}>
-               <div className="flex items-center gap-2 mb-3">
-                  <div className="p-1.5 rounded-lg bg-orange-500/10 text-orange-400"><Flame size={16}/></div>
-                  <h4 className="font-bold text-sm text-white">Nutrición</h4>
-               </div>
-               <ul className="space-y-2">
-                  {parseToBullets(phase.nutritionGoal).map((bullet, idx) => (
-                     <li key={idx} className="flex items-start gap-2 text-xs text-zinc-400 font-medium">
-                        <div className="w-1.5 h-1.5 rounded-full bg-orange-500/50 mt-1.5 shrink-0"/>
-                        <span className="leading-relaxed">{bullet}</span>
-                     </li>
-                  ))}
-               </ul>
-            </div>
-
-            {/* ENTRENO */}
-            <div className={`p-4 rounded-2xl bg-zinc-900/60 border border-white/5 hover:border-brand-500/30 transition-all`}>
-               <div className="flex items-center gap-2 mb-3">
-                  <div className="p-1.5 rounded-lg bg-brand-500/10 text-brand-400"><Dumbbell size={16}/></div>
-                  <h4 className="font-bold text-sm text-white">Entrenamiento</h4>
-               </div>
-               <ul className="space-y-2">
-                  {parseToBullets(phase.trainingFocus).map((bullet, idx) => (
-                     <li key={idx} className="flex items-start gap-2 text-xs text-zinc-400 font-medium">
-                        <div className="w-1.5 h-1.5 rounded-full bg-brand-500/50 mt-1.5 shrink-0"/>
-                        <span className="leading-relaxed">{bullet}</span>
-                     </li>
-                  ))}
-               </ul>
-            </div>
-         </div>
-      </section>
-
       {/* ── ALERTA HORARIO ESPECIAL ── */}
       {specialSchedule && (
         <div className={`mb-5 p-4 rounded-2xl border flex items-center gap-4 animate-in slide-in-from-top-4 ${
@@ -370,7 +300,7 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      {/* ── CARD PRINCIPAL ENTRENO ── */}
+      {/* ── CARD PRINCIPAL ENTRENO (MAIN CTA) ── */}
       <div
         onClick={() => navigate('/workout')}
         className={`mb-5 relative overflow-hidden p-6 rounded-3xl border transition-all cursor-pointer group shadow-2xl active:scale-[0.98] ${
@@ -422,6 +352,74 @@ const Dashboard: React.FC = () => {
         )}
       </div>
 
+      {/* ── FASE ACTUAL (COMPACT STATUS PILL) ── */}
+      <div className={`mb-5 rounded-2xl border p-4 ${colors.bg} ${colors.border}`}>
+        <div className="flex justify-between items-center mb-3">
+          <div>
+            <p className={`text-[10px] uppercase font-bold tracking-widest ${colors.text}`}>Fase Actual</p>
+            <h3 className="text-lg font-bold text-white flex items-center gap-1.5">
+              <colors.icon size={16} className={colors.text} />
+              {phase.name}
+            </h3>
+          </div>
+          <div className="text-right">
+             <p className="text-[10px] uppercase font-bold text-zinc-500">Progreso</p>
+             <p className={`text-sm font-bold ${colors.text}`}>{phaseProgress.pct}%</p>
+          </div>
+        </div>
+        <div className="w-full h-1.5 bg-black/40 rounded-full overflow-hidden border border-white/5">
+           <div className={`h-full ${colors.bar} rounded-full transition-all duration-700`} style={{ width: `${phaseProgress.pct}%` }} />
+        </div>
+        {phase.name === 'Descarga (Deload)' && (
+          <div className="mt-3 text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
+             <AlertTriangle size={12} /> ¡Semana de descarga! Reduce el volumen.
+          </div>
+        )}
+      </div>
+
+      {/* ── FOCO ACTUAL (TABS) ── */}
+      <section className="mb-5 bg-zinc-900/50 border border-white/5 rounded-2xl overflow-hidden">
+        <div className="flex border-b border-white/5">
+           <button 
+             onClick={() => setActiveFocusTab('nutrition')}
+             className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
+               activeFocusTab === 'nutrition' ? 'bg-orange-500/10 text-orange-400 border-b-2 border-orange-500' : 'text-zinc-500 hover:text-zinc-300'
+             }`}
+           >
+             <Flame size={14}/> Nutrición
+           </button>
+           <button 
+             onClick={() => setActiveFocusTab('training')}
+             className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
+               activeFocusTab === 'training' ? 'bg-brand-500/10 text-brand-400 border-b-2 border-brand-500' : 'text-zinc-500 hover:text-zinc-300'
+             }`}
+           >
+             <Dumbbell size={14}/> Entrenamiento
+           </button>
+        </div>
+        <div className="p-4">
+           {activeFocusTab === 'nutrition' ? (
+              <ul className="space-y-2 animate-in fade-in">
+                 {parseToBullets(phase.nutritionGoal).map((bullet, idx) => (
+                    <li key={idx} className="flex items-start gap-2 text-xs text-zinc-400 font-medium">
+                       <div className="w-1.5 h-1.5 rounded-full bg-orange-500/50 mt-1.5 shrink-0"/>
+                       <span className="leading-relaxed">{bullet}</span>
+                    </li>
+                 ))}
+              </ul>
+           ) : (
+              <ul className="space-y-2 animate-in fade-in">
+                 {parseToBullets(phase.trainingFocus).map((bullet, idx) => (
+                    <li key={idx} className="flex items-start gap-2 text-xs text-zinc-400 font-medium">
+                       <div className="w-1.5 h-1.5 rounded-full bg-brand-500/50 mt-1.5 shrink-0"/>
+                       <span className="leading-relaxed">{bullet}</span>
+                    </li>
+                 ))}
+              </ul>
+           )}
+        </div>
+      </section>
+
       {/* ── GRID PESO + NUTRICIÓN ── */}
       <div className="grid grid-cols-2 gap-3 mb-5">
         {/* Peso */}
@@ -443,7 +441,7 @@ const Dashboard: React.FC = () => {
           </div>
           <div className="mt-2 pt-2 border-t border-zinc-800 flex items-center gap-1.5">
             {renderTrendIcon(weightTrend)}
-            <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 truncate">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 truncate">
               Media 7d: <span className="text-zinc-400">{weightAvg7d?.toFixed(1) || '--'}kg</span>
             </span>
           </div>
@@ -461,7 +459,7 @@ const Dashboard: React.FC = () => {
           <p className="text-xs font-medium text-zinc-300 leading-relaxed flex-1 line-clamp-2">
             {phase.nutritionGoal.split('.')[0]}.
           </p>
-          <div className="mt-2 pt-2 border-t border-zinc-800 flex items-center justify-between text-[9px] font-bold uppercase tracking-widest text-zinc-500 group-hover:text-amber-500 transition-colors">
+          <div className="mt-2 pt-2 border-t border-zinc-800 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-zinc-500 group-hover:text-amber-500 transition-colors">
             Ver plan <ChevronRight size={10} />
           </div>
         </section>

@@ -10,6 +10,7 @@ const ALL_EXERCISES = [...EXERCISES_PUSH, ...EXERCISES_PULL, ...EXERCISES_LEGS, 
 const History: React.FC = () => {
   const [logs, setLogs] = useState<Record<string, DailyLog>>(() => getLogs());
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeFilter, setActiveFilter] = useState<string>('All');
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
   const [logToDelete, setLogToDelete] = useState<string | null>(null);
 
@@ -26,6 +27,13 @@ const History: React.FC = () => {
     let sortedLogs = (Object.values(logs) as DailyLog[])
       .filter(log => log.exercises && log.exercises.length > 0 && log.workoutCompleted)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    if (activeFilter !== 'All') {
+      sortedLogs = sortedLogs.filter(log => {
+        const type = log.workoutType?.toLowerCase() || '';
+        return type.includes(activeFilter.toLowerCase());
+      });
+    }
 
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
@@ -96,16 +104,34 @@ const History: React.FC = () => {
         <p className="text-xs text-zinc-400 font-medium mt-1">Tu diario cronológico de entrenamiento</p>
       </header>
 
-      {/* SEARCH BAR */}
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
-        <input 
-          type="text" 
-          placeholder="Buscar ejercicio o músculo..." 
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-          className="w-full bg-zinc-900/50 border border-zinc-800 rounded-2xl py-3.5 pl-11 pr-4 text-sm font-bold text-white placeholder:text-zinc-600 focus:outline-none focus:border-brand-500/50 focus:bg-zinc-900 transition-all"
-        />
+      {/* SEARCH BAR & FILTERS */}
+      <div className="space-y-4">
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+          <input 
+            type="text" 
+            placeholder="Buscar ejercicio o músculo..." 
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-full bg-zinc-900/50 border border-zinc-800 rounded-2xl py-3.5 pl-11 pr-4 text-sm font-bold text-white placeholder:text-zinc-600 focus:outline-none focus:border-brand-500/50 focus:bg-zinc-900 transition-all"
+          />
+        </div>
+
+        <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide snap-x">
+          {['All', 'Push', 'Pull', 'Legs', 'Upper', 'Lower'].map(filter => (
+            <button
+              key={filter}
+              onClick={() => setActiveFilter(filter)}
+              className={`snap-start shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${
+                activeFilter === filter 
+                  ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20' 
+                  : 'bg-zinc-800/50 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-300'
+              }`}
+            >
+              {filter === 'All' ? 'Todos' : filter}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* HISTORIAL LIST */}
@@ -126,12 +152,12 @@ const History: React.FC = () => {
                 {/* LOG SUMMARY ROW */}
                 <div 
                   onClick={() => setExpandedLogId(isExpanded ? null : log.date)}
-                  className="p-5 cursor-pointer select-none"
+                  className="p-5 cursor-pointer select-none active:scale-[0.98] transition-transform"
                 >
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <h3 className="text-sm font-bold text-white capitalize">{dateStr}</h3>
-                      <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mt-0.5">
+                      <p className="text-[10px] text-brand-400 uppercase tracking-widest font-bold mt-0.5 inline-block bg-brand-500/10 px-2 py-0.5 rounded-md">
                         {log.workoutType || 'Sesión Libre'}
                       </p>
                     </div>
@@ -145,6 +171,7 @@ const History: React.FC = () => {
                       <button 
                         onClick={(e) => { e.stopPropagation(); setLogToDelete(log.date); }}
                         className="p-1.5 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                        aria-label="Eliminar entrenamiento"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -153,15 +180,15 @@ const History: React.FC = () => {
 
                   <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-zinc-800/50">
                     <div className="flex flex-col">
-                      <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold mb-1 flex items-center gap-1"><Clock size={10}/> Duración</span>
+                      <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1 flex items-center gap-1"><Clock size={10}/> Duración</span>
                       <span className="text-xs font-bold text-zinc-300">{log.duration ? `${log.duration} min` : '--'}</span>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold mb-1 flex items-center gap-1"><Dumbbell size={10}/> Volumen</span>
+                      <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1 flex items-center gap-1"><Dumbbell size={10}/> Volumen</span>
                       <span className="text-xs font-bold text-brand-400">{log.tonnage.toLocaleString()} kg</span>
                     </div>
                     <div className="flex flex-col items-end">
-                      <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold mb-1 flex items-center gap-1"><Hash size={10}/> Series</span>
+                      <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1 flex items-center gap-1"><Hash size={10}/> Series</span>
                       <span className="text-xs font-bold text-zinc-300 flex items-center gap-1">
                         {log.totalSets} <ChevronDown size={14} className={`text-zinc-600 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                       </span>
@@ -175,7 +202,7 @@ const History: React.FC = () => {
                     {/* PRs List */}
                     {log.prs.length > 0 && (
                       <div className="bg-amber-950/20 border border-amber-500/10 rounded-2xl p-3">
-                        <h4 className="text-[9px] text-amber-500 uppercase tracking-widest font-bold mb-2 flex items-center gap-1">
+                        <h4 className="text-[10px] text-amber-500 uppercase tracking-widest font-bold mb-2 flex items-center gap-1">
                           <Flame size={12} /> Récords del día
                         </h4>
                         <ul className="space-y-1">
@@ -190,7 +217,7 @@ const History: React.FC = () => {
 
                     {/* Exercises List */}
                     <div className="space-y-3">
-                      <h4 className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Ejercicios Realizados</h4>
+                      <h4 className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Ejercicios Realizados</h4>
                       {log.enrichedExercises.map((ex, i) => (
                         <div key={i} className="flex justify-between items-center bg-zinc-900/50 p-3 rounded-xl border border-white/5">
                           <div className="flex-1 min-w-0 pr-3">

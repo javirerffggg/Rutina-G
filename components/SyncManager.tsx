@@ -32,6 +32,8 @@ export const SyncManager: React.FC = () => {
       if (serverState.routines) localStorage.setItem('customRoutines', serverState.routines);
       if (serverState.settings) localStorage.setItem('appSettings', serverState.settings);
       if (serverState.rpgLevel) localStorage.setItem('rpg_last_seen_level', serverState.rpgLevel);
+      if (serverState.rpgXp !== undefined) localStorage.setItem('rutinag_xp_total', serverState.rpgXp.toString());
+      if (serverState.username) localStorage.setItem('rutinag_username', serverState.username);
       localStorage.setItem('ot_last_update', serverState.updatedAt.toString());
       window.dispatchEvent(new Event('storage-update'));
       window.dispatchEvent(new Event('achievements-unlocked'));
@@ -42,6 +44,10 @@ export const SyncManager: React.FC = () => {
       const routines = localStorage.getItem('customRoutines') || '[]';
       const settings = localStorage.getItem('appSettings') || '{}';
       const rpgLevel = localStorage.getItem('rpg_last_seen_level') || '1';
+      const rpgXpStr = localStorage.getItem('rutinag_xp_total');
+      const rpgXp = rpgXpStr ? parseInt(rpgXpStr, 10) : 0;
+      const username = localStorage.getItem('rutinag_username') || undefined;
+      
       if (pushSync && api) {
         pushSync({
           deviceId,
@@ -50,6 +56,8 @@ export const SyncManager: React.FC = () => {
           routines,
           settings,
           rpgLevel,
+          rpgXp,
+          username,
           updatedAt: localUpdatedAt
         }).catch(console.error);
       }
@@ -67,6 +75,10 @@ export const SyncManager: React.FC = () => {
       const routines = localStorage.getItem('customRoutines') || '[]';
       const settings = localStorage.getItem('appSettings') || '{}';
       const rpgLevel = localStorage.getItem('rpg_last_seen_level') || '1';
+      const rpgXpStr = localStorage.getItem('rutinag_xp_total');
+      const rpgXp = rpgXpStr ? parseInt(rpgXpStr, 10) : 0;
+      const username = localStorage.getItem('rutinag_username') || undefined;
+
       if (pushSync && api) {
         pushSync({
           deviceId,
@@ -75,6 +87,8 @@ export const SyncManager: React.FC = () => {
           routines,
           settings,
           rpgLevel,
+          rpgXp,
+          username,
           updatedAt: now
         }).catch(console.error);
       }

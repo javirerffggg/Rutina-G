@@ -13,6 +13,7 @@ import { WeeklyPlanEditor } from '../components/WeeklyPlanEditor';
 
 export const Settings: React.FC = () => {
   const [settings, setSettingsState] = useState<AppSettings>(getSettings());
+  const [username, setUsername] = useState(() => localStorage.getItem('rutinag_username') || '');
 
   const updateSetting = (key: keyof AppSettings, value: any) => {
     const updated = saveSettings({ [key]: value });
@@ -22,6 +23,13 @@ export const Settings: React.FC = () => {
   const updateProfile = (key: keyof AppSettings['profile'], value: any) => {
     const newProfile = { ...settings.profile, [key]: value };
     updateSetting('profile', newProfile);
+  };
+
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setUsername(val);
+    localStorage.setItem('rutinag_username', val);
+    window.dispatchEvent(new Event('storage-update'));
   };
 
   const updateNotification = (key: keyof AppSettings['notifications'], value: any) => {
@@ -305,6 +313,16 @@ export const Settings: React.FC = () => {
           <RefreshCw size={14}/> Integración y Sync
         </h3>
         <div className="bg-zinc-900/50 border border-white/5 rounded-3xl p-1">
+          <div className="p-4 border-b border-white/5">
+            <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest block mb-1">Nombre de Usuario (Cloud)</label>
+            <input 
+              type="text" 
+              value={username} 
+              onChange={handleUsernameChange}
+              placeholder="Añade un usuario para vincular tu dispositivo"
+              className="w-full bg-transparent text-white font-bold text-lg outline-none placeholder:text-zinc-700"
+            />
+          </div>
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center gap-3">
                <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />

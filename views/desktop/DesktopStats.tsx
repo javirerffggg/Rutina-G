@@ -367,7 +367,7 @@ export const DesktopStats: React.FC = () => {
               />
             ))}
           </div>
-          <div className="flex gap-3 mt-3 text-[9px] font-bold uppercase tracking-widest text-zinc-600">
+          <div className="flex gap-3 mt-3 text-[10px] font-bold uppercase tracking-widest text-zinc-600">
             <span className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-sm bg-brand-500" /> Entreno</span>
             <span className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-sm bg-violet-500/60" /> Solo peso</span>
           </div>
@@ -394,15 +394,15 @@ export const DesktopStats: React.FC = () => {
             <>
               <div className="grid grid-cols-3 gap-3">
                 <div className="bg-zinc-800/60 rounded-xl p-3">
-                  <div className="flex items-center gap-1 text-amber-400 mb-1"><Trophy size={12} /><span className="text-[9px] font-bold uppercase tracking-widest">PR</span></div>
+                  <div className="flex items-center gap-1 text-amber-400 mb-1"><Trophy size={12} /><span className="text-[10px] font-bold uppercase tracking-widest">PR</span></div>
                   <p className="text-xl font-bold text-white tabular-nums">{maxPR} <span className="text-xs text-zinc-500">kg</span></p>
                 </div>
                 <div className="bg-zinc-800/60 rounded-xl p-3">
-                  <div className="flex items-center gap-1 text-emerald-400 mb-1"><Target size={12} /><span className="text-[9px] font-bold uppercase tracking-widest">1RM Est.</span></div>
+                  <div className="flex items-center gap-1 text-emerald-400 mb-1"><Target size={12} /><span className="text-[10px] font-bold uppercase tracking-widest">1RM Est.</span></div>
                   <p className="text-xl font-bold text-white tabular-nums">{max1RM} <span className="text-xs text-zinc-500">kg</span></p>
                 </div>
                 <div className="bg-zinc-800/60 rounded-xl p-3">
-                  <div className="flex items-center gap-1 text-brand-400 mb-1"><TrendingUp size={12} /><span className="text-[9px] font-bold uppercase tracking-widest">Δ 1RM</span></div>
+                  <div className="flex items-center gap-1 text-brand-400 mb-1"><TrendingUp size={12} /><span className="text-[10px] font-bold uppercase tracking-widest">Δ 1RM</span></div>
                   <p className="text-xl font-bold text-white tabular-nums">{delta1RM > 0 ? '+' : ''}{delta1RM.toFixed(1)} <span className="text-xs text-zinc-500">kg</span></p>
                 </div>
               </div>

@@ -78,7 +78,7 @@ const AchievementCard: React.FC<{
         {isHidden ? (
           <>
             <p className="text-xs font-bold text-zinc-500 blur-sm select-none">Logro Oculto</p>
-            <p className={`text-[9px] font-bold uppercase tracking-widest mt-0.5 ${meta.text}`}>{TIER_META[ach.tier].emoji} Oculto</p>
+            <p className={`text-[10px] font-bold uppercase tracking-widest mt-0.5 ${meta.text}`}>{TIER_META[ach.tier].emoji} Oculto</p>
           </>
         ) : (
           <>
@@ -88,10 +88,10 @@ const AchievementCard: React.FC<{
                 <div className="flex-1 h-1 bg-zinc-800 rounded-full overflow-hidden">
                   <div className="h-full bg-zinc-500 rounded-full" style={{ width: `${(ach.prog.current / ach.prog.max) * 100}%` }} />
                 </div>
-                <span className="text-[9px] font-bold text-zinc-500 tabular-nums">{ach.prog.current}/{ach.prog.max}</span>
+                <span className="text-[10px] font-bold text-zinc-500 tabular-nums">{ach.prog.current}/{ach.prog.max}</span>
               </div>
             ) : (
-              <p className={`text-[9px] font-bold uppercase tracking-widest mt-0.5 ${
+              <p className={`text-[10px] font-bold uppercase tracking-widest mt-0.5 ${
                 ach.isUnlocked ? (meta as any).text : 'text-zinc-600'
               }`}>
                 {ach.isUnlocked ? TIER_META[ach.tier].label : 'Bloqueado'}
@@ -353,9 +353,9 @@ export const DesktopTrophyRoom: React.FC = () => {
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${m.bg}`}><Icon size={14} className={m.text} /></div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-white truncate">{ach.title}</p>
-                      <p className="text-[9px] text-zinc-500 font-bold">{new Date(unlocked[ach.id]).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}</p>
+                      <p className="text-[10px] text-zinc-500 font-bold">{new Date(unlocked[ach.id]).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}</p>
                     </div>
-                    <span className={`text-[9px] font-bold ${m.text}`}>{m.emoji}</span>
+                    <span className={`text-[10px] font-bold ${m.text}`}>{m.emoji}</span>
                   </div>
                 );
               })}
@@ -380,7 +380,7 @@ export const DesktopTrophyRoom: React.FC = () => {
                         <div className="flex-1 h-1 bg-zinc-800 rounded-full overflow-hidden">
                           <div className="h-full bg-brand-500 rounded-full" style={{ width: `${pct}%` }} />
                         </div>
-                        <span className="text-[9px] font-bold text-brand-400">{pct}%</span>
+                        <span className="text-[10px] font-bold text-brand-400">{pct}%</span>
                       </div>
                     </div>
                   </div>
@@ -416,7 +416,7 @@ export const DesktopTrophyRoom: React.FC = () => {
                   <CatIcon size={14} className={isActive ? 'text-brand-400' : ''} />
                   <div className="flex-1 min-w-0">
                     <p className="text-[11px] font-bold truncate">{CATEGORY_NAMES[cat]}</p>
-                    <p className="text-[9px] text-zinc-600">{catUnlocked}/{catList.length} · {pct}%</p>
+                    <p className="text-[10px] text-zinc-600">{catUnlocked}/{catList.length} · {pct}%</p>
                   </div>
                 </button>
               );
@@ -426,7 +426,7 @@ export const DesktopTrophyRoom: React.FC = () => {
               <div className="flex bg-zinc-900 rounded-lg p-0.5 border border-zinc-800">
                 {(['GRID', 'TIMELINE'] as const).map(v => (
                   <button key={v} onClick={() => { setViewMode(v); setSelectedAch(null); }}
-                    className={`flex-1 py-1.5 rounded-md text-[9px] font-bold uppercase tracking-widest transition-all ${
+                    className={`flex-1 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all ${
                       viewMode === v ? 'bg-zinc-700 text-white' : 'text-zinc-500 hover:text-zinc-300'
                     }`}>{v === 'GRID' ? 'Grid' : 'Timeline'}
                   </button>

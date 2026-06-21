@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { LayoutDashboard, Dumbbell, CalendarRange, Scale, Trophy, Settings } from 'lucide-react';
 import { ACHIEVEMENTS, AchievementDef } from '../achievements';
+import { getUnlockedAchievements } from '../services/storage';
 import * as Icons from 'lucide-react';
 import { useLiveActivity } from '../hooks/useLiveActivity';
 import { LiveActivityPill } from './LiveActivityPill';
@@ -31,6 +32,19 @@ const Layout: React.FC = () => {
   const liveActivity = useLiveActivity();
   const [forceHideNav, setForceHideNav] = useState(false);
   const { levelUpData, clearLevelUp } = useProgression();
+  const [unseenTrophies, setUnseenTrophies] = useState(0);
+
+  useEffect(() => {
+    const checkUnseen = () => {
+      const unlocked = getUnlockedAchievements();
+      const count = Object.keys(unlocked).length;
+      const lastSeen = parseInt(localStorage.getItem('lastSeenTrophies') || '0', 10);
+      setUnseenTrophies(Math.max(0, count - lastSeen));
+    };
+    checkUnseen();
+    window.addEventListener('focus', checkUnseen);
+    return () => window.removeEventListener('focus', checkUnseen);
+  }, [toastQueue]);
 
   const handleDismissRest = useCallback(() => {
     window.dispatchEvent(new CustomEvent('live-activity-dismiss-rest'));
@@ -238,9 +252,12 @@ const Layout: React.FC = () => {
             </NavLink>
 
             <NavLink to="/trophies" className={({ isActive }) =>
-              `flex flex-col items-center gap-1.5 transition-all ${ isActive ? 'text-amber-500 scale-110' : 'text-zinc-500 hover:text-zinc-300' }`
+              `relative flex flex-col items-center gap-1.5 transition-all ${ isActive ? 'text-amber-500 scale-110' : 'text-zinc-500 hover:text-zinc-300' }`
             }>
               {({ isActive }) => (<>
+                {unseenTrophies > 0 && (
+                  <span className="absolute -top-0.5 right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse border-2 border-zinc-950" />
+                )}
                 <Trophy size={22} strokeWidth={isActive ? 2.5 : 2} />
                 <span className="text-[9px] font-bold tracking-[0.1em] uppercase">Logros</span>
               </>)}

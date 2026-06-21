@@ -145,6 +145,32 @@
 
       .pt-safe { padding-top: max(16px, env(safe-area-inset-top)); }
       .pb-safe { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+
+      @keyframes border-spin {
+        from { --angle: 0deg; }
+        to { --angle: 360deg; }
+      }
+      @property --angle {
+        syntax: '<angle>';
+        initial-value: 0deg;
+        inherits: false;
+      }
+      .trophy-card-elite {
+        border: 2px solid transparent;
+        background: 
+          linear-gradient(#09090b, #09090b) padding-box,
+          conic-gradient(from var(--angle), #a855f7, #06b6d4, #a855f7) border-box;
+        animation: border-spin 3s linear infinite;
+      }
+      .trophy-card-diamond {
+        backdrop-filter: blur(12px);
+        background: rgba(8, 145, 178, 0.1);
+        border: 1px solid rgba(34, 211, 238, 0.4);
+        box-shadow: 0 0 20px rgba(34, 211, 238, 0.2);
+      }
+      .trophy-card-gold {
+        background: linear-gradient(135deg, rgba(251,191,36,0.1), rgba(251,191,36,0.2));
+      }
     </style>
   <script type="importmap">
 {

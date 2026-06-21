@@ -12,9 +12,18 @@ export interface AchievementDef {
   icon: string;
   tier: AchievementTier;
   condition: (logs: Record<string, DailyLog>, todayStr: string) => boolean;
-    category: AchievementCategory;
-    progress?: (logs: Record<string, DailyLog>, today: string) => { current: number; max: number; label?: string };
+  category: AchievementCategory;
+  progress?: (logs: Record<string, DailyLog>, today: string) => { current: number; max: number; label?: string };
+  xp?: number;
 }
+
+export const TIER_XP: Record<AchievementTier, number> = {
+  BRONZE: 100,
+  SILVER: 250,
+  GOLD: 500,
+  DIAMOND: 1000,
+  ELITE: 2000
+};
 
 export const ACHIEVEMENTS: AchievementDef[] = [
   // --- Categoría A: Fuerza Bruta ---

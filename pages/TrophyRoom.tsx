@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { ACHIEVEMENTS, AchievementDef, AchievementTier, AchievementCategory } from '../achievements';
+import { ACHIEVEMENTS, AchievementDef, AchievementTier, AchievementCategory, TIER_XP } from '../achievements';
 import { getUnlockedAchievements, getLogs } from '../services/storage';
 import { getTodayDateString } from '../utils';
 import * as Icons from 'lucide-react';
@@ -41,6 +41,8 @@ const TrophyRoom: React.FC = () => {
   const [logs, setLogs] = useState<Record<string, DailyLog>>({});
   const [selected, setSelected] = useState<AchievementDef | null>(null);
   const [activeTab, setActiveTab] = useState<AchievementCategory>('CONSISTENCIA');
+  const [activeTier, setActiveTier] = useState<AchievementTier | null>(null);
+  const [viewMode, setViewMode] = useState<'GRID' | 'TIMELINE'>('GRID');
 
   const today = getTodayDateString();
   const { rankInfo } = useProgression();
@@ -97,8 +99,21 @@ const TrophyRoom: React.FC = () => {
   const actionableAchievement = almostUnlocked.length > 0 ? almostUnlocked[0] : null;
 
   const filteredCollection = useMemo(() => {
-    return enrichedAchievements.filter(a => a.category === activeTab);
-  }, [enrichedAchievements, activeTab]);
+    return enrichedAchievements.filter(a => a.category === activeTab && (activeTier === null || a.tier === activeTier));
+  }, [enrichedAchievements, activeTab, activeTier]);
+
+  const timelineGroups = useMemo(() => {
+    if (viewMode !== 'TIMELINE') return [];
+    const unlockedArr = enrichedAchievements.filter(a => a.isUnlocked).sort((a, b) => new Date(unlocked[b.id]).getTime() - new Date(unlocked[a.id]).getTime());
+    const groups: Record<string, typeof unlockedArr> = {};
+    unlockedArr.forEach(ach => {
+      const d = new Date(unlocked[ach.id]);
+      const monthYear = d.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' }).toUpperCase();
+      if (!groups[monthYear]) groups[monthYear] = [];
+      groups[monthYear].push(ach);
+    });
+    return Object.entries(groups);
+  }, [enrichedAchievements, unlocked, viewMode]);
 
   const sortedCollection = useMemo(() => [
     ...filteredCollection.filter(a => a.isUnlocked),
@@ -135,14 +150,18 @@ const TrophyRoom: React.FC = () => {
               style={{ width: `${globalProgress}%` }}
             />
           </div>
-          <div className="flex gap-3 mt-2 w-full justify-between sm:justify-end">
+          <div className="flex gap-2 sm:gap-3 mt-2 w-full justify-between sm:justify-end">
             {TIERS.map(tier => {
               const count = enrichedAchievements.filter(a => a.isUnlocked && a.tier === tier).length;
               const meta = TIER_META[tier];
               return (
-                <span key={tier} className={`text-[10px] font-bold ${meta.text}`}>
+                <button 
+                  key={tier} 
+                  onClick={() => setActiveTier(prev => prev === tier ? null : tier)}
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-all active:scale-95 ${activeTier === tier ? `${meta.bg} ${meta.border} ring-1 ring-white/20 ${meta.text}` : `${meta.text} hover:bg-zinc-800 border border-transparent`}`}
+                >
                   {meta.emoji} {count}
-                </span>
+                </button>
               );
             })}
           </div>
@@ -262,6 +281,10 @@ const TrophyRoom: React.FC = () => {
       <section>
         <div className="flex justify-between items-end mb-4">
           <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">Colección Completa</h2>
+          <div className="flex bg-zinc-900 rounded-lg p-0.5 border border-zinc-800">
+            <button onClick={() => setViewMode('GRID')} className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all ${viewMode === 'GRID' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>Grid</button>
+            <button onClick={() => setViewMode('TIMELINE')} className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all ${viewMode === 'TIMELINE' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>Timeline</button>
+          </div>
         </div>
         
         {/* TABS */}
@@ -294,55 +317,120 @@ const TrophyRoom: React.FC = () => {
         </div>
 
         {/* GRID DE CATEGORÍA */}
-        {(() => {
-          const catStats = filteredCollection.reduce((acc, a) => {
-            if (a.isUnlocked) acc.unlocked++;
-            acc.total++;
-            return acc;
-          }, { unlocked: 0, total: 0 });
-          return (
-            <p className="text-xs text-zinc-500 mb-3">
-              {catStats.unlocked} de {catStats.total} desbloqueados
-              {catStats.unlocked === catStats.total && ' · ✅ Completado'}
-            </p>
-          );
-        })()}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {sortedCollection.map((ach) => {
-            const isHidden = ach.category === 'EPICO' && !ach.isUnlocked;
-            const meta = ach.isUnlocked ? TIER_META[ach.tier] : LOCKED_STYLES;
-            const IconComponent = (Icons as any)[ach.icon] || Icons.Trophy;
+        {viewMode === 'GRID' ? (
+          <>
+            {(() => {
+              const catStats = filteredCollection.reduce((acc, a) => {
+                if (a.isUnlocked) acc.unlocked++;
+                acc.total++;
+                return acc;
+              }, { unlocked: 0, total: 0 });
+              return (
+                <p className="text-xs text-zinc-500 mb-3">
+                  {catStats.unlocked} de {catStats.total} desbloqueados
+                  {catStats.unlocked === catStats.total && ' · ✅ Completado'}
+                </p>
+              );
+            })()}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {sortedCollection.map((ach) => {
+                const isHidden = ach.category === 'EPICO' && !ach.isUnlocked;
+                const meta = ach.isUnlocked ? TIER_META[ach.tier] : LOCKED_STYLES;
+                const IconComponent = (Icons as any)[ach.icon] || Icons.Trophy;
+                
+                let cssClass = '';
+                if (ach.isUnlocked) {
+                  if (ach.tier === 'ELITE') cssClass = 'trophy-card-elite';
+                  else if (ach.tier === 'DIAMOND') cssClass = 'trophy-card-diamond';
+                  else if (ach.tier === 'GOLD') cssClass = 'trophy-card-gold';
+                }
 
-            return (
-              <div
-                key={ach.id}
-                onClick={() => setSelected(ach)}
-                className={`rounded-2xl border p-3 flex items-center gap-3 cursor-pointer transition-all active:scale-[0.98] hover:bg-zinc-900 ${meta.border} ${meta.bg} ${!ach.isUnlocked ? 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100' : ''}`}
-              >
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${meta.bg}`}>
-                  <IconComponent size={20} className={meta.text} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className={`text-xs font-bold line-clamp-1 mb-1 ${ach.isUnlocked ? 'text-white' : 'text-zinc-400'}`}>
-                    {isHidden ? '???' : ach.title}
-                  </h4>
-                  {ach.prog && !ach.isUnlocked && !isHidden ? (
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-1 bg-zinc-800 rounded-full overflow-hidden">
-                        <div className="h-full bg-zinc-500 rounded-full" style={{ width: `${(ach.prog.current / ach.prog.max) * 100}%` }} />
+                if (isHidden) {
+                  const hiddenMeta = TIER_META[ach.tier];
+                  return (
+                    <div key={ach.id} onClick={() => setSelected(ach)} className="rounded-2xl border border-zinc-800 p-3 flex items-center gap-3 cursor-pointer hover:bg-zinc-900 transition-all">
+                      <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-zinc-900 border border-zinc-800">
+                        <Icons.HelpCircle size={20} className="text-zinc-700" />
                       </div>
-                      <span className="text-[9px] font-bold text-zinc-500 tabular-nums">{ach.prog.current}/{ach.prog.max}</span>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-xs font-bold text-zinc-500 line-clamp-1 mb-1 blur-[3px] select-none">Logro Secreto</h4>
+                        <p className={`text-[9px] font-bold uppercase tracking-widest ${hiddenMeta.text}`}>{hiddenMeta.emoji} Oculto</p>
+                      </div>
                     </div>
-                  ) : (
-                    <p className={`text-[9px] font-bold uppercase tracking-widest ${ach.isUnlocked ? meta.text : 'text-zinc-600'}`}>
-                      {ach.isUnlocked ? TIER_META[ach.tier].label : 'Bloqueado'}
-                    </p>
-                  )}
+                  );
+                }
+
+                return (
+                  <div
+                    key={ach.id}
+                    onClick={() => setSelected(ach)}
+                    className={`rounded-2xl border p-3 flex items-center gap-3 cursor-pointer transition-all active:scale-[0.98] hover:bg-zinc-900 ${meta.border} ${meta.bg} ${cssClass} ${!ach.isUnlocked ? 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100' : ''}`}
+                  >
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${meta.bg}`}>
+                      <IconComponent size={20} className={meta.text} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className={`text-xs font-bold line-clamp-1 mb-1 ${ach.isUnlocked ? 'text-white' : 'text-zinc-400'}`}>
+                        {ach.title}
+                      </h4>
+                      {ach.prog && !ach.isUnlocked ? (
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-1 bg-zinc-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-zinc-500 rounded-full" style={{ width: `${(ach.prog.current / ach.prog.max) * 100}%` }} />
+                          </div>
+                          <span className="text-[9px] font-bold text-zinc-500 tabular-nums">{ach.prog.current}/{ach.prog.max}</span>
+                        </div>
+                      ) : (
+                        <p className={`text-[9px] font-bold uppercase tracking-widest ${ach.isUnlocked ? meta.text : 'text-zinc-600'}`}>
+                          {ach.isUnlocked ? TIER_META[ach.tier].label : 'Bloqueado'}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        ) : (
+          <div className="space-y-6">
+            {timelineGroups.length === 0 ? (
+              <div className="text-center py-12 text-zinc-500 text-sm font-bold">Aún no hay logros desbloqueados.</div>
+            ) : (
+              timelineGroups.map(([month, items]) => (
+                <div key={month} className="relative">
+                  <div className="sticky top-0 bg-black/80 backdrop-blur-md py-2 z-10 -mx-4 px-4 sm:mx-0 sm:px-0 mb-3 border-b border-white/5">
+                    <h3 className="text-xs font-bold text-brand-400 uppercase tracking-widest">{month}</h3>
+                  </div>
+                  <div className="space-y-3 relative before:absolute before:inset-y-0 before:left-[23px] before:w-px before:bg-white/5">
+                    {items.map((ach) => {
+                      const meta = TIER_META[ach.tier];
+                      const IconComponent = (Icons as any)[ach.icon] || Icons.Trophy;
+                      let cssClass = '';
+                      if (ach.tier === 'ELITE') cssClass = 'trophy-card-elite';
+                      else if (ach.tier === 'DIAMOND') cssClass = 'trophy-card-diamond';
+                      else if (ach.tier === 'GOLD') cssClass = 'trophy-card-gold';
+
+                      return (
+                        <div key={ach.id} onClick={() => setSelected(ach)} className={`relative pl-14 pr-4 py-3 rounded-2xl border cursor-pointer active:scale-[0.98] transition-all bg-black ${meta.border} ${cssClass}`}>
+                          <div className={`absolute left-2.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center z-10 ${meta.bg} ${meta.border} border`}>
+                            <IconComponent size={12} className={meta.text} />
+                          </div>
+                          <div className="flex justify-between items-center gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-[9px] font-bold uppercase tracking-widest mb-0.5 ${meta.text}`}>{meta.emoji} {meta.label}</p>
+                              <h4 className="text-sm font-bold text-white truncate">{ach.title}</h4>
+                            </div>
+                            <span className="text-[10px] text-zinc-500 font-bold shrink-0">{new Date(unlocked[ach.id]).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            )
-          })}
-        </div>
+              ))
+            )}
+          </div>
+        )}
       </section>
 
       {/* ── DETAIL MODAL ── */}
@@ -377,6 +465,12 @@ const TrophyRoom: React.FC = () => {
                   {selected.isUnlocked ? selected.description : isHidden ? 'Sigue entrenando para descubrir de qué se trata.' : selected.hint}
                 </p>
 
+                {/* Recompensa XP */}
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-400 rounded-full border border-amber-500/20">
+                  <Icons.Zap size={12} fill="currentColor" />
+                  <span className="text-[10px] font-bold tracking-widest uppercase">+{selected.xp || TIER_XP[selected.tier]} XP</span>
+                </div>
+
                 {/* Progreso parcial si aplica */}
                 {!selected.isUnlocked && selected.prog && !isHidden && (
                   <div className="w-full mt-2 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800">
@@ -390,16 +484,43 @@ const TrophyRoom: React.FC = () => {
                   </div>
                 )}
 
-                {selected.isUnlocked && unlocked[selected.id] && (
-                  <div className="mt-4 bg-zinc-900/50 rounded-xl px-5 py-3 border border-zinc-800 w-full text-left">
-                    <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest mb-1">Obtenido el</p>
-                    <p className="text-sm text-white font-bold">
-                      {new Date(unlocked[selected.id]).toLocaleDateString('es-ES', {
-                        weekday: 'long', day: '2-digit', month: 'long', year: 'numeric'
-                      })}
-                    </p>
-                  </div>
-                )}
+                {selected.isUnlocked && unlocked[selected.id] && (() => {
+                  const unlockDate = unlocked[selected.id];
+                  const logContext = logs[unlockDate];
+                  let contextText = '';
+                  if (logContext && logContext.workoutType) {
+                    const vol = logContext.exercises?.reduce((a, ex) => a + ex.sets.reduce((s, set) => s + set.weight * set.reps, 0), 0);
+                    contextText = `Obtenido en tu sesión de ${logContext.workoutType}${vol ? ` con un tonelaje de ${vol.toLocaleString()}kg` : ''}.`;
+                  }
+
+                  return (
+                    <div className="mt-4 bg-zinc-900/50 rounded-xl px-5 py-4 border border-zinc-800 w-full text-left space-y-3">
+                      <div>
+                        <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest mb-1 flex items-center gap-1.5"><Icons.Calendar size={12}/> Fecha</p>
+                        <p className="text-sm text-white font-bold capitalize">
+                          {new Date(unlockDate).toLocaleDateString('es-ES', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
+                        </p>
+                      </div>
+                      {contextText && (
+                        <div>
+                          <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest mb-1 flex items-center gap-1.5"><Icons.Dumbbell size={12}/> Contexto</p>
+                          <p className="text-xs text-zinc-400 leading-snug">{contextText}</p>
+                        </div>
+                      )}
+                      
+                      <button 
+                        onClick={() => {
+                          const text = `🏆 ¡He desbloqueado el logro "${selected.title}" en Rutina-G!\n${meta.emoji} Rareza: ${meta.label}\n\n" ${selected.description} "`;
+                          navigator.clipboard.writeText(text);
+                          alert('¡Copiado al portapapeles!');
+                        }}
+                        className="w-full mt-2 py-2.5 flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-bold uppercase tracking-widest transition-all"
+                      >
+                        <Icons.Share2 size={14} /> Compartir Logro
+                      </button>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>

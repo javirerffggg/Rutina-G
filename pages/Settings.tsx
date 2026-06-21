@@ -165,22 +165,36 @@ export const Settings: React.FC = () => {
                 <RefreshCw size={16} />
               </div>
               <div>
-                <p className="font-bold text-white text-sm">Frecuencia de Deload</p>
-                <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-0.5">Semanas automáticas</p>
+                <p className="font-bold text-white text-sm">Descargas Automáticas</p>
+                <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-0.5">Detectar semanas de fatiga</p>
               </div>
             </div>
-            <select 
-              value={settings.deloadFrequency || 0} 
-              onChange={e => updateSetting('deloadFrequency', parseInt(e.target.value))}
-              className="bg-black border border-white/10 rounded-xl px-3 py-1.5 text-xs font-bold text-white outline-none"
+            <button 
+              onClick={() => updateSetting('autoDeload', !settings.autoDeload)}
+              className={`w-12 h-6 rounded-full p-1 transition-colors ${settings.autoDeload ? 'bg-brand-500' : 'bg-zinc-700'}`}
             >
-              <option value="0">Apagado</option>
-              <option value="4">Cada 4 sem</option>
-              <option value="6">Cada 6 sem</option>
-              <option value="8">Cada 8 sem</option>
-              <option value="12">Cada 12 sem</option>
-            </select>
+              <div className={`w-4 h-4 rounded-full bg-white transition-transform ${settings.autoDeload ? 'translate-x-6' : 'translate-x-0'}`} />
+            </button>
           </div>
+          
+          {settings.autoDeload && (
+            <div className="flex items-center justify-between p-4 pt-0">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 opacity-0" /> {/* Spacer */}
+                <p className="font-bold text-zinc-400 text-xs">Frecuencia</p>
+              </div>
+              <select 
+                value={settings.deloadFrequency || 6} 
+                onChange={e => updateSetting('deloadFrequency', parseInt(e.target.value))}
+                className="bg-black border border-white/10 rounded-xl px-3 py-1.5 text-xs font-bold text-white outline-none"
+              >
+                <option value="4">Cada 4 semanas</option>
+                <option value="6">Cada 6 semanas</option>
+                <option value="8">Cada 8 semanas</option>
+                <option value="12">Cada 12 semanas</option>
+              </select>
+            </div>
+          )}
         </div>
       </section>
 

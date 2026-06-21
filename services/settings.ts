@@ -5,7 +5,8 @@ export interface AppSettings {
   routineFolders: boolean;
   hideDefaultRoutines: boolean;
   defaultRestTime: number; // 90, 120, 180
-  deloadFrequency: number; // 0 para desactivar, 4-12 para semanas
+  deloadFrequency: number; // 4-12 para semanas
+  autoDeload: boolean;
   profile: {
     height: number | null;
     birthDate: string | null;
@@ -27,6 +28,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   hideDefaultRoutines: false,
   defaultRestTime: 90,
   deloadFrequency: 6,
+  autoDeload: true,
   profile: {
     height: null,
     birthDate: null,

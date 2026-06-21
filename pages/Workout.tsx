@@ -78,7 +78,7 @@ const Workout: React.FC = () => {
   const today = getTodayDateString();
   const dayOfWeek = new Date().getDay();
   const allLogsInitial = React.useMemo(() => getLogs(), []);
-  const phase = React.useMemo(() => getCurrentPhase(today, allLogsInitial, settings.deloadFrequency), [today, allLogsInitial, settings.deloadFrequency]);
+  const phase = React.useMemo(() => getCurrentPhase(today, allLogsInitial, settings.autoDeload ? settings.deloadFrequency : 0), [today, allLogsInitial, settings.deloadFrequency, settings.autoDeload]);
   const specialSchedule = getGymSchedule(today);
   const weeklyPlan = React.useMemo(() => getWeeklyPlan() || ROUTINE_MAPPING, []);
   const defaultRoutine = weeklyPlan[dayOfWeek] || RoutineType.REST;

@@ -63,7 +63,7 @@ const Dashboard: React.FC = () => {
   const settings = useMemo(() => getSettings(), []);
   const initialLogs = useMemo(() => getLogs(), []);
   const [allLogs, setAllLogs] = useState<Record<string, DailyLog>>(initialLogs);
-  const phase = useMemo(() => getCurrentPhase(today, allLogs, settings.deloadFrequency), [today, allLogs, settings.deloadFrequency]);
+  const phase = useMemo(() => getCurrentPhase(today, allLogs, settings.autoDeload ? settings.deloadFrequency : 0), [today, allLogs, settings.deloadFrequency, settings.autoDeload]);
   
   const [log, setLog] = useState<DailyLog>({ date: today });
   const [weightInput, setWeightInput] = useState('');

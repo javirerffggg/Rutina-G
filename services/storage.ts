@@ -208,10 +208,10 @@ export interface HevyImportResult {
 }
 
 /**
- * Parse a Hevy CSV string to find all exercise names that cannot be mapped automatically.
- * Returns an array of unmapped Hevy exercise names.
+ * Parse a Hevy CSV string to find all exercise names.
+ * Returns an array of objects mapping Hevy exercise names to their suggested internal ID.
  */
-export const analyzeHevyCSV = (csvText: string): string[] => {
+export const analyzeHevyCSV = (csvText: string): Array<{ hevyName: string, suggestedId: string | null }> => {
   const lines = csvText.split(/\r?\n/).filter(l => l.trim());
   if (lines.length < 2) return [];
 
@@ -240,11 +240,11 @@ export const analyzeHevyCSV = (csvText: string): string[] => {
     }
   }
 
-  const unmapped: string[] = [];
+  const allExercises: Array<{ hevyName: string, suggestedId: string | null }> = [];
   uniqueNames.forEach(name => {
-    if (!matchExerciseId(name)) unmapped.push(name);
+    allExercises.push({ hevyName: name, suggestedId: matchExerciseId(name) });
   });
-  return unmapped;
+  return allExercises;
 };
 
 /**

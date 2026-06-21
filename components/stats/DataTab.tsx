@@ -70,7 +70,7 @@ export const DataTab: React.FC = () => {
   const [importResult, setImportResult]     = useState<HevyImportResult | null>(null);
   const [importError, setImportError]       = useState<string | null>(null);
   
-  const [unmappedExercises, setUnmappedExercises] = useState<string[]>([]);
+  const [csvExercises, setCsvExercises] = useState<Array<{ hevyName: string, suggestedId: string | null }>>([]);
   const [userMapping, setUserMapping]               = useState<Record<string, string>>({});
   const [csvFileText, setCsvFileText]               = useState<string | null>(null);
 
@@ -80,17 +80,17 @@ export const DataTab: React.FC = () => {
     setImporting(true);
     setImportResult(null);
     setImportError(null);
-    setUnmappedExercises([]);
+    setCsvExercises([]);
     setUserMapping({});
     setCsvFileText(null);
     try {
       const text = await file.text();
-      const unmapped = analyzeHevyCSV(text);
-      if (unmapped.length > 0) {
-        setUnmappedExercises(unmapped);
+      const allExercises = analyzeHevyCSV(text);
+      if (allExercises.length > 0) {
+        setCsvExercises(allExercises);
         setCsvFileText(text);
         const initialMapping: Record<string, string> = {};
-        unmapped.forEach(ex => initialMapping[ex] = '');
+        allExercises.forEach(ex => initialMapping[ex.hevyName] = ex.suggestedId || '');
         setUserMapping(initialMapping);
       } else {
         const result = importFromHevyCSV(text);
@@ -110,7 +110,7 @@ export const DataTab: React.FC = () => {
     try {
       const result = importFromHevyCSV(csvFileText, userMapping);
       setImportResult(result);
-      setUnmappedExercises([]);
+      setCsvExercises([]);
       setCsvFileText(null);
     } catch(err: any) {
       setImportError(err?.message ?? 'Error desconocido');
@@ -182,7 +182,7 @@ export const DataTab: React.FC = () => {
 
           <button
             onClick={() => fileInputRef.current?.click()}
-            disabled={importing || unmappedExercises.length > 0}
+            disabled={importing || csvExercises.length > 0}
             className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border border-dashed border-sky-500/40 bg-sky-500/5 hover:bg-sky-500/10 hover:border-sky-500/60 text-sky-400 font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-50"
           >
             <Upload size={18} />
@@ -191,7 +191,7 @@ export const DataTab: React.FC = () => {
 
           {/* Mapping UI */}
           <AnimatePresence>
-            {unmappedExercises.length > 0 && (
+            {csvExercises.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
@@ -202,25 +202,25 @@ export const DataTab: React.FC = () => {
                   <div className="flex items-start gap-3">
                     <AlertTriangle size={18} className="text-amber-400 shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm font-bold text-white">Ejercicios no reconocidos ({unmappedExercises.length})</p>
+                      <p className="text-sm font-bold text-white">Revisión de Mapeo ({csvExercises.length} ejercicios)</p>
                       <p className="text-[11px] text-zinc-400 mt-1 leading-relaxed">
-                        Selecciona el ejercicio equivalente en Rutina-G. Los que dejes en blanco serán ignorados.
+                        Revisa y asigna manualmente a qué ejercicio corresponde cada uno.
                       </p>
                     </div>
                   </div>
                   
                   <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
-                    {unmappedExercises.map(hevyName => (
-                      <div key={hevyName} className="space-y-1">
-                        <label className="text-xs font-bold text-zinc-300 pl-1">{hevyName}</label>
+                    {csvExercises.map(ex => (
+                      <div key={ex.hevyName} className="space-y-1">
+                        <label className="text-xs font-bold text-zinc-300 pl-1">{ex.hevyName}</label>
                         <select
                           className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-xs text-white outline-none focus:border-sky-500/50"
-                          value={userMapping[hevyName]}
-                          onChange={(e) => setUserMapping(prev => ({ ...prev, [hevyName]: e.target.value }))}
+                          value={userMapping[ex.hevyName] || ''}
+                          onChange={(e) => setUserMapping(prev => ({ ...prev, [ex.hevyName]: e.target.value }))}
                         >
                           <option value="">-- Ignorar este ejercicio --</option>
-                          {ALL_EXERCISES.sort((a,b) => a.name.localeCompare(b.name)).map(ex => (
-                            <option key={ex.id} value={ex.id}>{ex.name}</option>
+                          {ALL_EXERCISES.sort((a,b) => a.name.localeCompare(b.name)).map(dbEx => (
+                            <option key={dbEx.id} value={dbEx.id}>{dbEx.name}</option>
                           ))}
                         </select>
                       </div>

@@ -1,5 +1,5 @@
-import React, { Suspense, lazy } from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { Suspense, lazy, useEffect } from 'react';
+import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
 
 const Dashboard  = lazy(() => import('./pages/Dashboard'));
@@ -12,6 +12,14 @@ const MuscleLoadScreen = lazy(() => import('./pages/MuscleLoadScreen'));
 const ConsistencyScreen = lazy(() => import('./pages/ConsistencyScreen'));
 const VolumeEvolutionScreen = lazy(() => import('./pages/VolumeEvolutionScreen'));
 
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+};
+
 const Loader = () => (
   <div className="flex items-center justify-center min-h-screen">
     <div className="w-8 h-8 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" />
@@ -20,6 +28,7 @@ const Loader = () => (
 
 const App: React.FC = () => (
   <HashRouter>
+    <ScrollToTop />
     <Suspense fallback={<Loader />}>
       <Routes>
         <Route path="/" element={<Layout />}>

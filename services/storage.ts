@@ -170,25 +170,53 @@ export const getAvailableExercises = (logs: Record<string, DailyLog>, customRout
     });
   });
 
-  // 3. Orphans in logs
-  Object.values(logs).forEach(log => {
-    log.exercises?.forEach(exLog => {
-      if (!exercisesMap.has(exLog.exerciseId)) {
-        exercisesMap.set(exLog.exerciseId, {
-          id: exLog.exerciseId,
-          name: formatUnknownId(exLog.exerciseId),
-          targetSets: '-',
-          targetReps: '-'
-        });
-      }
-    });
-  });
-
   return Array.from(exercisesMap.values());
 };
 
 const formatUnknownId = (id: string) => {
   return id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') + ' (Historial)';
+};
+
+const guessMusclesFromId = (id: string): string[] => {
+  const s = id.toLowerCase();
+  const muscles: string[] = [];
+  
+  if (s.includes('squat') || s.includes('sentadilla') || s.includes('press de piernas') || s.includes('press pierna') || s.includes('hack') || s.includes('leg press') || s.includes('cuadriceps') || s.includes('quad') || s.includes('ext')) {
+    muscles.push('quads');
+  }
+  if (s.includes('hip thrust') || s.includes('glute') || s.includes('squat') || s.includes('sentadilla') || s.includes('peso muerto') || s.includes('deadlift')) {
+    muscles.push('glutes');
+  }
+  if (s.includes('femoral') || s.includes('isquios') || s.includes('leg curl') || s.includes('peso muerto') || s.includes('deadlift')) {
+    muscles.push('hamstrings');
+  }
+  if (s.includes('calf') || s.includes('calves') || s.includes('gemelos') || s.includes('talon')) {
+    muscles.push('calves');
+  }
+  if (s.includes('abs') || s.includes('crunch') || s.includes('abdominal') || s.includes('core')) {
+    muscles.push('abs');
+  }
+  if (s.includes('bench') || s.includes('pecho') || s.includes('press banca') || s.includes('chest') || s.includes('peck') || s.includes('fly') || s.includes('apertura')) {
+    muscles.push('chest');
+  }
+  if (s.includes('pull') || s.includes('row') || s.includes('remo') || s.includes('jalon') || s.includes('espalda') || s.includes('back') || s.includes('lat') || s.includes('dominada')) {
+    muscles.push('back');
+  }
+  if (s.includes('shoulder') || s.includes('hombro') || s.includes('press militar') || s.includes('lateral') || s.includes('deltoid') || s.includes('elevacion') || s.includes('vuelo') || s.includes('pajaro')) {
+    if (!s.includes('talon') && !s.includes('gemelo')) {
+      muscles.push('shoulders');
+    }
+  }
+  if (s.includes('triceps') || s.includes('tricep') || s.includes('fondo') || s.includes('dip')) {
+    muscles.push('triceps');
+  }
+  if (s.includes('biceps') || s.includes('bicep') || s.includes('curl')) {
+    if (!s.includes('femoral') && !s.includes('leg')) {
+      muscles.push('biceps');
+    }
+  }
+  
+  return [...new Set(muscles)];
 };
 
 /**
@@ -202,7 +230,9 @@ export const getExerciseMuscles = (id: string, customRoutines: CustomRoutine[] =
       return ex.primaryMuscles;
     }
   }
-  return EXERCISE_MUSCLE_MAP[id] || [];
+  if (EXERCISE_MUSCLE_MAP[id]) return EXERCISE_MUSCLE_MAP[id];
+  
+  return guessMusclesFromId(id);
 };
 
 /** Normalise a string for fuzzy matching: lowercase, remove accents & punctuation */

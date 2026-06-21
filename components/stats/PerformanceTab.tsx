@@ -6,7 +6,7 @@ import { Dumbbell, Trophy, TrendingUp, Flame, Activity, Clock, Calendar as Calen
 import { MUSCLE_VOLUME_RECOMMENDATIONS, EXERCISE_MUSCLE_MAP } from '../../constants';
 import { calculateOneRM, getWeeklyMuscleVolume } from '../../utils';
 import { BodyHeatmap } from '../BodyHeatmap';
-import { getAvailableExercises } from '../../services/storage';
+import { getAvailableExercises, getExerciseMuscles } from '../../services/storage';
 
 const MemoMuscleChart = React.memo(({ activeChartData }: any) => (
   <ResponsiveContainer width="100%" height="100%">
@@ -73,7 +73,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
   const allExercises = useMemo(() => getAvailableExercises(logs, customRoutines), [logs, customRoutines]);
 
   const combinedMuscleMap = useMemo(() => {
-    const map = { ...EXERCISE_MUSCLE_MAP };
+    const map: Record<string, string[]> = { ...EXERCISE_MUSCLE_MAP };
     customRoutines.forEach((cr: any) => {
       cr.exercises?.forEach((ex: any) => {
         if (ex.primaryMuscles && ex.primaryMuscles.length > 0) {
@@ -81,8 +81,19 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({ logs = {} }) => 
         }
       });
     });
+    // Add muscles for historical/orphaned IDs
+    Object.values(logs).forEach(log => {
+      log.exercises?.forEach(ex => {
+        if (!map[ex.exerciseId]) {
+          const muscles = getExerciseMuscles(ex.exerciseId, customRoutines);
+          if (muscles.length > 0) {
+            map[ex.exerciseId] = muscles;
+          }
+        }
+      });
+    });
     return map;
-  }, [customRoutines]);
+  }, [customRoutines, logs]);
 
   const [selectedExercise, setSelectedExercise] = useState<string>(allExercises[0]?.id || '');
   const [muscleChartMode, setMuscleChartMode] = useState<'historical' | 'weekly'>('historical');

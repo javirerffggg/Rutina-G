@@ -1,26 +1,92 @@
 import { PHASES, SPECIAL_GYM_HOURS } from './constants';
-import { PhaseType, PlanPhase } from './types';
+import { PhaseType, PlanPhase, DailyLog } from './types';
 
 export const getTodayDateString = (): string =>
   new Date().toISOString().split('T')[0];
 
-export const getCurrentPhase = (dateStr: string = getTodayDateString()): PlanPhase => {
-  const current = PHASES.find(p => dateStr >= p.startDate && dateStr <= p.endDate);
-  if (current) return current;
-  // Fallback: return the last phase if we're past all phases, or the first if before all
-  if (PHASES.length > 0) {
-    if (dateStr > PHASES[PHASES.length - 1].endDate) return PHASES[PHASES.length - 1];
-    if (dateStr < PHASES[0].startDate) return PHASES[0];
+export const getCurrentPhase = (
+  dateStr: string = getTodayDateString(),
+  allLogs?: Record<string, DailyLog>,
+  deloadFrequency?: number
+): PlanPhase => {
+  let current = PHASES.find(p => dateStr >= p.startDate && dateStr <= p.endDate);
+  
+  if (!current) {
+    if (PHASES.length > 0) {
+      if (dateStr > PHASES[PHASES.length - 1].endDate) current = PHASES[PHASES.length - 1];
+      else if (dateStr < PHASES[0].startDate) current = PHASES[0];
+    }
   }
-  return {
-    name: PhaseType.UNKNOWN,
-    startDate: '',
-    endDate: '',
-    description: 'No hay fase activa definida para esta fecha.',
-    nutritionGoal: 'Mantenimiento',
-    cardio: 'Opcional',
-    trainingFocus: 'General',
-  };
+
+  if (!current) {
+    current = {
+      name: PhaseType.UNKNOWN,
+      startDate: '',
+      endDate: '',
+      description: 'No hay fase activa definida para esta fecha.',
+      nutritionGoal: 'Mantenimiento',
+      cardio: 'Opcional',
+      trainingFocus: 'General',
+    };
+  }
+
+  if (allLogs && deloadFrequency && deloadFrequency > 0) {
+    const trainedDates = Object.keys(allLogs)
+      .filter(d => allLogs[d].workoutCompleted && allLogs[d].exercises && allLogs[d].exercises!.length > 0)
+      .sort();
+
+    if (trainedDates.length > 0) {
+      const trainedWeeks = new Set<string>();
+      trainedDates.forEach(d => {
+        if (d <= dateStr) {
+          const date = new Date(d);
+          const day = date.getDay() || 7;
+          date.setDate(date.getDate() - day + 1);
+          trainedWeeks.add(date.toISOString().split('T')[0]);
+        }
+      });
+
+      let consecutiveWeeks = 0;
+      let checkDate = new Date(dateStr);
+      let checkDay = checkDate.getDay() || 7;
+      checkDate.setDate(checkDate.getDate() - checkDay + 1);
+
+      // Si la semana actual aún no tiene entreno, pero la anterior sí, igual contamos.
+      const currentWeekStr = checkDate.toISOString().split('T')[0];
+      if (!trainedWeeks.has(currentWeekStr)) {
+        checkDate.setDate(checkDate.getDate() - 7);
+      }
+
+      while (true) {
+        const weekStr = checkDate.toISOString().split('T')[0];
+        if (trainedWeeks.has(weekStr)) {
+          consecutiveWeeks++;
+          checkDate.setDate(checkDate.getDate() - 7);
+        } else {
+          break;
+        }
+      }
+
+      // Si estamos en la semana de deload (ej: cada 6 semanas, la semana 6 es de descarga)
+      // Si currentWeekStr no tiene entreno aún, usamos el conteo de la anterior + 1 para ver si toca deload
+      const isCurrentWeekTrained = trainedWeeks.has(currentWeekStr);
+      const effectiveWeeks = isCurrentWeekTrained ? consecutiveWeeks : consecutiveWeeks + 1;
+
+      if (effectiveWeeks > 0 && effectiveWeeks % deloadFrequency === 0) {
+        return {
+          name: PhaseType.DELOAD,
+          startDate: '',
+          endDate: '',
+          description: "Semana de Descarga Automática. El sistema detecta " + effectiveWeeks + " semanas de entrenamiento continuo.",
+          nutritionGoal: "Normocalórica",
+          cardio: "LISS Ligero",
+          trainingFocus: "Reducir volumen un 20%, RIR 3-4",
+        };
+      }
+    }
+  }
+
+  return current;
 };
 
 export const calculateOneRM = (weight: number, reps: number): number => {

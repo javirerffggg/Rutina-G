@@ -10,6 +10,20 @@ import { RoutineType } from '../types';
 
 const STORAGE_KEY      = 'fitness_pro_logs_v1';
 const ACHIEVEMENTS_KEY = 'fitness_pro_achievements_v1';
+const WEEKLY_PLAN_KEY  = 'weeklyPlan';
+
+export const getWeeklyPlan = (): Record<number, RoutineType> | null => {
+  try {
+    const data = localStorage.getItem(WEEKLY_PLAN_KEY);
+    return data ? JSON.parse(data) : null;
+  } catch {
+    return null;
+  }
+};
+
+export const saveWeeklyPlan = (plan: Record<number, RoutineType>) => {
+  localStorage.setItem(WEEKLY_PLAN_KEY, JSON.stringify(plan));
+};
 
 export const getLogs = (): Record<string, DailyLog> => {
   try {

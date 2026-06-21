@@ -9,7 +9,7 @@ import {
   getGymSchedule, calculatePlates
 } from '../utils';
 import { RoutineType, Exercise, WorkoutLogEntry, WorkoutSet, CustomRoutine, ExerciseDBEntry } from '../types';
-import { saveLog, getLogs, getPreviousWorkoutLog, getExerciseHistory, deleteLog } from '../services/storage';
+import { saveLog, getLogs, getPreviousWorkoutLog, getExerciseHistory, deleteLog, getWeeklyPlan } from '../services/storage';
 import {
   Save, History, Plus, Minus, Check, Trophy, ArrowRightLeft, X,
   Dumbbell, Settings, Info, Bot, AlertTriangle, Clock, Flame, Activity,
@@ -74,11 +74,14 @@ const PlateCalculator = ({ weight, barWeight = 20 }: { weight: number; barWeight
 };
 
 const Workout: React.FC = () => {
+  const settings = React.useMemo(() => getSettings(), []);
   const today = getTodayDateString();
   const dayOfWeek = new Date().getDay();
-  const phase = getCurrentPhase();
+  const allLogsInitial = React.useMemo(() => getLogs(), []);
+  const phase = React.useMemo(() => getCurrentPhase(today, allLogsInitial, settings.deloadFrequency), [today, allLogsInitial, settings.deloadFrequency]);
   const specialSchedule = getGymSchedule(today);
-  const defaultRoutine = ROUTINE_MAPPING[dayOfWeek];
+  const weeklyPlan = React.useMemo(() => getWeeklyPlan() || ROUTINE_MAPPING, []);
+  const defaultRoutine = weeklyPlan[dayOfWeek] || RoutineType.REST;
 
   const [customRoutines, setCustomRoutines] = useState<any[]>(() => {
     try { return JSON.parse(localStorage.getItem('customRoutines') || '[]'); } catch(e) { return []; }
@@ -118,7 +121,6 @@ const Workout: React.FC = () => {
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [analysisData, setAnalysisData] = useState<any>(null);
-  const settings = React.useMemo(() => getSettings(), []);
 
   const [sessionState, setSessionState] = useState<'idle'|'active'|'finished'>(() => {
     const stored = localStorage.getItem(`workoutSessionState_${today}`);
@@ -584,6 +586,15 @@ const Workout: React.FC = () => {
           <p className="text-brand-400 text-[10px] font-bold tracking-[0.2em] uppercase flex items-center gap-2">
             <Trophy size={14} /> {phase.trainingFocus}
           </p>
+          {phase.name === 'Descarga (Deload)' && (
+            <div className="mt-3 bg-amber-500/10 border border-amber-500/20 text-amber-400 p-3 rounded-xl flex items-start gap-2">
+              <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider">{phase.name}</p>
+                <p className="text-[10px] leading-relaxed mt-0.5 opacity-80">{phase.description}</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {recentHistory.length > 0 && (

@@ -60,10 +60,13 @@ const parseToBullets = (text: string) => {
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const today = getTodayDateString();
-  const phase = getCurrentPhase();
+  const settings = useMemo(() => getSettings(), []);
+  const initialLogs = useMemo(() => getLogs(), []);
+  const [allLogs, setAllLogs] = useState<Record<string, DailyLog>>(initialLogs);
+  const phase = useMemo(() => getCurrentPhase(today, allLogs, settings.deloadFrequency), [today, allLogs, settings.deloadFrequency]);
+  
   const [log, setLog] = useState<DailyLog>({ date: today });
   const [weightInput, setWeightInput] = useState('');
-  const [allLogs, setAllLogs] = useState<Record<string, DailyLog>>({});
   const [muscleVolume, setMuscleVolume] = useState<Record<string, number>>({});
   const [muscleSets, setMuscleSets] = useState<Record<string, number>>({});
   const [weightAvg7d, setWeightAvg7d] = useState<number | undefined>(undefined);
@@ -75,8 +78,11 @@ const Dashboard: React.FC = () => {
   const { rankInfo, addXP } = useProgression();
 
   // Plan logic
-  const colors = useMemo(() => getSemanticColors(phase.type), [phase]);
+  const colors = useMemo(() => getSemanticColors(phase.name), [phase]);
   const phaseProgress = useMemo(() => {
+    if (!phase.startDate || !phase.endDate) {
+      return { pct: 0, elapsedDays: 0, totalDays: 0, currentWeek: 0, totalWeeks: 0, remainingDays: 0 };
+    }
     const start   = new Date(phase.startDate).getTime();
     const end     = new Date(phase.endDate).getTime();
     const now     = Date.now();
@@ -252,6 +258,15 @@ const Dashboard: React.FC = () => {
               <div className={`h-full ${colors.bar} rounded-full transition-all duration-700`} style={{ width: `${phaseProgress.pct}%` }} />
             </div>
           </div>
+          {phase.name === 'Descarga (Deload)' && (
+            <div className="mt-4 bg-amber-500/20 border border-amber-500/30 text-amber-400 p-3 rounded-2xl flex items-start gap-2 backdrop-blur-md">
+              <AlertTriangle size={18} className="mt-0.5 shrink-0" />
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-white">¡Toca Descarga!</p>
+                <p className="text-[10px] leading-relaxed mt-0.5 opacity-90">{phase.description}</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

@@ -9,6 +9,7 @@ import { AppSettings, getSettings, saveSettings } from '../services/settings';
 import { getLogs } from '../services/storage';
 import { ReportsTab } from '../components/stats/ReportsTab';
 import { DataTab } from '../components/stats/DataTab';
+import { WeeklyPlanEditor } from '../components/WeeklyPlanEditor';
 
 export const Settings: React.FC = () => {
   const [settings, setSettingsState] = useState<AppSettings>(getSettings());
@@ -157,6 +158,39 @@ export const Settings: React.FC = () => {
               <option value="180">180s</option>
             </select>
           </div>
+          <div className="h-px bg-white/5 mx-4" />
+          <div className="flex items-center justify-between p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-black border border-white/10 flex items-center justify-center text-zinc-400">
+                <RefreshCw size={16} />
+              </div>
+              <div>
+                <p className="font-bold text-white text-sm">Frecuencia de Deload</p>
+                <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-0.5">Semanas automáticas</p>
+              </div>
+            </div>
+            <select 
+              value={settings.deloadFrequency || 0} 
+              onChange={e => updateSetting('deloadFrequency', parseInt(e.target.value))}
+              className="bg-black border border-white/10 rounded-xl px-3 py-1.5 text-xs font-bold text-white outline-none"
+            >
+              <option value="0">Apagado</option>
+              <option value="4">Cada 4 sem</option>
+              <option value="6">Cada 6 sem</option>
+              <option value="8">Cada 8 sem</option>
+              <option value="12">Cada 12 sem</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      {/* ── PLAN SEMANAL ── */}
+      <section className="space-y-3">
+        <h3 className="text-[10px] font-bold text-brand-500 uppercase tracking-[0.2em] px-1 flex items-center gap-2">
+          <Calendar size={14}/> Configuración Semanal
+        </h3>
+        <div className="bg-zinc-900/50 border border-white/5 rounded-3xl p-4">
+          <WeeklyPlanEditor />
         </div>
       </section>
 

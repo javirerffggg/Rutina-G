@@ -5,6 +5,7 @@ export enum PhaseType {
   SUMMER_SHRED  = 'Fase 4: Summer Shred',
   HYPERTROPHY_2 = 'Fase 5: Hipertrofia II',
   CONSOLIDATION = 'Fase 6: Consolidación',
+  DELOAD        = 'Descarga (Deload)',
   UNKNOWN       = 'Fuera de Plan'
 }
 

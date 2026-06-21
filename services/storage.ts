@@ -148,7 +148,7 @@ export const clearAllData = (): void => {
 // reverse lookup from our exercise lists.
 // ---------------------------------------------------------------------------
 
-const ALL_EXERCISES = [
+export const ALL_EXERCISES = [
   ...EXERCISES_PUSH, ...EXERCISES_PULL, ...EXERCISES_LEGS,
   ...EXERCISES_UPPER, ...EXERCISES_LOWER,
 ];
@@ -208,10 +208,51 @@ export interface HevyImportResult {
 }
 
 /**
+ * Parse a Hevy CSV string to find all exercise names that cannot be mapped automatically.
+ * Returns an array of unmapped Hevy exercise names.
+ */
+export const analyzeHevyCSV = (csvText: string): string[] => {
+  const lines = csvText.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) return [];
+
+  const parseCSVLine = (line: string): string[] => {
+    const result: string[] = [];
+    let cur = ''; let inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { inQ = !inQ; continue; }
+      if (ch === ',' && !inQ) { result.push(cur.trim()); cur = ''; continue; }
+      cur += ch;
+    }
+    result.push(cur.trim());
+    return result;
+  };
+
+  const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase().replace(/[^a-z0-9]/g, '_'));
+  const iExercise = headers.findIndex(h => h.includes('exercise'));
+  if (iExercise === -1) return [];
+
+  const uniqueNames = new Set<string>();
+  for (let i = 1; i < lines.length; i++) {
+    const row = parseCSVLine(lines[i]);
+    if (row.length > iExercise && row[iExercise]) {
+      uniqueNames.add(row[iExercise]);
+    }
+  }
+
+  const unmapped: string[] = [];
+  uniqueNames.forEach(name => {
+    if (!matchExerciseId(name)) unmapped.push(name);
+  });
+  return unmapped;
+};
+
+/**
  * Parse a Hevy CSV string and merge the data into localStorage.
  * Existing days are merged (not overwritten) so local data is preserved.
+ * @param userMapping Optional dictionary mapping Hevy names to internal IDs
  */
-export const importFromHevyCSV = (csvText: string): HevyImportResult => {
+export const importFromHevyCSV = (csvText: string, userMapping?: Record<string, string>): HevyImportResult => {
   const result: HevyImportResult = { imported: 0, skipped: 0, warnings: [] };
 
   // ---- Parse CSV (handles quoted fields with commas) ----
@@ -307,7 +348,7 @@ export const importFromHevyCSV = (csvText: string): HevyImportResult => {
     let daySkipped = 0;
 
     exerciseSets.forEach((sets, hevyName) => {
-      const id = matchExerciseId(hevyName);
+      const id = userMapping?.[hevyName] || matchExerciseId(hevyName);
       if (!id) {
         result.skipped += sets.length;
         daySkipped++;

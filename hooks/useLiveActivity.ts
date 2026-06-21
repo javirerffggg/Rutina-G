@@ -110,6 +110,17 @@ export const useLiveActivity = () => {
     return () => navigator.serviceWorker?.removeEventListener('message', onSWMessage);
   }, []);
 
+  // Auto-hide finished session banner after 5 seconds
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>;
+    if (state.sessionState === 'finished' && state.active) {
+      timeout = setTimeout(() => {
+        setState(prev => ({ ...prev, active: false }));
+      }, 5000);
+    }
+    return () => clearTimeout(timeout);
+  }, [state.sessionState, state.active]);
+
   // Listen to Layout dismiss/addRest events and relay to SW
   useEffect(() => {
     const onDismiss = () => {

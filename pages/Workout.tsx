@@ -16,7 +16,7 @@ import {
   ChevronRight, Timer, Flag, Milk, BookOpen, GraduationCap,
   CalendarDays, Award, Zap, TrendingUp, ArrowUpRight, ArrowLeft,
   ChevronDown, ArrowUp, ArrowDown, Replace, PlaySquare, Image as ImageIcon,
-  MoreVertical, Search, PlayCircle, CalendarClock
+  MoreVertical, Search, PlayCircle, CalendarClock, Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { dispatchLiveActivity } from '../hooks/useLiveActivity';
@@ -1184,7 +1184,7 @@ const Workout: React.FC = () => {
           ) : sessionState === 'active' ? (
             <div className="flex gap-3">
                <button onClick={()=>setShowDiscardConfirm(true)} className="py-5 px-6 rounded-[24px] bg-red-600/20 text-red-500 hover:bg-red-600/30 font-bold border border-red-500/30 active:scale-[0.98] transition-all flex justify-center items-center">
-                 <Icons.Trash2 size={20}/>
+                 <Trash2 size={20}/>
                </button>
                <button onClick={()=>setShowFinishConfirm(true)} className="flex-1 py-5 rounded-[24px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold uppercase tracking-[0.2em] text-sm shadow-[0_10px_40px_rgba(16,185,129,0.4)] active:scale-[0.98] transition-all flex justify-center items-center gap-2">
                  <Check size={18}/> Finalizar

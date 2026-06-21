@@ -230,7 +230,57 @@ export const TECHNICAL_GUIDES: Record<string, string> = {
 
   'low_crunch': `• Ajuste: La bisagra de la máquina debe coincidir con tu zona lumbar/abdominal.
 • Fuerza: El esfuerzo nace de "enrollar" el torso, no de empujar con los brazos o hombros.
-• Respiración: Suelta el aire totalmente en la contracción máxima para vaciar el abdomen y activar el transverso.`
+• Respiración: Suelta el aire totalmente en la contracción máxima para vaciar el abdomen y activar el transverso.`,
+
+  'push_tri_rope': `• Posición: Espalda recta, torso ligeramente inclinado hacia adelante.
+• Rango: Extiende completamente separando las manos al final (apertura de cuerda para máxima contracción).
+• Codos: Fijos y pegados a las costillas en todo el recorrido.`,
+
+  'upp_tri_rope': `• Posición: Espalda recta, torso ligeramente inclinado hacia adelante.
+• Rango: Extiende completamente separando las manos al final (apertura de cuerda para máxima contracción).
+• Codos: Fijos y pegados a las costillas en todo el recorrido.`,
+
+  'pull_shrugs': `• Agarre: Usa Straps obligatoriamente para que el agarre no limite el peso.
+• Movimiento: Eleva los hombros en línea recta hacia las orejas. NUNCA rotes ni hagas círculos con los hombros.
+• Contracción: Aprieta 1-2 segundos en la parte más alta.`,
+
+  'pull_hammer': `• Agarre: Agarre neutro (las palmas se miran entre sí).
+• Ejecución: Sube la mancuerna controlando no usar impulso lumbar. 
+• Foco: Trabaja intensamente el braquial y el braquiorradial (antebrazo).`,
+
+  'legs_ext': `• Ajuste: El rodillo debe quedar en la parte baja de la espinilla, justo por encima del empeine.
+• Contracción: Extiende rápido de forma explosiva y aprieta el cuádriceps 1 segundo arriba.
+• Retorno: Controla la bajada lenta, el tiempo bajo tensión es clave aquí.`,
+
+  'legs_calves': `• Rango Completo: Sube de forma explosiva hasta quedar totalmente de puntillas.
+• La Clave Miotática: Baja MUY lento y haz una pausa de 2 segundos en la posición de máximo estiramiento (talón abajo) para evitar rebotes y forzar al gemelo.`,
+
+  'low_calves': `• Rango Completo: Sube de forma explosiva hasta quedar totalmente de puntillas.
+• La Clave Miotática: Baja MUY lento y haz una pausa de 2 segundos en la posición de máximo estiramiento (talón abajo) para evitar rebotes y forzar al gemelo.`,
+
+  'upp_bench_plate': `• Posición: Tumbado firme en el banco. Mantén retracción escapular (saca pecho).
+• Empuje: Empuja de forma vertical, enfocándote en apretar las fibras del pecho.
+• Estabilidad: Los pies deben estar plantados en el suelo para darte estabilidad base.`,
+
+  'upp_peck': `• Codos: Mantén los brazos con una ligera flexión, como si estuvieras "abrazando un árbol muy ancho".
+• Pecho: Saca el pecho (esternón al techo) durante todo el recorrido. No adelantes los hombros al juntar las manos.
+• Rango: Junta las manos/manillares y aprieta 1-2 segundos de forma isométrica.`,
+
+  'low_press': `• Posición: Pies centrados en la plataforma (anchura de hombros).
+• Profundidad: Baja hasta que tus rodillas lleguen casi al pecho, PERO detente justo antes de que tu glúteo/lumbar se despegue del respaldo.
+• Cuidado: No bloquees las rodillas bruscamente al extender, mantén tensión continua.`,
+
+  'low_goblet': `• Carga: Sujeta la mancuerna o kettlebell pegada a tu pecho en posición vertical.
+• Ejecución: Torso lo más vertical posible. Baja profundo abriendo bien las caderas y dejando caer el peso entre las piernas.
+• Foco: Mayor transferencia hacia los cuádriceps por la carga anterior.`,
+
+  'low_back_ext': `• Ajuste: El soporte superior del cojín debe quedar justo debajo de los huesos de tu pelvis para permitir que tu cadera flexione libremente.
+• Foco: Mantén la columna recta. Tira contrayendo isquios y glúteos.
+• Error: No hiperextiendas la espalda lumbar al llegar arriba. Frena cuando estés alineado.`,
+
+  'low_curl_ly': `• Posición: Caderas literalmente aplastadas contra la almohadilla (no levantes el culo al hacer el máximo esfuerzo).
+• Contracción: Tira del rodillo rápido intentando "patear" tu propio glúteo y frena la bajada.
+• Rango: Extiende completamente las piernas al bajar para máxima hipertrofia.`
 };
 
 export const PHASES: PlanPhase[] = [

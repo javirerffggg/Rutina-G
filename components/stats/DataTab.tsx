@@ -5,7 +5,7 @@ import { getDeviceId } from '../SyncManager';
 import { motion, AnimatePresence } from 'motion/react';
 
 // ---------------------------------------------------------------------------
-// DataTab — borrar datos e importar desde Hevy CSV
+// DataTab — borrar datos, exportar/importar JSON y CSV
 // ---------------------------------------------------------------------------
 export const DataTab: React.FC = () => {
   // --- Delete flow ---
@@ -19,7 +19,42 @@ export const DataTab: React.FC = () => {
     setTimeout(() => setDeleted(false), 5000);
   };
 
-  // --- Import flow ---
+  // --- Import/Export JSON flow ---
+  const exportData = () => {
+    const data = {
+      logs: JSON.parse(localStorage.getItem('workoutLogs') || '{}'),
+      routines: JSON.parse(localStorage.getItem('customRoutines') || '[]'),
+      settings: JSON.parse(localStorage.getItem('appSettings') || '{}')
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `rutina-g-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportJSON = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target?.result as string);
+        if (data.logs) localStorage.setItem('workoutLogs', JSON.stringify(data.logs));
+        if (data.routines) localStorage.setItem('customRoutines', JSON.stringify(data.routines));
+        if (data.settings) localStorage.setItem('appSettings', JSON.stringify(data.settings));
+        alert('Datos importados correctamente. La app se recargará.');
+        window.location.reload();
+      } catch (err) {
+        alert('Error importando los datos JSON.');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  // --- Import CSV flow ---
   const fileInputRef                        = useRef<HTMLInputElement>(null);
   const [importing, setImporting]           = useState(false);
   const [importResult, setImportResult]     = useState<HevyImportResult | null>(null);
@@ -35,7 +70,6 @@ export const DataTab: React.FC = () => {
       const text = await file.text();
       const result = importFromHevyCSV(text);
       setImportResult(result);
-      // Reset the file input so the same file can be re-selected if needed
       e.target.value = '';
     } catch (err: any) {
       setImportError(err?.message ?? 'Error desconocido al procesar el archivo.');
@@ -47,7 +81,33 @@ export const DataTab: React.FC = () => {
   return (
     <div className="space-y-6">
 
-      {/* ─── IMPORT SECTION ─── */}
+      {/* ─── NATIVE JSON IMPORT/EXPORT ─── */}
+      <section className="rounded-3xl border border-white/8 bg-zinc-900/50 overflow-hidden">
+        <div className="p-5 border-b border-white/5 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center">
+            <Upload size={18} className="text-blue-400" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-white">Datos de la App (JSON)</h3>
+            <p className="text-[10px] text-zinc-500 font-medium">Exportar e importar copias de seguridad</p>
+          </div>
+        </div>
+
+        <div className="p-5 space-y-4">
+          <button onClick={exportData} className="w-full flex items-center gap-3 p-4 bg-zinc-800/50 hover:bg-zinc-800 transition-colors text-left rounded-2xl border border-white/5">
+            <Share2 size={18} className="text-blue-400" />
+            <p className="font-bold text-white text-sm flex-1">Exportar Copia de Seguridad</p>
+          </button>
+          
+          <label className="w-full flex items-center gap-3 p-4 bg-zinc-800/50 hover:bg-zinc-800 transition-colors text-left cursor-pointer rounded-2xl border border-white/5">
+            <Upload size={18} className="text-emerald-400" />
+            <p className="font-bold text-white text-sm flex-1">Importar Datos (JSON)</p>
+            <input type="file" accept=".json" className="hidden" onChange={handleImportJSON} />
+          </label>
+        </div>
+      </section>
+
+      {/* ─── IMPORT HEVY SECTION ─── */}
       <section className="rounded-3xl border border-white/8 bg-zinc-900/50 overflow-hidden">
         <div className="p-5 border-b border-white/5 flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-sky-500/10 flex items-center justify-center">

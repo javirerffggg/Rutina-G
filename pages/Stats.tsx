@@ -4,9 +4,7 @@ import { getTodayDateString } from '../utils';
 import { DailyLog } from '../types';
 import { CompositionTab } from '../components/stats/CompositionTab';
 import { PerformanceTab } from '../components/stats/PerformanceTab';
-import { ReportsTab } from '../components/stats/ReportsTab';
-import { DataTab } from '../components/stats/DataTab';
-import { Activity, Dumbbell, FileText, Database } from 'lucide-react';
+import { Activity, Dumbbell } from 'lucide-react';
 
 const Stats: React.FC = () => {
   const today = getTodayDateString();
@@ -40,8 +38,6 @@ const Stats: React.FC = () => {
   const TABS = [
     { id: 'performance', label: 'Rendimiento', Icon: Dumbbell },
     { id: 'composition', label: 'Cuerpo',      Icon: Activity },
-    { id: 'reports',     label: 'Reportes',    Icon: FileText },
-    { id: 'data',        label: 'Datos',       Icon: Database },
   ] as const;
 
   return (
@@ -69,8 +65,6 @@ const Stats: React.FC = () => {
         <CompositionTab todayLog={todayLog} weightLogs={weightLogs} updateLog={updateLog} today={today} />
       )}
       {activeTab === 'performance' && <PerformanceTab logs={logs} />}
-      {activeTab === 'reports'     && <ReportsTab logs={logs} />}
-      {activeTab === 'data'        && <DataTab />}
     </div>
   );
 };

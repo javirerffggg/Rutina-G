@@ -3,10 +3,12 @@ import {
   Palette, Smartphone, Baseline, Moon, Clock, Type,
   User, Calendar, Ruler, Scale, Target, Bell, Flame,
   Download, Upload, Trash2, HardDrive, RefreshCw, Info,
-  ChevronRight, Check
+  ChevronRight, Check, FileText
 } from 'lucide-react';
 import { AppSettings, getSettings, saveSettings } from '../services/settings';
 import { getLogs } from '../services/storage';
+import { ReportsTab } from '../components/stats/ReportsTab';
+import { DataTab } from '../components/stats/DataTab';
 
 export const Settings: React.FC = () => {
   const [settings, setSettingsState] = useState<AppSettings>(getSettings());
@@ -29,59 +31,6 @@ export const Settings: React.FC = () => {
   const updateNotification = (key: keyof AppSettings['notifications'], value: any) => {
     const newNotif = { ...settings.notifications, [key]: value };
     updateSetting('notifications', newNotif);
-  };
-
-  const calculateDbSize = () => {
-    let total = 0;
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key) {
-        total += localStorage.getItem(key)?.length || 0;
-      }
-    }
-    setDbSize((total / 1024).toFixed(2) + ' KB');
-  };
-
-  const exportData = () => {
-    const data = {
-      logs: getLogs(),
-      routines: JSON.parse(localStorage.getItem('customRoutines') || '[]'),
-      settings: settings
-    };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `rutina-g-backup-${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const data = JSON.parse(event.target?.result as string);
-        if (data.logs) localStorage.setItem('workoutLogs', JSON.stringify(data.logs));
-        if (data.routines) localStorage.setItem('customRoutines', JSON.stringify(data.routines));
-        if (data.settings) saveSettings(data.settings);
-        alert('Datos importados correctamente. La app se recargará.');
-        window.location.reload();
-      } catch (err) {
-        alert('Error importando los datos.');
-      }
-    };
-    reader.readAsText(file);
-  };
-
-  const handleClearData = () => {
-    const code = prompt('Escribe "BORRAR" para confirmar la eliminación de todos los datos.');
-    if (code === 'BORRAR') {
-      localStorage.clear();
-      window.location.reload();
-    }
   };
 
   const toggleOLED = () => {
@@ -291,28 +240,20 @@ export const Settings: React.FC = () => {
         </div>
       </section>
 
-      {/* ── DATOS ── */}
+      {/* ── REPORTES ── */}
       <section className="space-y-3">
         <h3 className="text-[10px] font-bold text-brand-500 uppercase tracking-[0.2em] px-1 flex items-center gap-2">
-          <HardDrive size={14}/> Datos ({dbSize})
+          <FileText size={14}/> Reportes Anuales y Mensuales
         </h3>
-        <div className="bg-zinc-900/50 border border-white/5 rounded-3xl p-1">
-          <button onClick={exportData} className="w-full flex items-center gap-3 p-4 hover:bg-white/5 transition-colors text-left rounded-2xl">
-            <Download size={18} className="text-blue-400" />
-            <p className="font-bold text-white text-sm flex-1">Exportar Copia de Seguridad</p>
-          </button>
-          <div className="h-px bg-white/5 mx-4" />
-          <label className="w-full flex items-center gap-3 p-4 hover:bg-white/5 transition-colors text-left cursor-pointer rounded-2xl">
-            <Upload size={18} className="text-emerald-400" />
-            <p className="font-bold text-white text-sm flex-1">Importar Datos (JSON)</p>
-            <input type="file" accept=".json" className="hidden" onChange={handleImport} />
-          </label>
-          <div className="h-px bg-white/5 mx-4" />
-          <button onClick={handleClearData} className="w-full flex items-center gap-3 p-4 hover:bg-red-500/10 transition-colors text-left rounded-2xl">
-            <Trash2 size={18} className="text-red-500" />
-            <p className="font-bold text-red-500 text-sm flex-1">Borrar Todos los Datos</p>
-          </button>
-        </div>
+        <ReportsTab logs={getLogs()} />
+      </section>
+
+      {/* ── DATOS Y ALMACENAMIENTO ── */}
+      <section className="space-y-3">
+        <h3 className="text-[10px] font-bold text-brand-500 uppercase tracking-[0.2em] px-1 flex items-center gap-2">
+          <HardDrive size={14}/> Datos y Almacenamiento
+        </h3>
+        <DataTab />
       </section>
 
       {/* ── INTEGRACIÓN Y SYNC ── */}

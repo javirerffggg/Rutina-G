@@ -176,8 +176,8 @@ export default function MuscleLoadScreen() {
                        </div>
                      </div>
                      <div className="relative h-1.5 bg-black/40 rounded-full overflow-hidden">
-                       <div className={`absolute top-0 left-0 h-full ${barColor} rounded-full transition-all`} style={{ width: \`\${progressPct}%\` }} />
-                       {mev > 0 && <div className="absolute top-0 bottom-0 w-px bg-zinc-600 z-10" style={{ left: \`\${(mev/mav)*100}%\` }} />}
+                       <div className={`absolute top-0 left-0 h-full ${barColor} rounded-full transition-all`} style={{ width: `${progressPct}%` }} />
+                       {mev > 0 && <div className="absolute top-0 bottom-0 w-px bg-zinc-600 z-10" style={{ left: `${(mev/mav)*100}%` }} />}
                      </div>
                      <div className="flex justify-between mt-1.5">
                        <span className="text-[8px] font-bold text-zinc-600">0</span>

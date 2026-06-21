@@ -22,9 +22,11 @@ export const DataTab: React.FC = () => {
   // --- Import/Export JSON flow ---
   const exportData = () => {
     const data = {
-      logs: JSON.parse(localStorage.getItem('workoutLogs') || '{}'),
+      logs: JSON.parse(localStorage.getItem('fitness_pro_logs_v1') || '{}'),
+      achievements: JSON.parse(localStorage.getItem('fitness_pro_achievements_v1') || '{}'),
       routines: JSON.parse(localStorage.getItem('customRoutines') || '[]'),
-      settings: JSON.parse(localStorage.getItem('appSettings') || '{}')
+      settings: JSON.parse(localStorage.getItem('appSettings') || '{}'),
+      rpgLevel: localStorage.getItem('rpg_last_seen_level') || '1'
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -42,9 +44,11 @@ export const DataTab: React.FC = () => {
     reader.onload = (event) => {
       try {
         const data = JSON.parse(event.target?.result as string);
-        if (data.logs) localStorage.setItem('workoutLogs', JSON.stringify(data.logs));
+        if (data.logs) localStorage.setItem('fitness_pro_logs_v1', JSON.stringify(data.logs));
+        if (data.achievements) localStorage.setItem('fitness_pro_achievements_v1', JSON.stringify(data.achievements));
         if (data.routines) localStorage.setItem('customRoutines', JSON.stringify(data.routines));
         if (data.settings) localStorage.setItem('appSettings', JSON.stringify(data.settings));
+        if (data.rpgLevel) localStorage.setItem('rpg_last_seen_level', data.rpgLevel);
         alert('Datos importados correctamente. La app se recargará.');
         window.location.reload();
       } catch (err) {

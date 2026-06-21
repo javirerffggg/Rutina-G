@@ -5,10 +5,37 @@ import { getLogs, saveLog } from '../services/storage';
 import { DailyLog } from '../types';
 import { Activity, Battery, Moon, Scale, Utensils, CheckCircle2, AlertTriangle, Clock, Flame, ChevronRight, TrendingUp, TrendingDown, Minus, HeartPulse, CalendarRange, Dumbbell, Target, Crown } from 'lucide-react';
 import { EXERCISE_MUSCLE_MAP, PHASES } from '../constants';
-import { BodyHeatmap } from '../components/BodyHeatmap';
 import { calculate7DayAverage, calculate7DayTrend } from '../utils/bodyComposition';
 import { useProgression } from '../hooks/useProgression';
 import { getSettings } from '../services/settings';
+import {
+  ResponsiveContainer,
+  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+  Tooltip,
+} from 'recharts';
+
+// ── Radar axes ───────────────────────────────────────────────────────────────
+const RADAR_MUSCLES: { key: string; label: string }[] = [
+  { key: 'chest',      label: 'Pecho' },
+  { key: 'back',       label: 'Espalda' },
+  { key: 'shoulders',  label: 'Hombros' },
+  { key: 'biceps',     label: 'Bíceps' },
+  { key: 'triceps',    label: 'Tríceps' },
+  { key: 'core',       label: 'Core' },
+  { key: 'quads',      label: 'Cuádriceps' },
+  { key: 'hamstrings', label: 'Isquios' },
+];
+
+const RadarTooltip: React.FC<any> = ({ active, payload }) => {
+  if (!active || !payload || payload.length === 0) return null;
+  const { muscle, sets } = payload[0].payload;
+  return (
+    <div className="bg-zinc-900/90 backdrop-blur-sm border border-zinc-700 rounded-lg px-3 py-2 shadow-xl">
+      <p className="text-xs font-bold text-white">{muscle}</p>
+      <p className="text-xs text-amber-400">{sets} series</p>
+    </div>
+  );
+};
 
 const getGreeting = () => {
   const h = new Date().getHours();
@@ -68,7 +95,6 @@ const Dashboard: React.FC = () => {
   
   const [log, setLog] = useState<DailyLog>({ date: today });
   const [weightInput, setWeightInput] = useState('');
-  const [muscleVolume, setMuscleVolume] = useState<Record<string, number>>({});
   const [muscleSets, setMuscleSets] = useState<Record<string, number>>({});
   const [weightAvg7d, setWeightAvg7d] = useState<number | undefined>(undefined);
   const [weightTrend, setWeightTrend] = useState<number | undefined>(undefined);
@@ -121,9 +147,8 @@ const Dashboard: React.FC = () => {
         setWeightTrend(calculate7DayTrend(saved[today].weight!, avg));
       }
 
-      // Volumen + series musculares semanales (solo sets completados con reps reales)
+      // Series musculares semanales (solo sets completados con reps reales)
       const todayDate = new Date(today);
-      const volumeData: Record<string, number> = {};
       const setsData: Record<string, number> = {};
 
       Object.keys(saved).forEach(dateStr => {
@@ -134,20 +159,15 @@ const Dashboard: React.FC = () => {
         if (diffDays <= 7 && saved[dateStr].exercises) {
           saved[dateStr].exercises!.forEach(ex => {
             const muscles = EXERCISE_MUSCLE_MAP[ex.exerciseId] || [];
-            // Solo contar sets completados con reps/peso real
-            const completedSets = ex.sets.filter(s => s.completed && ((s.reps || 0) > 0 || (s.weight || 0) > 0));
-            const reps = completedSets.reduce((sum, set) => sum + (set.reps || 0), 0);
-            const sets = completedSets.length;
-            if (sets === 0) return;
-            muscles.forEach(m => {
-              volumeData[m] = (volumeData[m] || 0) + reps;
-              setsData[m] = (setsData[m] || 0) + sets;
+            const completedSets = ex.sets.filter((s: any) => s.completed && ((s.reps || 0) > 0 || (s.weight || 0) > 0));
+            if (completedSets.length === 0) return;
+            muscles.forEach((m: string) => {
+              setsData[m] = (setsData[m] || 0) + completedSets.length;
             });
           });
         }
       });
 
-      setMuscleVolume(volumeData);
       setMuscleSets(setsData);
     };
 
@@ -190,6 +210,17 @@ const Dashboard: React.FC = () => {
     );
     return totalSets > 0 ? Math.round((completedSets / totalSets) * 100) : 0;
   }, [log.exercises]);
+
+  // ── Radar data ─────────────────────────────────────────────────────────────
+  const { radarData, hasMuscleData, maxSets } = useMemo(() => {
+    const radar = RADAR_MUSCLES.map(({ key, label }) => ({
+      muscle: label,
+      sets: muscleSets[key] || 0,
+    }));
+    const max = Math.max(...radar.map(d => d.sets), 1);
+    const hasData = radar.some(d => d.sets > 0);
+    return { radarData: radar, hasMuscleData: hasData, maxSets: max };
+  }, [muscleSets]);
 
   const renderCompactRating = (field: 'sleep' | 'energy' | 'stress', icon: React.ReactNode, iconColor: string, activeClass: string) => (
     <div className="flex items-center justify-between gap-3">
@@ -446,35 +477,52 @@ const Dashboard: React.FC = () => {
         </div>
       </section>
 
-      {/* RPG RANK BADGE REMOVED - MOVED TO TROPHY ROOM */}
-
-      {/* ── MAPA DE CALOR MUSCULAR ── */}
-      <section className="bg-zinc-900/50 border border-zinc-800/50 p-5 rounded-2xl space-y-4">
-        <div className="flex justify-between items-end">
-          <div>
-            <h2 className="text-base font-display font-bold text-white flex items-center gap-2">
-              <Flame size={18} className="text-brand-400" /> Carga Muscular
-            </h2>
-            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">Volumen últimos 7 días</p>
-          </div>
-          <div className="flex flex-col gap-1 text-[9px] font-bold uppercase tracking-widest text-zinc-500">
-            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-zinc-800 border border-zinc-700" /> Descanso</span>
-            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-amber-500" /> Óptimo</span>
-            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-red-500" /> Fatiga</span>
-          </div>
-        </div>
-        <button 
-          onClick={() => navigate('/muscle-load', { state: { muscleVolume, muscleSets, allLogs } })}
-          className="w-full block relative group cursor-pointer active:scale-[0.98] transition-transform"
-        >
-          <div className="absolute top-2 right-2 p-2 bg-zinc-800/80 backdrop-blur-md rounded-full text-zinc-400 group-hover:text-white transition-colors z-10 hidden sm:flex">
-             <ChevronRight size={16} />
-          </div>
-          <BodyHeatmap muscleVolume={muscleVolume} muscleSets={muscleSets} />
-          <p className="text-center text-[9px] text-zinc-500 font-bold uppercase tracking-widest mt-4 group-hover:text-brand-400 transition-colors">
-            Toca para ver detalle completo
+      {/* ── RADAR CHART: CARGA MUSCULAR ── */}
+      <section className="bg-zinc-900/50 border border-zinc-800/50 p-5 rounded-2xl">
+        <div className="mb-4">
+          <h2 className="text-base font-display font-bold text-white flex items-center gap-2">
+            <Flame size={18} className="text-brand-400" /> Carga Muscular
+          </h2>
+          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">
+            Series por grupo — últimos 7 días
           </p>
-        </button>
+        </div>
+
+        {hasMuscleData ? (
+          <ResponsiveContainer width="100%" height={260}>
+            <RadarChart data={radarData} margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>
+              <PolarGrid stroke="#3f3f46" strokeDasharray="3 3" />
+              <PolarAngleAxis
+                dataKey="muscle"
+                tick={{ fill: '#a1a1aa', fontSize: 11, fontWeight: 600 }}
+              />
+              <PolarRadiusAxis
+                angle={90}
+                domain={[0, maxSets]}
+                tick={{ fill: '#52525b', fontSize: 9 }}
+                axisLine={false}
+                tickCount={4}
+              />
+              <Radar
+                name="Series"
+                dataKey="sets"
+                stroke="#f59e0b"
+                fill="#f59e0b"
+                fillOpacity={0.18}
+                strokeWidth={2}
+                dot={{ r: 3, fill: '#f59e0b', strokeWidth: 0 }}
+                activeDot={{ r: 5, fill: '#fbbf24', stroke: '#92400e', strokeWidth: 1 }}
+              />
+              <Tooltip content={<RadarTooltip />} />
+            </RadarChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <Flame size={28} className="text-zinc-700 mb-3" />
+            <p className="text-zinc-500 text-xs font-bold">Sin entrenamientos esta semana</p>
+            <p className="text-zinc-600 text-[10px] mt-1">Completa una sesión para ver la carga muscular</p>
+          </div>
+        )}
       </section>
 
     </div>

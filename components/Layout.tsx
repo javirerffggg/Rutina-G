@@ -238,7 +238,7 @@ const Layout: React.FC = () => {
             }>
               {({ isActive }) => (<>
                 <Scale size={20} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[9px] font-bold tracking-[0.05em] uppercase">Peso</span>
+                <span className="text-[9px] font-bold tracking-[0.05em] uppercase">Stats</span>
               </>)}
             </NavLink>
 

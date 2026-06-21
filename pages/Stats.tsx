@@ -11,7 +11,7 @@ const Stats: React.FC = () => {
   const today = getTodayDateString();
   const [logs, setLogs] = useState<Record<string, DailyLog>>({});
   const [todayLog, setTodayLog] = useState<DailyLog>({ date: today });
-  const [activeTab, setActiveTab] = useState<'today' | 'composition' | 'performance' | 'reports' | 'data'>('today');
+  const [activeTab, setActiveTab] = useState<'today' | 'composition' | 'performance' | 'reports' | 'data'>('performance');
 
   useEffect(() => {
     const load = () => {
@@ -37,9 +37,9 @@ const Stats: React.FC = () => {
     .filter(l => l.weight !== undefined && l.weight > 0);
 
   const TABS = [
-    { id: 'today',       label: 'Hoy',         Icon: LayoutDashboard },
     { id: 'performance', label: 'Rendimiento', Icon: Dumbbell },
     { id: 'composition', label: 'Cuerpo',      Icon: Activity },
+    { id: 'today',       label: 'Hoy',         Icon: LayoutDashboard },
   ] as const;
 
   return (

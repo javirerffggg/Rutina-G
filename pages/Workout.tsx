@@ -129,6 +129,7 @@ const Workout: React.FC = () => {
   
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [restTimer, setRestTimer] = useState<number | null>(null);
+  const [showEdgeGlow, setShowEdgeGlow] = useState(false);
   const restDurationRef = useRef<number>(90);
   const skipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [startTime, setStartTime] = useState<number | null>(() => {
@@ -185,6 +186,10 @@ const Workout: React.FC = () => {
         oscillator.start(audioCtx.currentTime);
         oscillator.stop(audioCtx.currentTime + 0.5);
       } catch (e) { console.error(e); }
+
+      setShowEdgeGlow(true);
+      setTimeout(() => setShowEdgeGlow(false), 2500);
+
       const timeout = setTimeout(() => { setRestTimer(null); }, 10000);
       return () => clearTimeout(timeout);
     }
@@ -817,6 +822,95 @@ const Workout: React.FC = () => {
 
   return (
     <div className="pb-32 min-h-screen">
+      {/* ── EDGE GLOW OVERLAY ── */}
+      <AnimatePresence>
+        {showEdgeGlow && (
+          <motion.div
+            className="fixed inset-0 z-[200] pointer-events-none"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            {/* Glow top */}
+            <motion.div
+              className="absolute top-0 left-0 right-0 h-28"
+              style={{
+                background: 'linear-gradient(to bottom, rgba(34,211,238,0.6) 0%, transparent 100%)',
+                filter: 'blur(8px)',
+                transformOrigin: 'top',
+              }}
+              initial={{ scaleY: 0, opacity: 0 }}
+              animate={{ scaleY: [0, 1.2, 1], opacity: [0, 1, 0.8] }}
+              exit={{ scaleY: 0, opacity: 0 }}
+              transition={{ duration: 0.5, ease: 'easeOut' }}
+            />
+            {/* Glow bottom */}
+            <motion.div
+              className="absolute bottom-0 left-0 right-0 h-28"
+              style={{
+                background: 'linear-gradient(to top, rgba(34,211,238,0.6) 0%, transparent 100%)',
+                filter: 'blur(8px)',
+                transformOrigin: 'bottom',
+              }}
+              initial={{ scaleY: 0, opacity: 0 }}
+              animate={{ scaleY: [0, 1.2, 1], opacity: [0, 1, 0.8] }}
+              exit={{ scaleY: 0, opacity: 0 }}
+              transition={{ duration: 0.5, ease: 'easeOut' }}
+            />
+            {/* Glow left */}
+            <motion.div
+              className="absolute top-0 bottom-0 left-0 w-16"
+              style={{
+                background: 'linear-gradient(to right, rgba(34,211,238,0.5) 0%, transparent 100%)',
+                filter: 'blur(6px)',
+                transformOrigin: 'left',
+              }}
+              initial={{ scaleX: 0, opacity: 0 }}
+              animate={{ scaleX: [0, 1.3, 1], opacity: [0, 1, 0.7] }}
+              exit={{ scaleX: 0, opacity: 0 }}
+              transition={{ duration: 0.5, ease: 'easeOut', delay: 0.05 }}
+            />
+            {/* Glow right */}
+            <motion.div
+              className="absolute top-0 bottom-0 right-0 w-16"
+              style={{
+                background: 'linear-gradient(to left, rgba(34,211,238,0.5) 0%, transparent 100%)',
+                filter: 'blur(6px)',
+                transformOrigin: 'right',
+              }}
+              initial={{ scaleX: 0, opacity: 0 }}
+              animate={{ scaleX: [0, 1.3, 1], opacity: [0, 1, 0.7] }}
+              exit={{ scaleX: 0, opacity: 0 }}
+              transition={{ duration: 0.5, ease: 'easeOut', delay: 0.05 }}
+            />
+            {/* Corners — detalles de esquina */}
+            {['top-0 left-0', 'top-0 right-0', 'bottom-0 left-0', 'bottom-0 right-0'].map((pos, i) => (
+              <motion.div
+                key={i}
+                className={`absolute ${pos} w-20 h-20`}
+                style={{
+                  background: 'radial-gradient(circle at corner, rgba(34,211,238,0.8) 0%, transparent 70%)',
+                  filter: 'blur(4px)',
+                }}
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: [0, 1, 0.6], scale: [0, 1.5, 1] }}
+                exit={{ opacity: 0, scale: 0 }}
+                transition={{ duration: 0.6, ease: 'backOut', delay: 0.1 + i * 0.03 }}
+              />
+            ))}
+            {/* Pulso de fade-out suave */}
+            <motion.div
+              className="absolute inset-0"
+              style={{
+                boxShadow: 'inset 0 0 60px 20px rgba(34,211,238,0.25)',
+              }}
+              animate={{ opacity: [1, 0.6, 1, 0.4, 0] }}
+              transition={{ duration: 2.0, delay: 0.4, ease: 'easeInOut' }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
       <AnimatePresence>
         {showAnalysis && analysisData && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">

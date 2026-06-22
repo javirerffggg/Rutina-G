@@ -10,10 +10,12 @@ import { getLogs } from '../services/storage';
 import { ReportsTab } from '../components/stats/ReportsTab';
 import { DataTab } from '../components/stats/DataTab';
 import { WeeklyPlanEditor } from '../components/WeeklyPlanEditor';
+import { useConvexConnectionState } from 'convex/react';
 
 export const Settings: React.FC = () => {
   const [settings, setSettingsState] = useState<AppSettings>(getSettings());
   const [username, setUsername] = useState(() => localStorage.getItem('rutinag_username') || '');
+  const convexState = useConvexConnectionState();
 
   const updateSetting = (key: keyof AppSettings, value: any) => {
     const updated = saveSettings({ [key]: value });
@@ -350,11 +352,18 @@ export const Settings: React.FC = () => {
           </div>
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center gap-3">
-               <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
+               <div className={`w-2 h-2 rounded-full ${convexState.isWebSocketConnected ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'}`} />
                <p className="font-bold text-white text-sm">Convex Cloud Sync</p>
             </div>
-            <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-2 py-1 rounded-lg">Online</span>
+            <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg ${convexState.isWebSocketConnected ? 'text-emerald-500 bg-emerald-500/10' : 'text-red-500 bg-red-500/10'}`}>
+              {convexState.isWebSocketConnected ? 'Online' : 'Offline'}
+            </span>
           </div>
+          {!convexState.isWebSocketConnected && (
+            <div className="px-4 pb-4">
+              <p className="text-[10px] text-red-400 font-medium">Desconectado. Comprueba tu internet o si un bloqueador (ej. escudos de Brave) está bloqueando la conexión.</p>
+            </div>
+          )}
           <div className="h-px bg-white/5 mx-4" />
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center gap-3">

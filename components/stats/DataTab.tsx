@@ -361,7 +361,7 @@ export const DataTab: React.FC = () => {
                       }
                     } catch (err) {
                       console.error('Error resolving device:', err);
-                      alert('Error al buscar el dispositivo. Asegúrate de tener conexión.');
+                      alert('Error al buscar el dispositivo. Comprueba tu conexión a internet o si un bloqueador de anuncios (ej. escudos de Brave) está bloqueando a Convex.');
                     }
                   } else {
                     alert('Por favor, ingresa un ID o Nombre de Usuario válido.');

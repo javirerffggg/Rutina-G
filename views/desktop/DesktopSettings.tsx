@@ -8,6 +8,7 @@ import { getLogs } from '../../services/storage';
 import { ReportsTab } from '../../components/stats/ReportsTab';
 import { DataTab } from '../../components/stats/DataTab';
 import { WeeklyPlanEditor } from '../../components/WeeklyPlanEditor';
+import { useConvexConnectionState } from 'convex/react';
 
 const SECTIONS = [
   { id: 'appearance', label: 'Apariencia',         Icon: Palette },
@@ -63,6 +64,7 @@ export const DesktopSettings: React.FC = () => {
   const [settings, setSettingsState] = useState<AppSettings>(getSettings());
   const [activeSection, setActiveSection] = useState<SectionId>('appearance');
   const [username, setUsername] = useState(() => localStorage.getItem('rutinag_username') || '');
+  const convexState = useConvexConnectionState();
 
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -256,10 +258,15 @@ export const DesktopSettings: React.FC = () => {
               />
             </div>
             <Row label="Convex Cloud Sync" border>
-              <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-2 py-1 rounded-lg flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Online
+              <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg flex items-center gap-1.5 ${convexState.isWebSocketConnected ? 'text-emerald-500 bg-emerald-500/10' : 'text-red-500 bg-red-500/10'}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${convexState.isWebSocketConnected ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} /> {convexState.isWebSocketConnected ? 'Online' : 'Offline'}
               </span>
             </Row>
+            {!convexState.isWebSocketConnected && (
+              <Row label="Aviso" sub="Conexión bloqueada. Revisa tus bloqueadores de anuncios (ej. escudos de Brave)." border={false}>
+                <span className="text-[10px] font-bold text-red-500">Desconectado</span>
+              </Row>
+            )}
             <Row label="Versión de la App" border={false}>
               <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">v1.2.0</span>
             </Row>

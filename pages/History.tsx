@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getLogs, getExerciseHistory, deleteLog } from '../services/storage';
 import { DailyLog } from '../types';
-import { Search, CalendarDays, Clock, Dumbbell, Award, Flame, ChevronDown, ChevronRight, Hash, Trash2 } from 'lucide-react';
+import { Search, CalendarDays, Clock, Dumbbell, Award, Flame, ChevronDown, ChevronRight, Hash, Trash2, BarChart2 } from 'lucide-react';
 import { EXERCISES_PUSH, EXERCISES_PULL, EXERCISES_LEGS, EXERCISES_UPPER, EXERCISES_LOWER, EXERCISE_MUSCLE_MAP } from '../constants';
 import { calculateOneRM } from '../utils';
 
@@ -13,6 +14,7 @@ const History: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<string>('All');
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
   const [logToDelete, setLogToDelete] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const customRoutines = useMemo(() => {
     try { return JSON.parse(localStorage.getItem('customRoutines') || '[]'); } catch { return []; }
@@ -195,6 +197,13 @@ const History: React.FC = () => {
                           <span className="text-[10px] font-bold">{log.prs.length} PRs</span>
                         </div>
                       )}
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); navigate(`/workout-stats/${log.date}`); }}
+                        className="p-1.5 text-zinc-500 hover:text-brand-400 hover:bg-brand-500/10 rounded-lg transition-colors"
+                        aria-label="Ver estadísticas"
+                      >
+                        <BarChart2 size={16} />
+                      </button>
                       <button 
                         onClick={(e) => { e.stopPropagation(); setLogToDelete(log.date); }}
                         className="p-1.5 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"

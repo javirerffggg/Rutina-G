@@ -405,8 +405,9 @@ const Workout: React.FC = () => {
     const tl = newLogs.find(l=>l.exerciseId===exerciseId);
     if (tl?.completed) {
       const ci = exercises.findIndex(e=>e.id===exerciseId);
-      if (ci < exercises.length-1) setActiveExercise(exercises[ci+1].id);
-      else setActiveExercise(null);
+      let nextUncomp = newLogs.slice(ci+1).find(l=>!l.completed)?.exerciseId;
+      if (!nextUncomp) nextUncomp = newLogs.slice(0, ci).find(l=>!l.completed)?.exerciseId;
+      setActiveExercise(nextUncomp || null);
     }
   };
 
@@ -417,7 +418,9 @@ const Workout: React.FC = () => {
     saveWorkoutDebounced(nl);
     const nowComplete = nl.find(l=>l.exerciseId===exerciseId)?.completed;
     if (nowComplete) {
-      const nextUncomp = nl.find(l=>!l.completed)?.exerciseId;
+      const ci = exercises.findIndex(e=>e.id===exerciseId);
+      let nextUncomp = nl.slice(ci+1).find(l=>!l.completed)?.exerciseId;
+      if (!nextUncomp) nextUncomp = nl.slice(0, ci).find(l=>!l.completed)?.exerciseId;
       setActiveExercise(nextUncomp || null);
     } else {
       setActiveExercise(exerciseId);

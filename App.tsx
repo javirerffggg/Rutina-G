@@ -13,6 +13,7 @@ const Settings   = lazy(() => import('./pages/Settings'));
 const MuscleLoadScreen = lazy(() => import('./pages/MuscleLoadScreen'));
 const ConsistencyScreen = lazy(() => import('./pages/ConsistencyScreen'));
 const VolumeEvolutionScreen = lazy(() => import('./pages/VolumeEvolutionScreen'));
+const WorkoutStatsScreen = lazy(() => import('./pages/WorkoutStatsScreen'));
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -38,6 +39,7 @@ const MobileApp: React.FC = () => (
           <Route path="volume-evolution"  element={<VolumeEvolutionScreen />} />
           <Route path="history"           element={<History />} />
           <Route path="stats"             element={<Stats />} />
+          <Route path="workout-stats/:date" element={<WorkoutStatsScreen />} />
           <Route path="trophies"          element={<TrophyRoom />} />
           <Route path="settings"          element={<Settings />} />
           <Route path="*" element={<Navigate to="/stats" replace />} />

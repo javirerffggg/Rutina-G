@@ -14,17 +14,7 @@ import {
   Tooltip,
 } from 'recharts';
 
-// ── Radar axes ───────────────────────────────────────────────────────────────
-const RADAR_MUSCLES: { key: string; label: string }[] = [
-  { key: 'chest',      label: 'Pecho' },
-  { key: 'back',       label: 'Espalda' },
-  { key: 'shoulders',  label: 'Hombros' },
-  { key: 'biceps',     label: 'Bíceps' },
-  { key: 'triceps',    label: 'Tríceps' },
-  { key: 'core',       label: 'Core' },
-  { key: 'quads',      label: 'Cuádriceps' },
-  { key: 'hamstrings', label: 'Isquios' },
-];
+import { getRadarData } from '../utils/radar';
 
 const RadarTooltip: React.FC<any> = ({ active, payload }) => {
   if (!active || !payload || payload.length === 0) return null;
@@ -149,30 +139,7 @@ const Dashboard: React.FC = () => {
         setWeightTrend(calculate7DayTrend(saved[today].weight!, avg));
       }
 
-      // Series musculares semanales (solo sets completados con reps reales)
-      const todayDate = new Date(today);
-      const setsData: Record<string, number> = {};
-
-      const customRoutines = JSON.parse(localStorage.getItem('customRoutines') || '[]');
-
-      Object.keys(saved).forEach(dateStr => {
-        const logDate = new Date(dateStr);
-        const diffTime = Math.abs(todayDate.getTime() - logDate.getTime());
-        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-
-        if (diffDays <= 7 && saved[dateStr].exercises) {
-          saved[dateStr].exercises!.forEach(ex => {
-            const muscles = getExerciseMuscles(ex.exerciseId, customRoutines) || [];
-            const completedSets = ex.sets.filter((s: any) => s.completed && ((s.reps || 0) > 0 || (s.weight || 0) > 0));
-            if (completedSets.length === 0) return;
-            muscles.forEach((m: string) => {
-              setsData[m] = (setsData[m] || 0) + completedSets.length;
-            });
-          });
-        }
-      });
-
-      setMuscleSets(setsData);
+      // Series musculares semanales (ahora lo maneja getRadarData en useMemo abajo)
     };
 
     load();
@@ -217,14 +184,8 @@ const Dashboard: React.FC = () => {
 
   // ── Radar data ─────────────────────────────────────────────────────────────
   const { radarData, hasMuscleData, maxSets } = useMemo(() => {
-    const radar = RADAR_MUSCLES.map(({ key, label }) => ({
-      muscle: label,
-      sets: muscleSets[key] || 0,
-    }));
-    const max = Math.max(...radar.map(d => d.sets), 1);
-    const hasData = radar.some(d => d.sets > 0);
-    return { radarData: radar, hasMuscleData: hasData, maxSets: max };
-  }, [muscleSets]);
+    return getRadarData(Object.values(allLogs), 7);
+  }, [allLogs]);
 
   const renderCompactRating = (field: 'sleep' | 'energy' | 'stress', icon: React.ReactNode, iconColor: string, activeClass: string) => (
     <div className="flex flex-col gap-1.5 mb-2">

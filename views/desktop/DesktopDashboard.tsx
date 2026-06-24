@@ -11,16 +11,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
 } from 'recharts';
 
-const RADAR_MUSCLES = [
-  { key: 'chest',      label: 'Pecho' },
-  { key: 'back',       label: 'Espalda' },
-  { key: 'shoulders',  label: 'Hombros' },
-  { key: 'biceps',     label: 'Bíceps' },
-  { key: 'triceps',    label: 'Tríceps' },
-  { key: 'core',       label: 'Core' },
-  { key: 'quads',      label: 'Cuádriceps' },
-  { key: 'hamstrings', label: 'Isquios' },
-];
+import { getRadarData } from '../../utils/radar';
 
 export const DesktopDashboard: React.FC = () => {
   const today = getTodayDateString();
@@ -73,22 +64,8 @@ export const DesktopDashboard: React.FC = () => {
 
   // ── Radar data ───────────────────────────────────────────────────────────
   const { radarData, maxSets, hasMuscleData } = useMemo(() => {
-    const setsData: Record<string, number> = {};
-    const todayDate = new Date(today);
-    Object.keys(allLogs).forEach(d => {
-      const diff = Math.round(Math.abs(todayDate.getTime() - new Date(d).getTime()) / 86400000);
-      if (diff <= 7 && allLogs[d].exercises) {
-        allLogs[d].exercises!.forEach((ex: any) => {
-          const muscles = EXERCISE_MUSCLE_MAP[ex.exerciseId] || [];
-          const done = ex.sets.filter((s: any) => s.completed && ((s.reps || 0) > 0 || (s.weight || 0) > 0));
-          if (!done.length) return;
-          muscles.forEach((m: string) => { setsData[m] = (setsData[m] || 0) + done.length; });
-        });
-      }
-    });
-    const radar = RADAR_MUSCLES.map(({ key, label }) => ({ muscle: label, sets: setsData[key] || 0 }));
-    return { radarData: radar, maxSets: Math.max(...radar.map(d => d.sets), 1), hasMuscleData: radar.some(d => d.sets > 0) };
-  }, [allLogs, today]);
+    return getRadarData(Object.values(allLogs), 7);
+  }, [allLogs]);
 
   // ── Weight chart (30d) ───────────────────────────────────────────────────
   const weightChartData = useMemo(() =>

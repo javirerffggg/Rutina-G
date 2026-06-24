@@ -20,18 +20,7 @@ import {
 } from '../../utils/bodyComposition';
 import { EXERCISE_MUSCLE_MAP } from '../../constants';
 
-// ── Radar axis groups: muscle key → display label ──────────────────────────
-const RADAR_MUSCLES: { key: string; label: string }[] = [
-  { key: 'chest',      label: 'Pecho' },
-  { key: 'back',       label: 'Espalda' },
-  { key: 'shoulders',  label: 'Hombros' },
-  { key: 'biceps',     label: 'Bíceps' },
-  { key: 'triceps',    label: 'Tríceps' },
-  { key: 'core',       label: 'Core' },
-  { key: 'quads',      label: 'Cuádriceps' },
-  { key: 'hamstrings', label: 'Isquios' },
-];
-
+import { getRadarData } from '../../utils/radar';
 interface CompositionTabProps {
   todayLog: DailyLog;
   weightLogs: DailyLog[];
@@ -57,37 +46,8 @@ export const CompositionTab: React.FC<CompositionTabProps> = ({ todayLog, weight
   // MUSCLE SETS (últimos 7 días) → radar data
   // ====================
   const { radarData, hasMuscleData, maxSets } = useMemo(() => {
-    const setsData: Record<string, number> = {};
-    const todayDate = new Date(today);
-
-    Object.keys(allLogs).forEach(dateStr => {
-      const diffDays = Math.round(
-        Math.abs(todayDate.getTime() - new Date(dateStr).getTime()) / 86400000
-      );
-      if (diffDays <= 7 && allLogs[dateStr].exercises) {
-        allLogs[dateStr].exercises!.forEach(ex => {
-          const muscles = EXERCISE_MUSCLE_MAP[ex.exerciseId] || [];
-          const completedSets = ex.sets.filter(
-            (s: any) => s.completed && ((s.reps || 0) > 0 || (s.weight || 0) > 0)
-          );
-          if (completedSets.length === 0) return;
-          muscles.forEach((m: string) => {
-            setsData[m] = (setsData[m] || 0) + completedSets.length;
-          });
-        });
-      }
-    });
-
-    const radar = RADAR_MUSCLES.map(({ key, label }) => ({
-      muscle: label,
-      sets: setsData[key] || 0,
-    }));
-
-    const max = Math.max(...radar.map(d => d.sets), 1);
-    const hasData = radar.some(d => d.sets > 0);
-
-    return { radarData: radar, hasMuscleData: hasData, maxSets: max };
-  }, [allLogs, today]);
+    return getRadarData(Object.values(allLogs), 7);
+  }, [allLogs]);
 
   // ====================
   // BODY COMPOSITION

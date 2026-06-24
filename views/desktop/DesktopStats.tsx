@@ -37,16 +37,7 @@ const MUSCLE_LABELS: Record<string, string> = {
   calves: 'Pantorrillas',
 };
 
-const RADAR_MUSCLES = [
-  { key: 'chest',      label: 'Pecho' },
-  { key: 'back',       label: 'Espalda' },
-  { key: 'shoulders',  label: 'Hombros' },
-  { key: 'biceps',     label: 'Bíceps' },
-  { key: 'triceps',    label: 'Tríceps' },
-  { key: 'core',       label: 'Core' },
-  { key: 'quads',      label: 'Cuádriceps' },
-  { key: 'hamstrings', label: 'Isquios' },
-];
+import { getRadarData } from '../../utils/radar';
 
 const CHART_COLORS = ['#3b82f6','#ef4444','#10b981','#f59e0b','#8b5cf6','#ec4899','#14b8a6','#f97316'];
 
@@ -239,22 +230,8 @@ export const DesktopStats: React.FC = () => {
 
   // ── Radar data ──────────────────────────────────────────
   const { radarData, maxSets, hasMuscleData } = useMemo(() => {
-    const setsData: Record<string,number> = {};
-    const td = new Date(today);
-    Object.keys(logs).forEach(d => {
-      const diff = Math.round(Math.abs(td.getTime() - new Date(d).getTime()) / 86400000);
-      if (diff <= 7 && logs[d].exercises) {
-        logs[d].exercises!.forEach((ex: any) => {
-          const muscles = EXERCISE_MUSCLE_MAP[ex.exerciseId] || [];
-          const done = ex.sets.filter((s: any) => s.completed && ((s.reps||0) > 0));
-          if (!done.length) return;
-          muscles.forEach((m: string) => { setsData[m]=(setsData[m]||0)+done.length; });
-        });
-      }
-    });
-    const radar = RADAR_MUSCLES.map(({ key, label }) => ({ muscle: label, sets: setsData[key]||0 }));
-    return { radarData: radar, maxSets: Math.max(...radar.map(d => d.sets), 1), hasMuscleData: radar.some(d => d.sets > 0) };
-  }, [logs, today]);
+    return getRadarData(Object.values(logs), 7);
+  }, [logs]);
 
   // ── 4-week muscle trend ─────────────────────────────────
   const trendData = useMemo(() => {

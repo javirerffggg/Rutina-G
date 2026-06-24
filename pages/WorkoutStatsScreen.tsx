@@ -5,16 +5,7 @@ import { Dumbbell, Clock, Flame, Award, ChevronLeft, CalendarDays, Activity } fr
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip } from 'recharts';
 import { EXERCISE_MUSCLE_MAP } from '../constants';
 
-const RADAR_MUSCLES = [
-  { key: 'chest',      label: 'Pecho' },
-  { key: 'back',       label: 'Espalda' },
-  { key: 'shoulders',  label: 'Hombros' },
-  { key: 'biceps',     label: 'Bíceps' },
-  { key: 'triceps',    label: 'Tríceps' },
-  { key: 'core',       label: 'Core' },
-  { key: 'quads',      label: 'Cuádriceps' },
-  { key: 'hamstrings', label: 'Isquios' },
-];
+import { getRadarData } from '../utils/radar';
 
 const WorkoutStatsScreen: React.FC = () => {
   const { date } = useParams<{ date: string }>();
@@ -34,29 +25,15 @@ const WorkoutStatsScreen: React.FC = () => {
 
     let totalVolume = 0;
     let totalSets = 0;
-    const muscleSets: Record<string, number> = {};
-
     log.exercises.forEach(exLog => {
       const completedSets = exLog.sets.filter(s => s.completed && ((s.weight || 0) > 0 || (s.reps || 0) > 0));
       if (completedSets.length === 0) return;
-
       const exVolume = completedSets.reduce((sum, s) => sum + ((s.weight || 0) * (s.reps || 0)), 0);
       totalVolume += exVolume;
       totalSets += completedSets.length;
-
-      const muscles = EXERCISE_MUSCLE_MAP[exLog.exerciseId] || [];
-      muscles.forEach(m => {
-        muscleSets[m] = (muscleSets[m] || 0) + completedSets.length;
-      });
     });
 
-    const radarData = RADAR_MUSCLES.map(({ key, label }) => ({
-      muscle: label,
-      sets: muscleSets[key] || 0,
-    }));
-    
-    const maxSets = Math.max(...radarData.map(d => d.sets), 1);
-    const hasMuscleData = radarData.some(d => d.sets > 0);
+    const { radarData, maxSets, hasMuscleData } = getRadarData([log], Infinity);
 
     return {
       totalVolume,
